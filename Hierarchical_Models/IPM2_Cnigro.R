@@ -4,7 +4,7 @@
 #setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
 
 #Read fecundity data
-fecundidade.Cn <- read.csv("fecundidade.Cn.csv", h=T)
+fecundidade.Cn <- read.csv("fecundidade_Cn.csv", h=T)
 summary(fecundidade.Cn)
 
 #Probability of reproducing
@@ -196,7 +196,12 @@ mplot <- data.frame(C = as.numeric(plot==1),
                     BT = as.numeric(plot==5))
 
 # Create matrix X indicating crc
-x <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(x), value="CRC",fill=NA);x <- x[,2:ncol(x)]
+x <- cast(datA,
+          TrueID ~ Year,
+          fun.aggregate = function(x) as.numeric(x),
+          value = "CRC",
+          fill = NA)
+x <- x[, 2:ncol(x)]
 x.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
