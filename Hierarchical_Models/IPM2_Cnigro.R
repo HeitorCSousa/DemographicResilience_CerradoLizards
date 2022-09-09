@@ -1,6 +1,11 @@
 # ##################
 # #Hierarchical IPM#
 # ##################
+library(runjags)
+library(parallel)
+library(rjags)
+library(reshape)
+
 # #setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
 # 
 # #Read fecundity data
@@ -60,9 +65,7 @@
 # ###################
 # #Usa dados mensais#
 # ###################
-# library(jagsUI)
-# library(rjags)
-# library(reshape)
+
 # # Separa as variaveis de interesse
 # table1 <- nigro.planilha[nigro.planilha$recaptura!="(s)", c("IDENT", "campanha", "sexo", "crc","massa", "recaptura", "parcela")]
 # str(table1)
@@ -1106,18 +1109,24 @@ gamma[j,i]<-phiJS[j,i-1]/(phiJS[j,i-1]+f[j,i-1])
 sink()
 
 # MCMC settings
-ni <- 250000
+ni <- 200000
 nt <- 10
 nb <- 50000
 nc <- 4
 na <- 50000
 
-# Call JAGS from R (BRT 3 min)
-ipm2.Cnigro<- jags(bugs.data, inits, parameters, "ipm2-nigro-crc.jags", 
-                     n.chains = nc, n.adapt = na,n.thin = nt, n.iter = ni, n.burnin = nb, 
-                     parallel = T, codaOnly = parameters)
+#Call JAGS from R (BRT 3 min)
+bugs.data$y <- as.matrix(bugs.data$y)
+bugs.data$z <- as.matrix(bugs.data$z)
+cl <- makeCluster(4)
+ipm2.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="ipm2-nigro-crc.jags",
+                                n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
+                                method = "parallel", jags.refresh = 30,keep.jags.files = TRUE,
+                         modules = c("glm"))
 
-#print(ipm2.Cnigro, digits = 3)
+
+summary(ipm2.Cnigro)
+# print(ipm2.itambere, digits = 3)
 saveRDS(ipm2.Cnigro, "results_imp2_Cnigro.rds")
 #summary(ipm2.Cnigro)
 #ipm2.Cnigro.df<-ipm2.Cnigro$summary
