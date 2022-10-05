@@ -1109,7 +1109,7 @@ gamma[j,i]<-phiJS[j,i-1]/(phiJS[j,i-1]+f[j,i-1])
 sink()
 
 # MCMC settings
-ni <- 100000
+ni <- 10000
 nt <- 10
 nb <- 50000
 nc <- 4
