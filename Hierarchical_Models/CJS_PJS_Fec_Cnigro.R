@@ -26,7 +26,7 @@ summary(fecundidade.Cn)
 
 #Probability of reproduction
 
-Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum.RECOR.imp.rds") #Read data
+Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #Read data
 Cnigropunctatum.RECOR.females<-subset(Cnigropunctatum.RECOR.imp,sexo=="F")# subset only females
 summary(as.factor(Cnigropunctatum.RECOR.females$ovos))
 
@@ -42,7 +42,7 @@ Cnigropunctatum.RECOR.females <- Cnigropunctatum.RECOR.females[Cnigropunctatum.R
 summary(Cnigropunctatum.RECOR.females)
 
 ## Clean demographic data ----------
-Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum.RECOR.imp.rds") #read data
+Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
 head(Cnigropunctatum.RECOR.imp)
 tail(Cnigropunctatum.RECOR.imp)
@@ -1733,7 +1733,7 @@ ggs_traceplot(S,family="alpha.p")
 
 setwd("/Volumes/Macintosh HD/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
 
-Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum.RECOR.imp.rds") #read data
+Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
 head(Cnigropunctatum.RECOR.imp)
 tail(Cnigropunctatum.RECOR.imp)
