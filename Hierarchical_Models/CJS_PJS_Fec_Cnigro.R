@@ -268,7 +268,7 @@ xpop <- c(xpopmeanC,xpopmeanQ,xpopmeanBP,xpopmeanBM,xpopmeanBT)
 
 #Read data
 # var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
-var_amb <- readRDS("climate.ecophysio.month.rds")
+var_amb <- readRDS("climate_ecophysio_month.rds")
 var_amb$canopy <- factor(var_amb$canopy,levels = c("C","Q","BP","BM","BT"))
 var_amb <- var_amb[order(var_amb$canopy),]
 var_amb$canopy
