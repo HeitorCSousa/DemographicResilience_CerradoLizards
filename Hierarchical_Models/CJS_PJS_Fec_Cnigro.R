@@ -695,7 +695,7 @@ parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
 
 
 # Specify model in BUGS language
-sink("ipm2-nigro-crc.jags")
+sink("vitalrates-nigro-crc.jags")
 cat("
 
 data{
@@ -1117,26 +1117,26 @@ na <- 50000
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
-ipm2.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="ipm2-nigro-crc.jags",
+vitalrates.Cnigro <- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-nigro-crc.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
                        summarise = FALSE,
                          modules = c("glm"))
 
-results.ipm2.Cnigro <- results.jags("IPM2_Cnigro/runjagsfiles")
-results.ipm2.Cnigro <- add.summary(results.ipm2.Cnigro)
+results.vitalrates.Cnigro <- results.jags(vitalrates.Cnigro)
+results.vitalrates.Cnigro <- add.summary(results.vitalrates.Cnigro)
 
-results.ipm2.Cnigro.df <- summary(results.ipm2.Cnigro)
-View(results.ipm2.Cnigro.df)
+results.vitalrates.Cnigro.df <- summary(results.vitalrates.Cnigro)
+View(results.vitalrates.Cnigro.df)
 
-saveRDS(results.ipm2.Cnigro.df,"results_ipm2_Cnigro_df.rds")
-saveRDS(results.ipm2.Cnigro, "results_ipm2_Cnigro.rds")
-summary(ipm2.Cnigro)
+saveRDS(results.vitalrates.Cnigro.df,"results_vitalrates_Cnigro_df.rds")
+saveRDS(results.vitalrates.Cnigro, "results_vitalrates_Cnigro.rds")
+summary(vitalrates.Cnigro)
 
-results.ipm2.Cnigro.df <- readRDS("results_ipm2_Cnigro_df.rds")
-write.csv(results.ipm2.Cnigro.df, "results_ipm2_Cnigro_df.csv")
+results.vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
+write.csv(results.vitalrates.Cnigro.df, "results_vitalrates_Cnigro_df.csv")
 
-S <- ggs(results.ipm2.Cnigro$mcmc[,3459:3460])
+S <- ggs(results.vitalrates.Cnigro$mcmc[,3459:3460])
 ggs_density(S,family="beta.phi")
 ggs_density(S,family="beta2.phi")
 ggs_traceplot(S,family="beta.phi")
