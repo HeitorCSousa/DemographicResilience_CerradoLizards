@@ -1,5 +1,5 @@
 rm(list = ls())
-setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -8,46 +8,97 @@ library(popdemo)
 library(tidyverse)
 library(BayesPostEst)
 library(MCMCvis)
+library(ggplot2)
+library(viridis)
 
 Titambere.data <- readRDS("Titambere.data.rds")
-ipm2.itambere<-readRDS("results_imp2_Titambere.rds")
-ipm2.itambere.samples <- as.mcmc.list(ipm2.itambere$samples)
+# setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado/runjags_ipm2_itambere_crc")
 
-# ipm2.itambere.2 <- ipm2.itambere
+ipm2.Titambere.samples <- readRDS("sims_list_Titambere.rds")
 
-load(file = "results2_imp2_Titambere.Rdata")
+ipm2.Titambere.df <- read.csv("results.ipm2.Titambere.df_100000iters.csv")
+
+pradel.Titambere.df <- read.csv("results.pradel.itambere.df_400000_noecophys.csv")
+
+fec.Titambere.df <- read.csv("results_fecund_itambere_df.csv")
+
+f.ipm2 <- ipm2.Titambere.df[grep(pattern = "f", x = ipm2.Titambere.df$X)[1:850],]
+f.pradel <- pradel.Titambere.df[grep(pattern = "f", x = pradel.Titambere.df$X)[1:850],]
+
+rho.ipm2 <- ipm2.Titambere.df[grep(pattern = "rho", x = ipm2.Titambere.df$X)[1:850],]
+rho.pradel <- pradel.Titambere.df[grep(pattern = "rho", x = pradel.Titambere.df$X)[1:850],]
+
+phi.pradel <- pradel.Titambere.df[grep(pattern = "phi", x = pradel.Titambere.df$X)[1:850],]
+phi.ipm2 <- ipm2.Titambere.df[grep(pattern = "phi", x = ipm2.Titambere.df$X)[1:850],]
 
 
-ipm2.itambere.samples <- ipm2.itambere$samples
-# ipm2.itambere.samples<-list(ipm2.itambere$samples[[1]],ipm2.itambere$samples[[2]],ipm2.itambere$samples[[3]],
-#                           ipm2.itambere$samples[[4]],ipm2.itambere$samples[[5]],ipm2.itambere$samples[[6]],
-#                           ipm2.itambere$samples[[7]],ipm2.itambere$samples[[8]],ipm2.itambere$samples[[9]],
-#                           ipm2.itambere$samples[[10]],ipm2.itambere$samples[[11]],ipm2.itambere$samples[[12]],
-#                           ipm2.itambere$samples[[13]],ipm2.itambere$samples[[14]],ipm2.itambere$samples[[15]],
-#                           ipm2.itambere$samples[[16]],ipm2.itambere$samples[[17]],ipm2.itambere$samples[[18]],
-#                           ipm2.itambere$samples[[19]],ipm2.itambere$samples[[20]],
-#                           ipm2.itambere.2$samples[[1]],ipm2.itambere.2$samples[[3]],ipm2.itambere.2$samples[[3]],
-#                           ipm2.itambere.2$samples[[4]],ipm2.itambere.2$samples[[5]],ipm2.itambere.2$samples[[6]],
-#                           ipm2.itambere.2$samples[[7]],ipm2.itambere.2$samples[[8]],ipm2.itambere.2$samples[[9]],
-#                           ipm2.itambere.2$samples[[10]],ipm2.itambere.2$samples[[11]],ipm2.itambere.2$samples[[12]],
-#                           ipm2.itambere.2$samples[[13]],ipm2.itambere.2$samples[[14]],ipm2.itambere.2$samples[[15]],
-#                           ipm2.itambere.2$samples[[16]],ipm2.itambere.2$samples[[17]],ipm2.itambere.2$samples[[18]],
-#                           ipm2.itambere.2$samples[[19]],ipm2.itambere.2$samples[[20]])
-# ipm2.itambere.samples<- as.mcmc.list(ipm2.itambere.samples)
 
-print(ipm2.itambere)
-rm(ipm2.itambere)
-rm(ipm2.itambere.2)
-gc()
-ipm2.itambere.df <- MCMCsummary(ipm2.itambere.samples)
+f.ipm2$plot <- rep(1:5,170)
+f.pradel$plot <- rep(1:5,170)
 
-write.csv(ipm2.itambere.df, "results.ipm2.itambere.df.csv")
+f.ipm2$time <- rep(1:170, each = 5)
+f.pradel$time <- rep(1:170, each = 5)
 
-View(ipm2.itambere.df)
+rho.ipm2$plot <- rep(1:5,170)
+rho.pradel$plot <- rep(1:5,170)
+
+rho.ipm2$time <- rep(1:170, each = 5)
+rho.pradel$time <- rep(1:170, each = 5)
+
+phi.pradel$plot <- rep(1:5,170)
+phi.pradel$time <- rep(1:170, each = 5)
+
+table(f.ipm2$X == f.pradel$X)
+table(rho.ipm2$X == rho.pradel$X)
+
+f.diffmean <- f.ipm2$mean - f.pradel$mean
+
+rho.diffmean <- rho.ipm2$mean - rho.pradel$mean
+
+phi.diffmean <- phi.ipm2$mean - phi.pradel$mean
+
+f.ipm2[f.diffmean > 1,]
+rho.ipm2[rho.diffmean > 1,]
+
+
+summary(f.diffmean)
+boxplot(f.diffmean ~ rep(1:5,170))
+
+summary(rho.diffmean)
+boxplot(rho.diffmean ~ rep(1:5,170))
+
+summary(phi.diffmean)
+boxplot(phi.diffmean ~ rep(1:5,170))
+
+tapply(rho.pradel$mean, rho.pradel$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
+tapply(rho.ipm2$mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
+
+f.ipm2$diff <- f.ipm2$mean - f.pradel$mean
+f.pradel$plot <- as.factor(f.pradel$plot)
+f.ipm2$plot <- as.factor(f.ipm2$plot)
+phi.pradel$plot <- as.factor(phi.pradel$plot)
+
+ggplot(f.ipm2, aes(x = time, y = mean, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  ylim(c(0,5))+
+  scale_color_manual(values=turbo(5))
+
+ggplot(f.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0,2))+
+  scale_color_manual(values=turbo(5))
+
+ggplot(phi.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0.65,0.95))+
+  scale_color_manual(values=turbo(5))
 
 library(ggmcmc)
 
-S <- ggs(ipm2.itambere.samples[,c(851:876,1722:1747,3473:3495)])
+S <- ggs(ipm2.Titambere.samples[,,c(851:876,1722:1747,3473:3495)])
 str(S)
 levels(S$Parameter)
 
@@ -212,87 +263,83 @@ ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_cr
 # Define some fixed parameters
 
 fixed_list <- list(
-  s_mu_slope   = ipm2.itambere.df['beta.phi','mean'],    #survival slope
-  #s_mu_slope2   = ipm2.itambere.df['beta.phi2','mean'],    #survival slope
+  s_mu_slope   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta.phi'],    #survival slope
+  #s_mu_slope2   = ipm2.Titambere.df['beta.phi2','mean'],    #survival slope
   
-  s_sd_slope   = ipm2.itambere.df['beta.phi','sd'],    #survival slope
-  #s_sd_slope2  = ipm2.itambere.df['beta.phi2','sd'],    #survival slope
+  s_sd_slope   = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta.phi'],    #survival slope
+  #s_sd_slope2  = ipm2.Titambere.df['beta.phi2','sd'],    #survival slope
   
   
   #Environmental slopes for survival
-  s_mu_tmed2m  = ipm2.itambere.df['betaphiJS[1]','mean'],
-  s_mu_RHmax   = ipm2.itambere.df['betaphiJS[2]','mean'],
-  s_mu_sol     = ipm2.itambere.df['betaphiJS[3]','mean'],
-  s_mu_tmed0cm = ipm2.itambere.df['betaphiJS[4]','mean'],
-  s_mu_tmin0cm = ipm2.itambere.df['betaphiJS[5]','mean'],
-  s_mu_precip  = ipm2.itambere.df['betaphiJS[6]','mean'],
-  s_mu_perf    = ipm2.itambere.df['betaphiJS[7]','mean'],
-  s_mu_ha_90   = ipm2.itambere.df['betaphiJS[8]','mean'],
-  s_mu_fire    = ipm2.itambere.df['betaphiJS[9]','mean'],
-  s_mu_TSLF    = ipm2.itambere.df['betaphiJS[10]','mean'],
+  s_mu_tmed2m  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[1]'],
+  s_mu_RHmax   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[2]'],
+  s_mu_sol     = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[3]'],
+  s_mu_tmed0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[4]'],
+  s_mu_tmin0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[5]'],
+  s_mu_precip  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[6]'],
+  s_mu_perf    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[7]'],
+  s_mu_ha_90   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[8]'],
+  s_mu_fire    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[9]'],
+  s_mu_TSLF    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[10]'],
   
-  s_sd_tmed2m  = ipm2.itambere.df['betaphiJS[1]','sd'],
-  s_sd_RHmax   = ipm2.itambere.df['betaphiJS[2]','sd'],
-  s_sd_sol     = ipm2.itambere.df['betaphiJS[3]','sd'],
-  s_sd_tmed0cm = ipm2.itambere.df['betaphiJS[4]','sd'],
-  s_sd_tmin0cm = ipm2.itambere.df['betaphiJS[5]','sd'],
-  s_sd_precip  = ipm2.itambere.df['betaphiJS[6]','sd'],
-  s_sd_perf    = ipm2.itambere.df['betaphiJS[7]','sd'],
-  s_sd_ha_90   = ipm2.itambere.df['betaphiJS[8]','sd'],
-  s_sd_fire    = ipm2.itambere.df['betaphiJS[9]','sd'],
-  s_sd_TSLF    = ipm2.itambere.df['betaphiJS[10]','sd'],
-  
-  sigma.phiJS = ipm2.itambere.df['sigma.phiJS','mean'],
+  s_sd_tmed2m  = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[1]'],
+  s_sd_RHmax   = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[2]'],
+  s_sd_sol     = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[3]'],
+  s_sd_tmed0cm = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[4]'],
+  s_sd_tmin0cm = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[5]'],
+  s_sd_precip  = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[6]'],
+  s_sd_perf    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[7]'],
+  s_sd_ha_90   = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[8]'],
+  s_sd_fire    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[9]'],
+  s_sd_TSLF    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaphiJS[10]'],
   
   #Environmental slopes for reproduction
-  r_f_mu_tmed2m  = ipm2.itambere.df['betaf[1]','mean'],
-  r_f_mu_RHmax   = ipm2.itambere.df['betaf[2]','mean'],
-  r_f_mu_sol     = ipm2.itambere.df['betaf[3]','mean'],
-  r_f_mu_tmed0cm = ipm2.itambere.df['betaf[4]','mean'],
-  r_f_mu_tmin0cm = ipm2.itambere.df['betaf[5]','mean'],
-  r_f_mu_precip  = ipm2.itambere.df['betaf[6]','mean'],
-  r_f_mu_perf    = ipm2.itambere.df['betaf[7]','mean'],
-  r_f_mu_ha_90   = ipm2.itambere.df['betaf[8]','mean'],
-  r_f_mu_fire    = ipm2.itambere.df['betaf[9]','mean'],
-  r_f_mu_TSLF    = ipm2.itambere.df['betaf[10]','mean'],
+  r_f_mu_tmed2m  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[1]'],
+  r_f_mu_RHmax   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[2]'],
+  r_f_mu_sol     = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[3]'],
+  r_f_mu_tmed0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[4]'],
+  r_f_mu_tmin0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[5]'],
+  r_f_mu_precip  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[6]'],
+  r_f_mu_perf    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[7]'],
+  r_f_mu_ha_90   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[8]'],
+  r_f_mu_fire    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[9]'],
+  r_f_mu_TSLF    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[10]'],
   
-  r_f_sd_tmed2m  = ipm2.itambere.df['betaf[1]','sd'],
-  r_f_sd_RHmax   = ipm2.itambere.df['betaf[2]','sd'],
-  r_f_sd_sol     = ipm2.itambere.df['betaf[3]','sd'],
-  r_f_sd_tmed0cm = ipm2.itambere.df['betaf[4]','sd'],
-  r_f_sd_tmin0cm = ipm2.itambere.df['betaf[5]','sd'],
-  r_f_sd_precip  = ipm2.itambere.df['betaf[6]','sd'],
-  r_f_sd_perf    = ipm2.itambere.df['betaf[7]','sd'],
-  r_f_sd_ha_90   = ipm2.itambere.df['betaf[8]','sd'],
-  r_f_sd_fire    = ipm2.itambere.df['betaf[9]','sd'],
-  r_f_sd_TSLF    = ipm2.itambere.df['betaf[10]','sd'],
-  
-  sigma.f = ipm2.itambere.df['sigma.f','mean'],
+  r_f_sd_tmed2m  = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[1]'],
+  r_f_sd_RHmax   = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[2]'],
+  r_f_sd_sol     = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[3]'],
+  r_f_sd_tmed0cm = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[4]'],
+  r_f_sd_tmin0cm = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[5]'],
+  r_f_sd_precip  = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[6]'],
+  r_f_sd_perf    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[7]'],
+  r_f_sd_ha_90   = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[8]'],
+  r_f_sd_fire    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[9]'],
+  r_f_sd_TSLF    = pradel.Titambere.df$sd[pradel.Titambere.df$X=='betaf[10]'],
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.itambere.df['alpha.prep','mean'],
-  r_r_mu_slope = ipm2.itambere.df['beta1.prep','mean'],  
-  #r_r_mu_slope2 = ipm2.itambere.df['beta2.fec','mean'], 
+  r_r_mu_int   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='alpha.prep'],
+  r_r_mu_slope = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta1.prep'],  
+  # r_r_mu_slope2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta2.prep'], 
   
-  r_r_sd_int   = ipm2.itambere.df['alpha.prep','sd'],
-  r_r_sd_slope = ipm2.itambere.df['beta1.prep','sd'],  
-  #r_r_sd_slope2 = ipm2.itambere.df['beta2.prep','sd'], 
+  r_r_sd_int   = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='alpha.prep'],
+  r_r_sd_slope = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta1.prep'],  
+  # r_r_sd_slope2 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta2.prep'], 
   
   #Number of eggs/embryos
-  r_n_mu_int   = ipm2.itambere.df['alpha.fec','mean'], 
-  r_n_mu_slope = ipm2.itambere.df['beta1.fec','mean'],   
-  r_n_mu_slope2 =ipm2.itambere.df['beta2.fec','mean'],  
-  
-  r_n_sd_int   = ipm2.itambere.df['alpha.fec','sd'], 
-  r_n_sd_slope = ipm2.itambere.df['beta1.fec','sd'],   
-  r_n_sd_slope2 =ipm2.itambere.df['beta2.fec','sd'],  
+  r_n_mu_int   = fec.Titambere.df$Mean[fec.Titambere.df$X=='alpha.fec'],
+  r_n_mu_slope = fec.Titambere.df$Mean[fec.Titambere.df$X=='beta1.fec'],
+  r_n_mu_slope2 =fec.Titambere.df$Mean[fec.Titambere.df$X=='beta2.fec'],
+
+  r_n_sd_int   = fec.Titambere.df$SD[fec.Titambere.df$X=='alpha.fec'],
+  r_n_sd_slope = fec.Titambere.df$SD[fec.Titambere.df$X=='beta1.fec'],
+  r_n_sd_slope2 =fec.Titambere.df$SD[fec.Titambere.df$X=='beta2.fec'],
   
   
   #Size of newborns
   mu_rd     = Titambere.data$mu.L0,   
   sd_rd     = sqrt(Titambere.data$tau.L0),
-  mu_LI = mean(Titambere.data$x[Titambere.data$x>=75],na.rm=T)
+  mu_LI = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.LI']
   
 )
 
@@ -302,52 +349,52 @@ fixed_list <- list(
 
 # First, we create vector of values that each random component can take.
 s_params  <- list(
-  s_g_mu_int_1 = ipm2.itambere.df['alpha.phiJS[1]','mean'],
-  s_g_mu_int_2 = ipm2.itambere.df['alpha.phiJS[2]','mean'],
-  s_g_mu_int_3 = ipm2.itambere.df['alpha.phiJS[3]','mean'],
-  s_g_mu_int_4 = ipm2.itambere.df['alpha.phiJS[4]','mean'],
-  s_g_mu_int_5 = ipm2.itambere.df['alpha.phiJS[5]','mean'],
+  s_g_mu_int_1 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[1]'],
+  s_g_mu_int_2 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[2]'],
+  s_g_mu_int_3 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[3]'],
+  s_g_mu_int_4 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[4]'],
+  s_g_mu_int_5 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[5]'],
   
-  s_g_sd_int_1 = ipm2.itambere.df['alpha.phiJS[1]','sd'],
-  s_g_sd_int_2 = ipm2.itambere.df['alpha.phiJS[2]','sd'],
-  s_g_sd_int_3 = ipm2.itambere.df['alpha.phiJS[3]','sd'],
-  s_g_sd_int_4 = ipm2.itambere.df['alpha.phiJS[4]','sd'],
-  s_g_sd_int_5 = ipm2.itambere.df['alpha.phiJS[5]','sd']
+  s_g_sd_int_1 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.phiJS[1]'],
+  s_g_sd_int_2 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.phiJS[2]'],
+  s_g_sd_int_3 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.phiJS[3]'],
+  s_g_sd_int_4 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.phiJS[4]'],
+  s_g_sd_int_5 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.phiJS[5]']
 )
 
 g_params <- list(
-
-  g_g_mu_K_1 = ipm2.itambere.df['mu.K[1]','mean'],
-  g_g_mu_K_2 = ipm2.itambere.df['mu.K[2]','mean'],
-  g_g_mu_K_3 = ipm2.itambere.df['mu.K[3]','mean'],
-  g_g_mu_K_4 = ipm2.itambere.df['mu.K[4]','mean'],
-  g_g_mu_K_5 = ipm2.itambere.df['mu.K[5]','mean'],
   
-  g_g_sd_K_1 = ipm2.itambere.df['mu.K[1]','sd'],
-  g_g_sd_K_2 = ipm2.itambere.df['mu.K[2]','sd'],
-  g_g_sd_K_3 = ipm2.itambere.df['mu.K[3]','sd'],
-  g_g_sd_K_4 = ipm2.itambere.df['mu.K[4]','sd'],
-  g_g_sd_K_5 = ipm2.itambere.df['mu.K[5]','sd']
+  g_g_mu_K_1 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[1]'],
+  g_g_mu_K_2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[2]'],
+  g_g_mu_K_3 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[3]'],
+  g_g_mu_K_4 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[4]'],
+  g_g_mu_K_5 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[5]'],
+  
+  g_g_sd_K_1 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[1]'],
+  g_g_sd_K_2 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[2]'],
+  g_g_sd_K_3 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[3]'],
+  g_g_sd_K_4 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[4]'],
+  g_g_sd_K_5 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[5]']
 )
 
 r_params <- list(
-  r_f_mu_int_1 = ipm2.itambere.df['alpha.f[1]','mean'],
-  r_f_mu_int_2 = ipm2.itambere.df['alpha.f[2]','mean'],
-  r_f_mu_int_3 = ipm2.itambere.df['alpha.f[3]','mean'],
-  r_f_mu_int_4 = ipm2.itambere.df['alpha.f[4]','mean'],
-  r_f_mu_int_5 = ipm2.itambere.df['alpha.f[5]','mean'],
+  r_f_mu_int_1 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[1]'],
+  r_f_mu_int_2 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[2]'],
+  r_f_mu_int_3 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[3]'],
+  r_f_mu_int_4 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[4]'],
+  r_f_mu_int_5 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[5]'],
   
-  r_f_sd_int_1 = ipm2.itambere.df['alpha.f[1]','sd'],
-  r_f_sd_int_2 = ipm2.itambere.df['alpha.f[2]','sd'],
-  r_f_sd_int_3 = ipm2.itambere.df['alpha.f[3]','sd'],
-  r_f_sd_int_4 = ipm2.itambere.df['alpha.f[4]','sd'],
-  r_f_sd_int_5 = ipm2.itambere.df['alpha.f[5]','sd'],
+  r_f_sd_int_1 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.f[1]'],
+  r_f_sd_int_2 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.f[2]'],
+  r_f_sd_int_3 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.f[3]'],
+  r_f_sd_int_4 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.f[4]'],
+  r_f_sd_int_5 = pradel.Titambere.df$sd[pradel.Titambere.df$X=='alpha.f[5]'],
   
-  r_p_mu_int_1 = ipm2.itambere.df['alpha.pJS[1]','mean'],
-  r_p_mu_int_2 = ipm2.itambere.df['alpha.pJS[2]','mean'],
-  r_p_mu_int_3 = ipm2.itambere.df['alpha.pJS[3]','mean'],
-  r_p_mu_int_4 = ipm2.itambere.df['alpha.pJS[4]','mean'],
-  r_p_mu_int_5 = ipm2.itambere.df['alpha.pJS[5]','mean']
+  r_p_mu_int_1 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.pJS[1]'],
+  r_p_mu_int_2 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.pJS[2]'],
+  r_p_mu_int_3 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.pJS[3]'],
+  r_p_mu_int_4 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.pJS[4]'],
+  r_p_mu_int_5 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.pJS[5]']
 )
 
 # Each set of parameters is converted to a named list. The names should match
@@ -384,7 +431,7 @@ sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+
 sd_growth <- function(x,mu.L0,mu_LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu_LI,
-                           unlist(ipm2.itambere.samples[,paste0('mu.K[',site,']')]))
+                           unlist(ipm2.Titambere.samples[,paste0('mu.K[',site,']')]))
   return(sd(mean.values,na.rm=T))
 }
 
@@ -394,62 +441,12 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-env.states <- Titambere.data$amb
+surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Titambere.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
 
-# env.states <- list(tmed2m_1  = Titambere.data$amb[1,,1],
-#                    RHmax_1   = Titambere.data$amb[1,,2],
-#                    sol_1     = Titambere.data$amb[1,,3],
-#                    tmed0cm_1 = Titambere.data$amb[1,,4],
-#                    tmin0cm_1 = Titambere.data$amb[1,,5],
-#                    precip_1  = Titambere.data$amb[1,,6],
-#                    perf_1    = Titambere.data$amb[1,,7],
-#                    ha_90_1   = Titambere.data$amb[1,,8],
-#                    fire_1    = Titambere.data$amb[1,,9],
-#                    TSLF_1    = Titambere.data$amb[1,,10],
-#                    
-#                     tmed2m_2 = Titambere.data$amb[2,,1],
-#                      RHmax_2 = Titambere.data$amb[2,,2],
-#                        sol_2 = Titambere.data$amb[2,,3],
-#                    tmed0cm_2 = Titambere.data$amb[2,,4],
-#                    tmin0cm_2 = Titambere.data$amb[2,,5],
-#                     precip_2 = Titambere.data$amb[2,,6],
-#                       perf_2 = Titambere.data$amb[2,,7],
-#                      ha_90_2 = Titambere.data$amb[2,,8],
-#                       fire_2 = Titambere.data$amb[2,,9],
-#                       TSLF_2 = Titambere.data$amb[2,,10],
-#                    
-#                    tmed2m_3 = Titambere.data$amb[3,,1],
-#                    RHmax_3 = Titambere.data$amb[3,,2],
-#                    sol_3 = Titambere.data$amb[3,,3],
-#                    tmed0cm_3 = Titambere.data$amb[3,,4],
-#                    tmin0cm_3 = Titambere.data$amb[3,,5],
-#                    precip_3 = Titambere.data$amb[3,,6],
-#                    perf_3 = Titambere.data$amb[3,,7],
-#                    ha_90_3 = Titambere.data$amb[3,,8],
-#                    fire_3 = Titambere.data$amb[3,,9],
-#                    TSLF_3 = Titambere.data$amb[3,,10],
-#                    
-#                    tmed2m_4 = Titambere.data$amb[4,,1],
-#                    RHmax_4 = Titambere.data$amb[4,,2],
-#                    sol_4 = Titambere.data$amb[4,,3],
-#                    tmed0cm_4 = Titambere.data$amb[4,,4],
-#                    tmin0cm_4 = Titambere.data$amb[4,,5],
-#                    precip_4 = Titambere.data$amb[4,,6],
-#                    perf_4 = Titambere.data$amb[4,,7],
-#                    ha_90_4 = Titambere.data$amb[4,,8],
-#                    fire_4 = Titambere.data$amb[4,,9],
-#                    TSLF_4 = Titambere.data$amb[4,,10],
-#                    
-#                    tmed2m_5 = Titambere.data$amb[5,,1],
-#                    RHmax_5 = Titambere.data$amb[5,,2],
-#                    sol_5 = Titambere.data$amb[5,,3],
-#                    tmed0cm_5 = Titambere.data$amb[5,,4],
-#                    tmin0cm_5 = Titambere.data$amb[5,,5],
-#                    precip_5 = Titambere.data$amb[5,,6],
-#                    perf_5 = Titambere.data$amb[5,,7],
-#                    ha_90_5 = Titambere.data$amb[5,,8],
-#                    fire_5 = Titambere.data$amb[5,,9],
-#                    TSLF_5 = Titambere.data$amb[5,,10])
+env.states[,,11]
 
 all_params_list <- c(fixed_list, g_params, s_params, r_params)
 
@@ -483,9 +480,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , s_sd_ha_90  ) * ha_90_site+
                           rnorm(1, s_mu_fire   , s_sd_fire   ) * fire_site+
                           rnorm(1, s_mu_TSLF   , s_sd_TSLF   ) * TSLF_site+
-                          rnorm(1, s_mu_slope, s_sd_slope) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)) ,
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, s_sd_slope) * ht_1) ,
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -522,7 +519,7 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -530,12 +527,11 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,r_r_sd_int) + 
                           rnorm(1, r_r_mu_slope, r_r_sd_slope) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, r_n_sd_int) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,r_n_sd_slope) * ht_1 +
                                rnorm(1,r_n_mu_slope2,r_n_sd_slope2)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -549,9 +545,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   , r_f_sd_perf   ) * perf_site+
                                rnorm(1, r_f_mu_ha_90  , r_f_sd_ha_90  ) * ha_90_site+
                                rnorm(1, r_f_mu_fire   , r_f_sd_fire   ) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site + r_f_sigma_site),
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -574,7 +570,7 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(20, 70, 100)) 
+  define_domains(ht = c(20, all_params_list$mu_LI, 100)) 
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -591,7 +587,10 @@ sample_env <- function(env_states, site, iteration) {
                   paste0("perf_",site)   ,
                   paste0("ha_90_",site)  ,
                   paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+                  
   
   return(out)
   
@@ -617,26 +616,28 @@ my_ipm <- my_ipm %>%
            return_sub_kernels = TRUE,
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 1:5))
-
+#Lambdas
 lambda(my_ipm,type_lambda = 'all')
 lambda(my_ipm,log = F)
 
+#Kernels
 library(fields)
 quartz(8,8)
 mean.kernel<-mean_kernel(my_ipm)
 
-par(mfrow(1,2))
+quartz(height=6,width=12)
+par(mfrow=c(1,2))
 plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
-quartz(8,8)
+
 plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
+par(mfrow=c(1,1))
 
 ######################
 #Without sd estimates#
 ######################
 
 
-################################################################################
 my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
     
@@ -666,7 +667,8 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -703,7 +705,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -711,12 +713,11 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1 +
                                rnorm(1,r_n_mu_slope2,0)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -731,7 +732,8 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -754,7 +756,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(20, 70, 100)) 
+  define_domains(ht = c(20, all_params_list$mu_LI, 100)) 
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -771,7 +773,10 @@ sample_env <- function(env_states, site, iteration) {
                   paste0("perf_",site)   ,
                   paste0("ha_90_",site)  ,
                   paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
   
   return(out)
   
@@ -798,29 +803,23 @@ my_ipm2 <- my_ipm2 %>%
 
 lambda(my_ipm2,type_lambda = 'all')
 lambda(my_ipm2,log = F)
-quartz(8,8)
-
-mean.kernel<-mean_kernel(my_ipm)
-plot(mean.kernel$mean_P_site)
-
-quartz(8,8)
-plot(mean.kernel$mean_F_site,do_contour=T)
 
 
+mean.kernel<-mean_kernel(my_ipm2)
 
+quartz(height = 6, width = 12)
+par(mfrow=c(1,2))
+plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
-define_pop_state(
-  pop_vectors = list(
-    n_surf_area = init_pop_vec
-  )
-) %>%
-  
-  
-  lambda(my_ipm)
+plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
+
 
 ###############
 #For each plot#
 ###############
+#########
+#Control#
+#########
 
 C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
@@ -840,19 +839,19 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # Survival is indexed by site as well.
     
     s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
-                          rnorm(1, s_mu_tmed2m ,0) * tmed2m_site +
-                          rnorm(1, s_mu_RHmax  ,0) * RHmax_site +
-                          rnorm(1, s_mu_sol    ,0) * sol_site +
-                          rnorm(1, s_mu_tmed0cm,0) * tmed0cm_site +
-                          rnorm(1, s_mu_tmin0cm,0) * tmin0cm_site+
-                          rnorm(1, s_mu_precip ,0) * precip_site+
-                          rnorm(1, s_mu_perf   ,0) * perf_site+
-                          rnorm(1, s_mu_ha_90  ,0) * ha_90_site+
-                          rnorm(1, s_mu_fire   ,0) * fire_site+
-                          rnorm(1, s_mu_TSLF   ,0) * TSLF_site+
-                          rnorm(1, s_mu_slope,  0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
+                          rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
+                          rnorm(1, s_mu_sol    , 0) * sol_site +
+                          rnorm(1, s_mu_tmed0cm, 0) * tmed0cm_site +
+                          rnorm(1, s_mu_tmin0cm, 0) * tmin0cm_site+
+                          rnorm(1, s_mu_precip , 0) * precip_site+
+                          rnorm(1, s_mu_perf   , 0) * perf_site+
+                          rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
+                          rnorm(1, s_mu_fire   , 0) * fire_site+
+                          rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -889,7 +888,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -897,12 +896,11 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1 +
                                rnorm(1,r_n_mu_slope2,0)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -916,9 +914,9 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -942,6 +940,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     )
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 100)) 
+
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -967,9 +966,11 @@ C_ipm <- C_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 1),)
 
+#Lambdas
 lambda(C_ipm,type_lambda = 'all')
 lambda(C_ipm,log = F)
 
+#Kernels
 C.mean.kernel<-mean_kernel(C_ipm)
 
 quartz(8,8)
@@ -981,22 +982,39 @@ plot(C.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
 
 plot_ipm_sd_rv <- function(ipm_sd, xmin, xmax, ylab){
-  plot(seq(xmin, xmax,length.out=100),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd)),
-       xlab = "SVL (mm)", ylab = ylab, bty="n")
-for(i in 2:ncol(ipm_sd)){
-  lines(seq(xmin, xmax,length.out=100),ipm_sd[,i],col=i)
+  plot(seq(xmin, xmax,length.out=100),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd[,-ncol(ipm_sd)])),
+       xlab = "SVL (mm)", ylab = ylab, bty="n", col=rgb(0,0,0,.1))
+for(i in 2:ncol(ipm_sd)-1){
+  lines(seq(xmin, xmax,length.out=100),ipm_sd[,i],col=rgb(0,0,0,.1))
 }
 }
 
 C_ipm_sd <- right_ev(C_ipm)
-plot_ipm_sd_rv(C_ipm_sd$ht_w, 20, 73.8945, "Stable distribution")
+plot_ipm_sd_rv(C_ipm_sd$ht_w, 20, all_params_list$mu_LI, "Stable distribution")
 
 C_ipm_rv <- left_ev(C_ipm, iterations = 170)
-plot_ipm_sd_rv(C_ipm_rv$ht_v, 20, 73.8945, "Reproductive value")
+plot_ipm_sd_rv(C_ipm_rv$ht_v, 20, all_params_list$mu_LI, "Reproductive value")
+
+par(mfrow=c(1,1))
 
 
-##############
-#Quadriennial#
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.8), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==1][-c(1, 170)])
+
+quartz(8,8)
+plot(rho.pradel$mean[rho.pradel$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==1][-c(1, 170)])
+
+summary(rho.pradel$mean[rho.pradel$plot==1][-c(1, 170)] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+
+#############
+#Quadrennial#
 ##############
 
 Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
@@ -1017,19 +1035,19 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # Survival is indexed by site as well.
     
     s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
-                          rnorm(1, s_mu_tmed2m ,0) * tmed2m_site +
-                          rnorm(1, s_mu_RHmax  ,0) * RHmax_site +
-                          rnorm(1, s_mu_sol    ,0) * sol_site +
-                          rnorm(1, s_mu_tmed0cm,0) * tmed0cm_site +
-                          rnorm(1, s_mu_tmin0cm,0) * tmin0cm_site+
-                          rnorm(1, s_mu_precip ,0) * precip_site+
-                          rnorm(1, s_mu_perf   ,0) * perf_site+
-                          rnorm(1, s_mu_ha_90  ,0) * ha_90_site+
-                          rnorm(1, s_mu_fire   ,0) * fire_site+
-                          rnorm(1, s_mu_TSLF   ,0) * TSLF_site+
-                          rnorm(1, s_mu_slope,  0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
+                          rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
+                          rnorm(1, s_mu_sol    , 0) * sol_site +
+                          rnorm(1, s_mu_tmed0cm, 0) * tmed0cm_site +
+                          rnorm(1, s_mu_tmin0cm, 0) * tmin0cm_site+
+                          rnorm(1, s_mu_precip , 0) * precip_site+
+                          rnorm(1, s_mu_perf   , 0) * perf_site+
+                          rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
+                          rnorm(1, s_mu_fire   , 0) * fire_site+
+                          rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1066,7 +1084,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1074,12 +1092,11 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1 +
                                rnorm(1,r_n_mu_slope2,0)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -1093,9 +1110,9 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1119,6 +1136,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     )
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 100)) 
+
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1144,17 +1162,20 @@ Q_ipm <- Q_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 2),)
 
+#Lambdas
 lambda(Q_ipm,type_lambda = 'all')
 lambda(Q_ipm,log = F)
 
+#Kernels
 Q.mean.kernel<-mean_kernel(Q_ipm)
-
+par(mfrow = c(1,2))
 quartz(8,8)
 plot(Q.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 quartz(8,8)
 plot(Q.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 Q_ipm_sd <- right_ev(Q_ipm)
 plot_ipm_sd_rv(Q_ipm_sd$ht_w, 
                Q_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1164,6 +1185,23 @@ Q_ipm_rv <- left_ev(Q_ipm, iterations = 170)
 plot_ipm_sd_rv(Q_ipm_rv$ht_v, 
                Q_ipm$proto_ipm$domain[[1]][[1]][1], 
                Q_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+
+par(mfrow = c(1,1))
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.5), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==2][-c(1, 170)])
+
+quartz(h = 8, w = 8)
+plot(rho.pradel$mean[rho.pradel$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==2][-c(1, 170)])
+
+summary(rho.pradel$mean[rho.pradel$plot==2][-c(1, 170)] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ################
 #Early biennial#
@@ -1185,7 +1223,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # into its own expression as well. This might help keep track of things.
     # Survival is indexed by site as well.
     
-    s_lin_site       = (rnorm(1,s_g_mu_int_site, 0) + 
+    s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
                           rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
                           rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
                           rnorm(1, s_mu_sol    , 0) * sol_site +
@@ -1196,9 +1234,9 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1235,7 +1273,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1243,12 +1281,11 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1 +
                                rnorm(1,r_n_mu_slope2,0)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -1262,9 +1299,9 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1313,9 +1350,11 @@ EB_ipm <- EB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 3),)
 
+#Lambdas
 lambda(EB_ipm,type_lambda = 'all')
 lambda(EB_ipm,log = F)
 
+#Kernels
 EB.mean.kernel<-mean_kernel(EB_ipm)
 
 quartz(8,8)
@@ -1324,6 +1363,7 @@ plot(EB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 quartz(8,8)
 plot(EB.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 EB_ipm_sd <- right_ev(EB_ipm)
 plot_ipm_sd_rv(EB_ipm_sd$ht_w, 
                EB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1334,6 +1374,20 @@ plot_ipm_sd_rv(EB_ipm_rv$ht_v,
                EB_ipm$proto_ipm$domain[[1]][[1]][1], 
                EB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
 
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.8,1.8), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==3][-c(1, 170)])
+
+quartz(h = 8, w = 8)
+plot(rho.pradel$mean[rho.pradel$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==3][-c(1, 170)])
+
+summary(rho.pradel$mean[rho.pradel$plot==3][-c(1, 170)] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Mid biennial#
@@ -1355,7 +1409,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # into its own expression as well. This might help keep track of things.
     # Survival is indexed by site as well.
     
-    s_lin_site       = (rnorm(1,s_g_mu_int_site, 0) + 
+    s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
                           rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
                           rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
                           rnorm(1, s_mu_sol    , 0) * sol_site +
@@ -1366,9 +1420,9 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1405,7 +1459,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1413,12 +1467,11 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1 +
                                rnorm(1,r_n_mu_slope2,0)* ht_1^2),
     r_n_site         = pois_r(r_n_lin_site),
@@ -1432,9 +1485,9 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1483,11 +1536,14 @@ MB_ipm <- MB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 4),)
 
+#Lambdas
 lambda(MB_ipm,type_lambda = 'all')
 lambda(MB_ipm,log = F)
 
+#Kernels
 MB.mean.kernel<-mean_kernel(MB_ipm)
 
+par(mfrow = c(1,2))
 quartz(8,8)
 plot(MB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
@@ -1503,6 +1559,24 @@ MB_ipm_rv <- left_ev(MB_ipm, iterations = 170)
 plot_ipm_sd_rv(MB_ipm_rv$ht_v, 
                MB_ipm$proto_ipm$domain[[1]][[1]][1], 
                MB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+
+par(mfrow=c(1,1))
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.8,2.6), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==4][-c(1, 170)])
+
+quartz(h = 8, w = 8)
+plot(rho.pradel$mean[rho.pradel$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==4][-c(1, 170)])
+
+summary(rho.pradel$mean[rho.pradel$plot==4][-c(1, 170)] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+
 ###############
 #Late biennial#
 ###############
@@ -1523,7 +1597,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # into its own expression as well. This might help keep track of things.
     # Survival is indexed by site as well.
     
-    s_lin_site       = (rnorm(1,s_g_mu_int_site, 0) + 
+    s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
                           rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
                           rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
                           rnorm(1, s_mu_sol    , 0) * sol_site +
@@ -1534,9 +1608,9 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1573,7 +1647,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1581,7 +1655,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
@@ -1600,9 +1674,9 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1651,19 +1725,19 @@ LB_ipm <- LB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 5),)
 
+#Lambdas
 lambda(LB_ipm,type_lambda = 'all')
 lambda(LB_ipm,log = F)
 
-
-
+#Kernels
 LB.mean.kernel<-mean_kernel(LB_ipm)
 
-quartz(8,8)
+par(mfrow=c(1,2))
 plot(LB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
-quartz(8,8)
 plot(LB.mean.kernel$mean_F_site, do_contour=T, col=turbo(1000))
 
+#Stable size distributions and reproductive values
 LB_ipm_sd <- right_ev(LB_ipm)
 plot_ipm_sd_rv(LB_ipm_sd$ht_w, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1673,6 +1747,22 @@ LB_ipm_rv <- left_ev(LB_ipm, iterations = 170)
 plot_ipm_sd_rv(LB_ipm_rv$ht_v, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
                LB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+
+par(mfrow=c(1,1))
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.8,2.6), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==5][-c(1, 170)])
+
+quartz(h = 8, w = 8)
+plot(rho.pradel$mean[rho.pradel$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==5][-c(1, 170)], method = "spearman")
+
+summary(rho.pradel$mean[rho.pradel$plot==5][-c(1, 170)] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 #######################
 #Perturbation analyses#
@@ -1827,7 +1917,14 @@ net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_sit
 net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site)   
 net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site)   
 net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site)   
-net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site)   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site) 
+
+net_repro_rate(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site, method = "start") 
 
 mature_age(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, start = 1)
 mature_age(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, start = 1)
@@ -1882,7 +1979,7 @@ mx.LB <- mpm_to_mx(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean
 quartz(8,8)
 plot(lx, xlab="Survival time (years)", ylab="Survivorship", type="s", col="black")
 lines(lx.C, type="s", col="forestgreen")
-lines(lx.Q, type="s", col="darkblue")
+lines(lx.Q, type="s", col="darkcyan")
 lines(lx.EB, type="s", col="gold")
 lines(lx.MB, type="s", col="orange")
 lines(lx.LB, type="s", col="red")
@@ -1954,6 +2051,12 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 (life.expect.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 (life.expect.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 
+(life.expect.var.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+
 (longev.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
@@ -1968,11 +2071,17 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 
 
 #Reproduction and maturation traits
-(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
-(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
-(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
-(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
-(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+(repro.value.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
+(repro.value.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
+(repro.value.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
+(repro.value.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
+(repro.value.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+
+(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i], method = "start")))
 
 #Life-table component traits
 (lx.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),mpm_to_lx,  start = 1)))
@@ -2065,7 +2174,6 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 ))
 
 
-#######################
 #Resilience parameters#
 #######################
 
@@ -2094,7 +2202,7 @@ isErgodic(LB.mean.kernel$mean_K_site)
 isIrreducible(LB.mean.kernel$mean_K_site)
 isPrimitive(as.matrix(unlist(LB.mean.kernel$mean_K_site),100,100))
 
-#Some are imprimitive!!!
+#One is imprimitive!!!
 
 #Reactivity (first-timestep amplification) and first-time step attenuation
 (r.up.K <- reac(mean.kernel$mean_K_site, bound = "upper"))
@@ -2265,7 +2373,7 @@ dr.stoch <- function(K, n){
 # (kreiss.low.K.LB.stoch <- unlist(apply(array(unlist(stoch.K.LB),dim = c(100,100,170)), MARGIN = c(3),FUN=  Kreiss, bound = "lower", simplify = F)))
 
 
-
+par(mfrow=c(1,1))
 Lizpd <- project(mean.kernel$mean_K_site, "diri", time = 12,
                  standard.A = TRUE)
 plot(Lizpd, plottype = "shady", bounds = T, log = "y", bty="n")
@@ -2290,13 +2398,28 @@ Lizpd.LB <- project(LB.mean.kernel$mean_K_site, "diri", time = 12,
                     standard.A = TRUE)
 plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
 
+bounds.ipms <- as.data.frame(rbind(bounds(Lizpd.C),bounds(Lizpd.Q),bounds(Lizpd.EB),
+                                   bounds(Lizpd.MB),bounds(Lizpd.LB)))
+
+bounds.ipms$plot <- rep(c(1:5), each = 13)
+bounds.ipms$time <- rep(c(1:13), 5)
+
+ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
+  geom_line()+
+  geom_line(aes(y = V2))+
+  scale_color_viridis_d(option = "H") +
+  labs(x = "Time (months)", y = "Population growth")
+
 (res.lh.param.Ti <- data.frame(species = c(rep("T_itambere", 850)),
                                plot = rep(c("C", "Q", "EB", "MB", "LB"),each = 170),
                                life.expect = c(life.expect.C, life.expect.Q, life.expect.EB, life.expect.MB, life.expect.LB),
+                               life.expect.var = c(life.expect.var.C, life.expect.var.Q, life.expect.var.EB, life.expect.var.MB, life.expect.var.LB),
                                longev = c(longev.C, longev.Q, longev.EB, longev.MB, longev.LB),
                                gen.time = c(gen.time.C, gen.time.Q, gen.time.EB, gen.time.MB, gen.time.LB),
                                net.repro = c(net.repro.rate.C, net.repro.rate.Q, net.repro.rate.EB, net.repro.rate.MB, net.repro.rate.LB),
+                               repro.value = c(repro.value.C, repro.value.Q, repro.value.EB, repro.value.MB, repro.value.LB),
                                semel = c(semel.C, semel.Q, semel.EB, semel.MB, semel.LB),
+                               surv.curv = c(surv.curv.C, surv.curv.Q, surv.curv.EB, surv.curv.MB, surv.curv.LB),
                                shape.surv = c(shape.surv.C, shape.surv.Q, shape.surv.EB, shape.surv.MB, shape.surv.LB),
                                shape.rep = c(shape.rep.C, shape.rep.Q, shape.rep.EB, shape.rep.MB, shape.rep.LB),
                                fst.amp = c(r.up.C.K.stoch, r.up.Q.K.stoch, r.up.EB.K.stoch, r.up.MB.K.stoch, r.up.LB.K.stoch),
@@ -2309,136 +2432,217 @@ plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
                                recovery.time = c(dr.K.C.stoch$t, dr.K.Q.stoch$t, dr.K.EB.stoch$t, dr.K.MB.stoch$t, dr.K.LB.stoch$t)
 ))
 
-cor(res.lh.param.Ti[,c(3:9)],use="na.or.complete") 
-cor(res.lh.param.Ti[,c(10:13)],use="na.or.complete")     
+cor(res.lh.param.Ti[,c(3:12)],use="na.or.complete", method = "spearman") 
+cor(res.lh.param.Ti[,c(13:16)],use="na.or.complete", method = "spearman")     
 saveRDS(res.lh.param.Ti, "res.lh.param.Ti.rds")
 
 #########################################################################
 #Bring more perturbation analyses from IPM Book - parameter perturbation#
 #########################################################################
-res_param_perturb <- function(plot,mu_LI_plot,nkernel){
+rm(list = ls())
+
+Titambere.data <- readRDS("Titambere.data.rds")
+# setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado/runjags_ipm2_itambere_crc")
+
+ipm2.Titambere.samples <- readRDS("sims_list_Titambere.rds")
+
+ipm2.Titambere.df <- read.csv("results.ipm2.Titambere.df_100000iters.csv")
+
+pradel.Titambere.df <- read.csv("results.pradel.itambere.df_400000_noecophys.csv")
+
+fec.Titambere.df <- read.csv("results_fecund_itambere_df.csv")
+
+
+inv_logit <- function(x) {
+  return(
+    1/(1 + exp(-(x)))
+  )
+}
+
+
+pois_r <- function(x) {
+  return(
+    exp(x)
+  )
+}
+
+#Function to estimate size from age
+age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-inv_logit(K)^x)
+
+#Function to estimate age from size
+size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/log(inv_logit(K))
+
+#Function to estimate size in t1 from size in t0
+sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
+
+#Variance in growth#
+####################
+
+sd_growth <- function(x,mu.L0,mu_LI,site){
+  mean.values <- sizet0_t1(x,mu.L0,
+                           mu_LI,
+                           unlist(ipm2.Titambere.samples[,paste0('mu.K[',site,']')]))
+  return(sd(mean.values,na.rm=T))
+}
+
+
+my_funs <- list(inv_logit   = inv_logit,
+                pois_r      = pois_r,
+                sizet0_t1 = sizet0_t1,
+                sd_growth = sd_growth)
+
+#Environmental variation
+f.pradel <- pradel.Titambere.df[grep(pattern = "f", x = pradel.Titambere.df$X)[1:850],]
+phi.pradel <- pradel.Titambere.df[grep(pattern = "phi", x = pradel.Titambere.df$X)[1:850],]
+
+surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Titambere.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+
+env.states[,,11]
+
+sample_env <- function(env_states, site, iteration) {
+  
+  out <- as.list(env_states[site, iteration, ])
+  names(out) <- c(paste0("tmed2m_",site), 
+                  paste0("RHmax_",site),  
+                  paste0("sol_",site),    
+                  paste0("tmed0cm_",site),
+                  paste0("tmin0cm_",site),
+                  paste0("precip_",site) ,
+                  paste0("perf_",site)   ,
+                  paste0("ha_90_",site)  ,
+                  paste0("fire_" ,site)  ,
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
+  
+  return(out)
+  
+}
+
+stoch_K <- function(ipm,sites,time){
+  stoch.K <- array(0,dim = c(100,100,sites,time))
+  seq.t <- seq(0,(sites*time*2)-(sites*2),sites*2)
+  ipm_array <- array(unlist(ipm$sub_kernels),dim=c(100,100,sites*time*2))
+  #stoch.K.list <- list()
+  
+  for(j in 1:time){
+    
+    for(i in 1:sites){
+      stoch.K[,,i,j] <- ipm_array[,,i+seq.t[j]] + ipm_array[,,(i)+(sites+seq.t[j])]
+      
+    }
+  }
+  list.K <- apply(stoch.K,MARGIN = c(1,2),FUN=c)
+  list.K <- aperm(list.K,c(2,3,1))
+  list.K2 <- list()
+  for(i in 1:(sites*time)){
+    list.K2[[i]] <- list.K[,,i] 
+  }
+  return(list.K2)
+}
+
+dr.stoch <- function(K, n){
+  dr.K.stoch <- apply(array(unlist(K),dim = c(100,100,n)), MARGIN = c(3), FUN =  dr , return.time = T)
+  dr.K.stoch.dr <- dr.K.stoch.t<- rep(NA, n)
+  for(i in 1:n){
+    dr.K.stoch.dr[i] <- dr.K.stoch[[i]]$dr
+    dr.K.stoch.t[i] <- dr.K.stoch[[i]]$t
+    dr.K.stoch.list <- list(dr = dr.K.stoch.dr, t = dr.K.stoch.t)
+  }
+  return(dr.K.stoch.list)
+}
+
+#Function to perform Parameter perturbation
+###########################################
+res_param_perturb <- function(plot,nkernel){
   add.s <- seq(0.0,0.01,0.001)
-  ord <- array(c(rep(1,11),rep(0,30*11),
-                 rep(0,11),rep(1,11),rep(0,29*11),
-                 rep(0,11*2),rep(1,11),rep(0,28*11),
-                 rep(0,11*3),rep(1,11),rep(0,27*11),
-                 rep(0,11*4),rep(1,11),rep(0,26*11),
-                 rep(0,11*5),rep(1,11),rep(0,25*11),
-                 rep(0,11*6),rep(1,11),rep(0,24*11),
-                 rep(0,11*7),rep(1,11),rep(0,23*11),
-                 rep(0,11*8),rep(1,11),rep(0,22*11),
-                 rep(0,11*9),rep(1,11),rep(0,21*11),
-                 rep(0,11*10),rep(1,11),rep(0,20*11),
-                 rep(0,11*11),rep(1,11),rep(0,19*11),
-                 rep(0,11*12),rep(1,11),rep(0,18*11),
-                 rep(0,11*13),rep(1,11),rep(0,17*11),
-                 rep(0,11*14),rep(1,11),rep(0,16*11),
-                 rep(0,11*15),rep(1,11),rep(0,15*11),
-                 rep(0,11*16),rep(1,11),rep(0,14*11),
-                 rep(0,11*17),rep(1,11),rep(0,13*11),
-                 rep(0,11*18),rep(1,11),rep(0,12*11),
-                 rep(0,11*19),rep(1,11),rep(0,11*11),
-                 rep(0,11*20),rep(1,11),rep(0,10*11),
-                 rep(0,11*21),rep(1,11),rep(0,9*11),
-                 rep(0,11*22),rep(1,11),rep(0,8*11),
-                 rep(0,11*23),rep(1,11),rep(0,7*11),
-                 rep(0,11*24),rep(1,11),rep(0,6*11),
-                 rep(0,11*25),rep(1,11),rep(0,5*11),
-                 rep(0,11*26),rep(1,11),rep(0,4*11),
-                 rep(0,11*27),rep(1,11),rep(0,3*11),
-                 rep(0,11*28),rep(1,11),rep(0,2*11),
-                 rep(0,11*29),rep(1,11),rep(0,1*11),
-                 rep(0,11*30),rep(1,11)),
-               dim=c(11,31,31))
+  ord <- array(c(rep(1,11),rep(0,29*11),
+                 rep(0,11),rep(1,11),rep(0,28*11),
+                 rep(0,11*2),rep(1,11),rep(0,27*11),
+                 rep(0,11*3),rep(1,11),rep(0,26*11),
+                 rep(0,11*4),rep(1,11),rep(0,25*11),
+                 rep(0,11*5),rep(1,11),rep(0,24*11),
+                 rep(0,11*6),rep(1,11),rep(0,23*11),
+                 rep(0,11*7),rep(1,11),rep(0,22*11),
+                 rep(0,11*8),rep(1,11),rep(0,21*11),
+                 rep(0,11*9),rep(1,11),rep(0,20*11),
+                 rep(0,11*10),rep(1,11),rep(0,19*11),
+                 rep(0,11*11),rep(1,11),rep(0,18*11),
+                 rep(0,11*12),rep(1,11),rep(0,17*11),
+                 rep(0,11*13),rep(1,11),rep(0,16*11),
+                 rep(0,11*14),rep(1,11),rep(0,15*11),
+                 rep(0,11*15),rep(1,11),rep(0,14*11),
+                 rep(0,11*16),rep(1,11),rep(0,13*11),
+                 rep(0,11*17),rep(1,11),rep(0,12*11),
+                 rep(0,11*18),rep(1,11),rep(0,11*11),
+                 rep(0,11*19),rep(1,11),rep(0,10*11),
+                 rep(0,11*20),rep(1,11),rep(0,9*11),
+                 rep(0,11*21),rep(1,11),rep(0,8*11),
+                 rep(0,11*22),rep(1,11),rep(0,7*11),
+                 rep(0,11*23),rep(1,11),rep(0,6*11),
+                 rep(0,11*24),rep(1,11),rep(0,5*11),
+                 rep(0,11*25),rep(1,11),rep(0,4*11),
+                 rep(0,11*26),rep(1,11),rep(0,3*11),
+                 rep(0,11*27),rep(1,11),rep(0,2*11),
+                 rep(0,11*28),rep(1,11),rep(0,1*11),
+                 rep(0,11*29),rep(1,11)),
+               dim=c(11,30,30))
   
-  res.sens <- list(fst.amp = array(NA,dim=c(170,11,31)), fst.att = array(NA,dim=c(170,11,31)), recov.t = array(NA,dim=c(170,11,31)))
+  res.sens <- list(fst.amp = array(NA,dim=c(170,11,30)), 
+                   fst.att = array(NA,dim=c(170,11,30)), 
+                   recov.t = array(NA,dim=c(170,11,30)))
   
-  for(i in 1:31){
+  for(i in 1:30){
     for(j in 1:11){
       
       
       fixed_list <- list(
-        s_mu_slope   = ipm2.itambere.df['beta.phi','mean']+ add.s[j]*ord[j,12,i],    #survival slope
+        s_mu_slope   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
         # s_mu_slope2   = ipm2.itambere.df['beta2.phi','mean']+ add.s[j]*ord[j,13,i],    #survival slope
         
-        s_sd_slope   = ipm2.itambere.df['beta.phi','sd'],    #survival slope
-        # s_sd_slope2  = ipm2.itambere.df['beta2.phi','sd'],    #survival slope
-        
-        
         #Environmental slopes for survival
-        s_mu_tmed2m  = ipm2.itambere.df['betaphiJS[1]','mean'] + add.s[j]*ord[j,2,i],
-        s_mu_RHmax   = ipm2.itambere.df['betaphiJS[2]','mean']+ add.s[j] *ord[j,3,i],
-        s_mu_sol     = ipm2.itambere.df['betaphiJS[3]','mean']+ add.s[j] *ord[j,4,i],
-        s_mu_tmed0cm = ipm2.itambere.df['betaphiJS[4]','mean']+ add.s[j]*ord[j,5,i],
-        s_mu_tmin0cm = ipm2.itambere.df['betaphiJS[5]','mean']+ add.s[j]*ord[j,6,i],
-        s_mu_precip  = ipm2.itambere.df['betaphiJS[6]','mean']+ add.s[j]*ord[j,7,i],
-        s_mu_perf    = ipm2.itambere.df['betaphiJS[7]','mean']+ add.s[j]*ord[j,8,i],
-        s_mu_ha_90   = ipm2.itambere.df['betaphiJS[8]','mean']+ add.s[j]*ord[j,9,i],
-        s_mu_fire    = ipm2.itambere.df['betaphiJS[9]','mean']+ add.s[j]*ord[j,10,i],
-        s_mu_TSLF    = ipm2.itambere.df['betaphiJS[10]','mean']+ add.s[j]*ord[j,11,i],
-        
-        s_sd_tmed2m  = ipm2.itambere.df['betaphiJS[1]','sd'],
-        s_sd_RHmax   = ipm2.itambere.df['betaphiJS[2]','sd'],
-        s_sd_sol     = ipm2.itambere.df['betaphiJS[3]','sd'],
-        s_sd_tmed0cm = ipm2.itambere.df['betaphiJS[4]','sd'],
-        s_sd_tmin0cm = ipm2.itambere.df['betaphiJS[5]','sd'],
-        s_sd_precip  = ipm2.itambere.df['betaphiJS[6]','sd'],
-        s_sd_perf    = ipm2.itambere.df['betaphiJS[7]','sd'],
-        s_sd_ha_90   = ipm2.itambere.df['betaphiJS[8]','sd'],
-        s_sd_fire    = ipm2.itambere.df['betaphiJS[9]','sd'],
-        s_sd_TSLF    = ipm2.itambere.df['betaphiJS[10]','sd'],
-        
-        sigma.phiJS = ipm2.itambere.df['sigma.phiJS','mean'],
+        s_mu_tmed2m  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[1]'] + add.s[j]*ord[j,2,i],
+        s_mu_RHmax   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[2]']+ add.s[j] *ord[j,3,i],
+        s_mu_sol     = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[3]']+ add.s[j] *ord[j,4,i],
+        s_mu_tmed0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[4]']+ add.s[j]*ord[j,5,i],
+        s_mu_tmin0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[5]']+ add.s[j]*ord[j,6,i],
+        s_mu_precip  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[6]']+ add.s[j]*ord[j,7,i],
+        s_mu_perf    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[7]']+ add.s[j]*ord[j,8,i],
+        s_mu_ha_90   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[8]']+ add.s[j]*ord[j,9,i],
+        s_mu_fire    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[9]']+ add.s[j]*ord[j,10,i],
+        s_mu_TSLF    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[10]']+ add.s[j]*ord[j,11,i],
         
         #Environmental slopes for reproduction
-        r_f_mu_tmed2m  = ipm2.itambere.df['betaf[1]','mean']+ add.s[j]*ord[j,13,i],
-        r_f_mu_RHmax   = ipm2.itambere.df['betaf[2]','mean']+ add.s[j]*ord[j,14,i],
-        r_f_mu_sol     = ipm2.itambere.df['betaf[3]','mean']+ add.s[j]*ord[j,15,i],
-        r_f_mu_tmed0cm = ipm2.itambere.df['betaf[4]','mean']+ add.s[j]*ord[j,16,i],
-        r_f_mu_tmin0cm = ipm2.itambere.df['betaf[5]','mean']+ add.s[j]*ord[j,17,i],
-        r_f_mu_precip  = ipm2.itambere.df['betaf[6]','mean']+ add.s[j]*ord[j,18,i],
-        r_f_mu_perf    = ipm2.itambere.df['betaf[7]','mean']+ add.s[j]*ord[j,19,i],
-        r_f_mu_ha_90   = ipm2.itambere.df['betaf[8]','mean']+ add.s[j]*ord[j,20,i],
-        r_f_mu_fire    = ipm2.itambere.df['betaf[9]','mean']+ add.s[j]*ord[j,21,i],
-        r_f_mu_TSLF    = ipm2.itambere.df['betaf[10]','mean']+ add.s[j]*ord[j,22,i],
-        
-        r_f_sd_tmed2m  = ipm2.itambere.df['betaf[1]','sd'],
-        r_f_sd_RHmax   = ipm2.itambere.df['betaf[2]','sd'],
-        r_f_sd_sol     = ipm2.itambere.df['betaf[3]','sd'],
-        r_f_sd_tmed0cm = ipm2.itambere.df['betaf[4]','sd'],
-        r_f_sd_tmin0cm = ipm2.itambere.df['betaf[5]','sd'],
-        r_f_sd_precip  = ipm2.itambere.df['betaf[6]','sd'],
-        r_f_sd_perf    = ipm2.itambere.df['betaf[7]','sd'],
-        r_f_sd_ha_90   = ipm2.itambere.df['betaf[8]','sd'],
-        r_f_sd_fire    = ipm2.itambere.df['betaf[9]','sd'],
-        r_f_sd_TSLF    = ipm2.itambere.df['betaf[10]','sd'],
-        
-        sigma.f = ipm2.itambere.df['sigma.f','mean'],
-        
+        r_f_mu_tmed2m  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[1]']+ add.s[j]*ord[j,13,i],
+        r_f_mu_RHmax   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[2]']+ add.s[j]*ord[j,14,i],
+        r_f_mu_sol     = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[3]']+ add.s[j]*ord[j,15,i],
+        r_f_mu_tmed0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[4]']+ add.s[j]*ord[j,16,i],
+        r_f_mu_tmin0cm = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[5]']+ add.s[j]*ord[j,17,i],
+        r_f_mu_precip  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[6]']+ add.s[j]*ord[j,18,i],
+        r_f_mu_perf    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[7]']+ add.s[j]*ord[j,19,i],
+        r_f_mu_ha_90   = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[8]']+ add.s[j]*ord[j,20,i],
+        r_f_mu_fire    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[9]']+ add.s[j]*ord[j,21,i],
+        r_f_mu_TSLF    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[10]']+ add.s[j]*ord[j,22,i],
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.itambere.df['alpha.prep','mean']+ add.s[j]*ord[j,23,i],
-        r_r_mu_slope = ipm2.itambere.df['beta1.prep','mean']+ add.s[j]*ord[j,24,i],  
+        r_r_mu_int   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='alpha.prep'] + add.s[j]*ord[j,23,i],
+        r_r_mu_slope = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta1.prep'] + add.s[j]*ord[j,24,i],  
         # r_r_mu_slope2 = ipm2.itambere.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
         
-        r_r_sd_int   = ipm2.itambere.df['alpha.prep','sd'],
-        r_r_sd_slope = ipm2.itambere.df['beta1.prep','sd'],  
-        # r_r_sd_slope2 = ipm2.itambere.df['beta2.prep','sd'], 
-        
         #Number of eggs/embryos
-        r_n_mu_int   = ipm2.itambere.df['alpha.fec','mean']+ add.s[j]*ord[j,25,i], 
-        r_n_mu_slope = ipm2.itambere.df['beta1.fec','mean']+ add.s[j]*ord[j,26,i],   
-        r_n_mu_slope2 =ipm2.itambere.df['beta2.fec','mean']+ add.s[j]*ord[j,27,i],
-        
-        r_n_sd_int   = ipm2.itambere.df['alpha.fec','sd'], 
-        r_n_sd_slope = ipm2.itambere.df['beta1.fec','sd'],   
-        r_n_sd_slope2 =ipm2.itambere.df['beta2.fec','sd'],
+        r_n_mu_int   = fec.Titambere.df$Mean[fec.Titambere.df$X=='alpha.fec']+ add.s[j]*ord[j,25,i], 
+        r_n_mu_slope = fec.Titambere.df$Mean[fec.Titambere.df$X=='beta1.fec']+ add.s[j]*ord[j,26,i],   
+        r_n_mu_slope2 =fec.Titambere.df$Mean[fec.Titambere.df$X=='beta2.fec']+ add.s[j]*ord[j,27,i],
         
         
         #Size of newborns
         mu_rd     = Titambere.data$mu.L0,   
         sd_rd     = sqrt(Titambere.data$tau.L0),
-        mu_LI = mean(Titambere.data$x[Titambere.data$x>=75],na.rm=T)
+        mu_LI = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.LI']
         
       )
       
@@ -2448,52 +2652,28 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       # First, we create vector of values that each random component can take.
       s_params  <- list(
-        s_g_mu_int_1 = ipm2.itambere.df['alpha.phiJS[1]','mean'] + add.s[j]*ord[j,28,i],
-        s_g_mu_int_2 = ipm2.itambere.df['alpha.phiJS[2]','mean']+ add.s[j]*ord[j,28,i],
-        s_g_mu_int_3 = ipm2.itambere.df['alpha.phiJS[3]','mean']+ add.s[j]*ord[j,28,i],
-        s_g_mu_int_4 = ipm2.itambere.df['alpha.phiJS[4]','mean']+ add.s[j]*ord[j,28,i],
-        s_g_mu_int_5 = ipm2.itambere.df['alpha.phiJS[5]','mean']+ add.s[j]*ord[j,28,i],
-        
-        s_g_sd_int_1 = ipm2.itambere.df['alpha.phiJS[1]','sd'],
-        s_g_sd_int_2 = ipm2.itambere.df['alpha.phiJS[2]','sd'],
-        s_g_sd_int_3 = ipm2.itambere.df['alpha.phiJS[3]','sd'],
-        s_g_sd_int_4 = ipm2.itambere.df['alpha.phiJS[4]','sd'],
-        s_g_sd_int_5 = ipm2.itambere.df['alpha.phiJS[5]','sd']
+        s_g_mu_int_1 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[1]'] + add.s[j]*ord[j,28,i],
+        s_g_mu_int_2 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[2]']+ add.s[j]*ord[j,28,i],
+        s_g_mu_int_3 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[3]']+ add.s[j]*ord[j,28,i],
+        s_g_mu_int_4 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[4]']+ add.s[j]*ord[j,28,i],
+        s_g_mu_int_5 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.phiJS[5]']+ add.s[j]*ord[j,28,i]
       )
       
       g_params <- list(
 
-        g_g_mu_K_1 = ipm2.itambere.df['mu.K[1]','mean'],
-        g_g_mu_K_2 = ipm2.itambere.df['mu.K[2]','mean'],
-        g_g_mu_K_3 = ipm2.itambere.df['mu.K[3]','mean'],
-        g_g_mu_K_4 = ipm2.itambere.df['mu.K[4]','mean'],
-        g_g_mu_K_5 = ipm2.itambere.df['mu.K[5]','mean'],
-        
-        g_g_sd_K_1 = ipm2.itambere.df['mu.K[1]','sd']+ add.s[j]*ord[j,29,i],
-        g_g_sd_K_2 = ipm2.itambere.df['mu.K[2]','sd']+ add.s[j]*ord[j,29,i],
-        g_g_sd_K_3 = ipm2.itambere.df['mu.K[3]','sd']+ add.s[j]*ord[j,29,i],
-        g_g_sd_K_4 = ipm2.itambere.df['mu.K[4]','sd']+ add.s[j]*ord[j,29,i],
-        g_g_sd_K_5 = ipm2.itambere.df['mu.K[5]','sd']+ add.s[j]*ord[j,29,i]
+        g_g_mu_K_1 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[1]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[2]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_3 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[3]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_4 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[4]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_5 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[5]'] + add.s[j]*ord[j,29,i]
       )
       
       r_params <- list(
-        r_f_mu_int_1 = ipm2.itambere.df['alpha.f[1]','mean']+ add.s[j]*ord[j,30,i],
-        r_f_mu_int_2 = ipm2.itambere.df['alpha.f[2]','mean']+ add.s[j]*ord[j,30,i],
-        r_f_mu_int_3 = ipm2.itambere.df['alpha.f[3]','mean']+ add.s[j]*ord[j,30,i],
-        r_f_mu_int_4 = ipm2.itambere.df['alpha.f[4]','mean']+ add.s[j]*ord[j,30,i],
-        r_f_mu_int_5 = ipm2.itambere.df['alpha.f[5]','mean']+ add.s[j]*ord[j,30,i],
-        
-        r_f_sd_int_1 = ipm2.itambere.df['alpha.f[1]','sd'],
-        r_f_sd_int_2 = ipm2.itambere.df['alpha.f[2]','sd'],
-        r_f_sd_int_3 = ipm2.itambere.df['alpha.f[3]','sd'],
-        r_f_sd_int_4 = ipm2.itambere.df['alpha.f[4]','sd'],
-        r_f_sd_int_5 = ipm2.itambere.df['alpha.f[5]','sd'],
-        
-        r_p_mu_int_1 = ipm2.itambere.df['alpha.pJS[1]','mean'],
-        r_p_mu_int_2 = ipm2.itambere.df['alpha.pJS[2]','mean'],
-        r_p_mu_int_3 = ipm2.itambere.df['alpha.pJS[3]','mean'],
-        r_p_mu_int_4 = ipm2.itambere.df['alpha.pJS[4]','mean'],
-        r_p_mu_int_5 = ipm2.itambere.df['alpha.pJS[5]','mean']
+        r_f_mu_int_1 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[1]'] + add.s[j]*ord[j,30,i],
+        r_f_mu_int_2 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[2]'] + add.s[j]*ord[j,30,i],
+        r_f_mu_int_3 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[3]'] + add.s[j]*ord[j,30,i],
+        r_f_mu_int_4 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[4]'] + add.s[j]*ord[j,30,i],
+        r_f_mu_int_5 = pradel.Titambere.df$mean[pradel.Titambere.df$X=='alpha.f[5]'] + add.s[j]*ord[j,30,i]
       )
       
       all_params_list <- c(fixed_list, g_params, s_params, r_params)
@@ -2515,20 +2695,20 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           # into its own expression as well. This might help keep track of things.
           # Survival is indexed by site as well.
           
-          s_lin_site       = (rnorm(1,s_g_mu_int_site ,0) + 
+          s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
                                 rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
-                                rnorm(1, s_mu_RHmax , 0) * RHmax_site +
-                                rnorm(1, s_mu_sol   , 0) * sol_site +
-                                rnorm(1, s_mu_tmed0cm , 0) * tmed0cm_site +
-                                rnorm(1, s_mu_tmin0cm , 0) * tmin0cm_site+
+                                rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
+                                rnorm(1, s_mu_sol    , 0) * sol_site +
+                                rnorm(1, s_mu_tmed0cm, 0) * tmed0cm_site +
+                                rnorm(1, s_mu_tmin0cm, 0) * tmin0cm_site+
                                 rnorm(1, s_mu_precip , 0) * precip_site+
                                 rnorm(1, s_mu_perf   , 0) * perf_site+
                                 rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                                 rnorm(1, s_mu_fire   , 0) * fire_site+
                                 rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                                rnorm(1, s_mu_slope, 0) * ht_1 +
-                                rnorm(1,0,sigma.phiJS)),
-          s_site           =  inv_logit(s_lin_site),
+                                rnorm(1, s_mu_slope, 0) * ht_1),
+          s_sigma_site     = surv_site - inv_logit(s_lin_site), 
+          s_site           =  inv_logit(s_lin_site) + s_sigma_site,
           
           # Again, we modify the vital rate expression to include "_site".
           
@@ -2565,7 +2745,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           # The F kernel also varies from site to site
           
           name             = "F_site",
-          formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+          formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
           family           = "CC",
           
           # We didn't include a site level effect for probability
@@ -2573,13 +2753,13 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           
           r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                                 rnorm(1, r_r_mu_slope, 0) * ht_1),
-          r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+          r_r_site              = inv_logit(r_r_lin),
           
           # We index the seed production expression with the site effect
           
           r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                                     r_f_lin_site +
-                                     rnorm(1,r_n_mu_slope,0) * ht_1),
+                                     rnorm(1,r_n_mu_slope,0) * ht_1 +
+                                     rnorm(1,r_n_mu_slope2,0)* ht_1^2),
           r_n_site         = pois_r(r_n_lin_site),
           r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                      rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
@@ -2592,7 +2772,8 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
                                      rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                      rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                      rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-          r_f_site = pois_r(r_f_lin_site),
+          r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+          r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
           r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
           data_list        = all_params_list,
           states           = list(c('ht')),
@@ -2615,7 +2796,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
             state_end      = rep("ht", 2)
           )
         ) %>%
-        define_domains(ht = c(30, mu_LI_plot, nkernel)) 
+        define_domains(ht = c(20, all_params_list$mu_LI, nkernel)) 
       
       # We also append the suffix in define_pop_state(). THis will create a deterministic
       # simulation for every "site"
@@ -2643,8 +2824,14 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       stoch.K <- stoch_K(ipm, sites = 1,time = 170)
       
-      res.sens$fst.amp[,j,i] <- unlist(apply(array(unlist(stoch.K),dim = c(100,100,170)), MARGIN = c(3),FUN =  reac, bound = "upper", simplify = F))
-      res.sens$fst.att[,j,i] <- unlist(apply(array(unlist(stoch.K),dim = c(100,100,170)), MARGIN = c(3),FUN =  reac, bound = "lower", simplify = F))
+      res.sens$fst.amp[,j,i] <- unlist(apply(array(unlist(stoch.K),
+                                                   dim = c(nkernel,nkernel,170)),
+                                             MARGIN = c(3),
+                                             FUN =  reac, bound = "upper", simplify = F))
+      res.sens$fst.att[,j,i] <- unlist(apply(array(unlist(stoch.K),
+                                                   dim = c(nkernel,nkernel,170)), 
+                                             MARGIN = c(3),
+                                             FUN =  reac, bound = "lower", simplify = F))
       res.sens$recov.t[,j,i] <- dr.stoch(stoch.K, 170)$t
       
     }
@@ -2652,11 +2839,11 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
   return(res.sens)
 }
 
-res.Titambere.param.sens.C <- res_param_perturb(1, all_params_list$mu_LI, 100)
-res.Titambere.param.sens.Q <- res_param_perturb(2, all_params_list$mu_LI, 100)
-res.Titambere.param.sens.EB <- res_param_perturb(3, all_params_list$mu_LI, 100)
-res.Titambere.param.sens.MB <- res_param_perturb(4, all_params_list$mu_LI, 100)
-res.Titambere.param.sens.LB <- res_param_perturb(5, all_params_list$mu_LI, 100)
+res.Titambere.param.sens.C  <- res_param_perturb(1, 100)
+res.Titambere.param.sens.Q  <- res_param_perturb(2, 100)
+res.Titambere.param.sens.EB <- res_param_perturb(3, 100)
+res.Titambere.param.sens.MB <- res_param_perturb(4, 100)
+res.Titambere.param.sens.LB <- res_param_perturb(5, 100)
 
 saveRDS(res.Titambere.param.sens.C,"res.Titambere.param.sens.C.rds")
 saveRDS(res.Titambere.param.sens.Q,"res.Titambere.param.sens.Q.rds")
@@ -2664,19 +2851,57 @@ saveRDS(res.Titambere.param.sens.EB,"res.Titambere.param.sens.EB.rds")
 saveRDS(res.Titambere.param.sens.MB,"res.Titambere.param.sens.MB.rds")
 saveRDS(res.Titambere.param.sens.LB,"res.Titambere.param.sens.LB.rds")
 
-boxplot(log10(res.Titambere.param.sens.C$fst.amp[,,31]))
+res.Titambere.param.sens.C  <- readRDS("res.Titambere.param.sens.C.rds")
+res.Titambere.param.sens.Q  <- readRDS("res.Titambere.param.sens.Q.rds")
+res.Titambere.param.sens.EB <- readRDS("res.Titambere.param.sens.EB.rds")
+res.Titambere.param.sens.MB <- readRDS("res.Titambere.param.sens.MB.rds")
+res.Titambere.param.sens.LB <- readRDS("res.Titambere.param.sens.LB.rds")
+
 
 sens.res <- function(res.array){
-  add.s <- seq(0.001,0.01,0.001)
-  res.sens <- array(NA, dim = c(10,31))
-  mean.res.array <- apply(res.array,MARGIN =c(2,3),mean,na.rm=T)
-    for(j in 1:10){
-      for(k in 1:31){
-        res.sens[j,k] <- (mean.res.array[j,k] - mean(res.array[,,c(1,31)]))/add.s[j]
+  add.s <- seq(0,0.01,0.001)
+  res.sens <- array(NA, dim = c(169,10,30))
+  for(i in 1:169){
+    for(j in 2:11){
+      for(k in 1:30){
+        res.sens[i,j-1,k] <- (res.array[i,j,k] - res.array[i,1,k]) / add.s[j]
       }
     }
-  return(apply(res.sens, MARGIN = c(2), mean, na.rm=T))
+  }
+  return(data.frame(X1 = c(res.sens[,,1]),
+                    X2 = c(res.sens[,,2]),
+                    X3 = c(res.sens[,,3]),
+                    X4 = c(res.sens[,,4]),
+                    X5 = c(res.sens[,,5]),
+                    X6 = c(res.sens[,,6]),
+                    X7 = c(res.sens[,,7]),
+                    X8 = c(res.sens[,,8]),
+                    X9 = c(res.sens[,,9]),
+                    X10 = c(res.sens[,,10]),
+                    X11 = c(res.sens[,,11]),
+                    X12 = c(res.sens[,,12]),
+                    X13 = c(res.sens[,,13]),
+                    X14 = c(res.sens[,,14]),
+                    X15 = c(res.sens[,,15]),
+                    X16 = c(res.sens[,,16]),
+                    X17 = c(res.sens[,,17]),
+                    X18 = c(res.sens[,,18]),
+                    X19 = c(res.sens[,,19]),
+                    X20 = c(res.sens[,,20]),
+                    X21 = c(res.sens[,,21]),
+                    X22 = c(res.sens[,,22]),
+                    X23 = c(res.sens[,,23]),
+                    X24 = c(res.sens[,,24]),
+                    X25 = c(res.sens[,,25]),
+                    X26 = c(res.sens[,,26]),
+                    X27 = c(res.sens[,,27]),
+                    X28 = c(res.sens[,,28]),
+                    X29 = c(res.sens[,,29]),
+                    X30 = c(res.sens[,,30])
+                    )
+         )
 }
+
 
 (sens.Titambere.fst.amp.C <- sens.res(log10(res.Titambere.param.sens.C$fst.amp)))
 (sens.Titambere.fst.amp.Q <- sens.res(log10(res.Titambere.param.sens.Q$fst.amp)))
@@ -2684,11 +2909,11 @@ sens.res <- function(res.array){
 (sens.Titambere.fst.amp.MB <- sens.res(log10(res.Titambere.param.sens.MB$fst.amp)))
 (sens.Titambere.fst.amp.LB <- sens.res(log10(res.Titambere.param.sens.LB$fst.amp)))
 
-(sens.Titambere.fst.att.C <- sens.res(log10(res.Titambere.param.sens.C$fst.att+1)))
-(sens.Titambere.fst.att.Q <- sens.res(log10(res.Titambere.param.sens.Q$fst.att+1)))
-(sens.Titambere.fst.att.EB <- sens.res(log10(res.Titambere.param.sens.EB$fst.att)))
-(sens.Titambere.fst.att.MB <- sens.res(log10(res.Titambere.param.sens.MB$fst.att)))
-(sens.Titambere.fst.att.LB <- sens.res(log10(res.Titambere.param.sens.LB$fst.att)))
+(sens.Titambere.fst.att.C <- sens.res(res.Titambere.param.sens.C$fst.att))
+(sens.Titambere.fst.att.Q <- sens.res(res.Titambere.param.sens.Q$fst.att))
+(sens.Titambere.fst.att.EB <- sens.res(res.Titambere.param.sens.EB$fst.att))
+(sens.Titambere.fst.att.MB <- sens.res(res.Titambere.param.sens.MB$fst.att))
+(sens.Titambere.fst.att.LB <- sens.res(res.Titambere.param.sens.LB$fst.att))
 
 (sens.Titambere.recov.t.C <- sens.res(res.Titambere.param.sens.C$recov.t))
 (sens.Titambere.recov.t.Q <- sens.res(res.Titambere.param.sens.Q$recov.t))
@@ -2696,10 +2921,339 @@ sens.res <- function(res.array){
 (sens.Titambere.recov.t.MB <- sens.res(res.Titambere.param.sens.MB$recov.t))
 (sens.Titambere.recov.t.LB <- sens.res(res.Titambere.param.sens.LB$recov.t))
 
+#Summary statistics
+library(psych)
+sens.Titambere.fst.amp.summary <- print(describe(rbind(sens.Titambere.fst.amp.C, 
+                                                    sens.Titambere.fst.amp.Q, 
+                                                    sens.Titambere.fst.amp.EB,
+                                                    sens.Titambere.fst.amp.MB,
+                                                    sens.Titambere.fst.amp.LB),
+                                              quant = c(0.25, 0.75)),3)
+
+
+write.csv(sens.Titambere.fst.amp.summary , "sens_Titambere_fst_amp_summary.csv")
+
+sens.Titambere.fst.att.summary <- print(describe(rbind(sens.Titambere.fst.att.C, 
+                                                    sens.Titambere.fst.att.Q, 
+                                                    sens.Titambere.fst.att.EB,
+                                                    sens.Titambere.fst.att.MB,
+                                                    sens.Titambere.fst.att.LB),
+                                              quant = c(0.25, 0.75)),3)
+
+write.csv(sens.Titambere.fst.att.summary , "sens_Titambere_fst_att_summary.csv")
+
+sens.Titambere.recov.t.summary <- print(describe(rbind(sens.Titambere.recov.t.C, 
+                                                    sens.Titambere.recov.t.Q, 
+                                                    sens.Titambere.recov.t.EB,
+                                                    sens.Titambere.recov.t.MB,
+                                                    sens.Titambere.recov.t.LB),
+                                              quant = c(0.25, 0.75)),3)
+
+write.csv(sens.Titambere.recov.t.summary , "sens_Titambere_recov_t_summary.csv")
+
+#Plots
+#Resilience x Perturbation magnitude
+quartz(height = 8, width = 12)
+fst.amp.Titambere.param.sens.mean <- (res.Titambere.param.sens.C$fst.amp+
+                                     res.Titambere.param.sens.Q$fst.amp +
+                                     res.Titambere.param.sens.EB$fst.amp+
+                                     res.Titambere.param.sens.MB$fst.amp+
+                                     res.Titambere.param.sens.LB$fst.amp)/5
+
+
+(fst.amp.Titambere.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              log10(apply(fst.amp.Titambere.param.sens.mean[,,c(which(sens.Titambere.fst.amp.summary$mean!=0))], 
+                                                          MARGIN = c(2,3), mean))))
+
+fst.amp.Titambere.param.sens.mean <- pivot_longer(data = fst.amp.Titambere.param.sens.mean, 
+                                               cols = `X1`:`X6`,
+                                               names_to = "parameter",
+                                               values_to = "compensation")
+quartz(height = 6, width = 8)
+ggplot(fst.amp.Titambere.param.sens.mean,
+       aes(x = perturb, y = compensation, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(beta["nb"]*"SVL"^2),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Titambere.fst.amp.summary$mean!=0))-1])+
+  scale_y_log10()+
+  labs(x = "Perturbation magnitude", y = "Compensation")
+
+fst.att.Titambere.param.sens.mean <- (res.Titambere.param.sens.C$fst.att+
+                                     res.Titambere.param.sens.Q$fst.att +
+                                     res.Titambere.param.sens.EB$fst.att+
+                                     res.Titambere.param.sens.MB$fst.att+
+                                     res.Titambere.param.sens.LB$fst.att)/5
+
+(fst.att.Titambere.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(fst.att.Titambere.param.sens.mean[,,c(which(sens.Titambere.fst.att.summary$mean!=0))], 
+                                                    MARGIN = c(2,3), mean)))
+
+fst.att.Titambere.param.sens.mean <- pivot_longer(data = fst.att.Titambere.param.sens.mean, 
+                                               cols = `X1`:`X6`,
+                                               names_to = "parameter",
+                                               values_to = "resistance")
+quartz(height = 6, width = 8)
+ggplot(fst.att.Titambere.param.sens.mean,
+       aes(x = perturb, y = resistance, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(beta["nb"]*"SVL"^2),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Titambere.fst.att.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Resistance")
+
+recov.t.Titambere.param.sens.mean <- (res.Titambere.param.sens.C$recov.t+
+                                     res.Titambere.param.sens.Q$recov.t +
+                                     res.Titambere.param.sens.EB$recov.t+
+                                     res.Titambere.param.sens.MB$recov.t+
+                                     res.Titambere.param.sens.LB$recov.t)/5
+
+
+(recov.t.Titambere.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(recov.t.Titambere.param.sens.mean[,,c(which(sens.Titambere.recov.t.summary$mean!=0))], 
+                                                    MARGIN = c(2,3), mean)))
+
+recov.t.Titambere.param.sens.mean <- pivot_longer(data = recov.t.Titambere.param.sens.mean, 
+                                               cols = `X1`:`X6`,
+                                               names_to = "parameter",
+                                               values_to = "recov.t")
+quartz(height = 6, width = 8)
+ggplot(recov.t.Titambere.param.sens.mean,
+       aes(x = perturb, y = recov.t, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(beta["nb"]*"SVL"^2),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Titambere.recov.t.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Recovery time")
+
+#Exlcuding beta.SVL2
+quartz(height = 6, width = 8)
+ggplot(recov.t.Titambere.param.sens.mean[recov.t.Titambere.param.sens.mean$parameter!="X5",],
+       aes(x = perturb, y = recov.t, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6)[-5],name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(beta["nb"]*"SVL"^2),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Titambere.recov.t.summary$mean!=0)[-5])-1])+
+  labs(x = "Perturbation magnitude", y = "Recovery time")
+
+
+#Barplots
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.amp.C[-c(1,31)],las=2,ylab="Compensation",main=expression("C - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.amp.C[,-1],las=2,
+        ylab="Compensation",
+        main=expression("C - "*italic("T. itambere")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                      expression(beta[phi]*"RHmax"),
+                      expression(beta[phi]*"sol"),
+                      expression(beta[phi]*"tmed0cm"),
+                      expression(beta[phi]*"tmin0cm"),
+                      expression(beta[phi]*"precip"),
+                      expression(beta[phi]*"perf"),
+                      expression(beta[phi]*"ha"),
+                      expression(beta[phi]*"fire"),
+                      expression(beta[phi]*"TSLF"),
+                      expression(beta[phi]*"SVL"),
+                      #expression(beta[phi]*"SVL"^2),
+                      expression(beta["f"]*"tmed2m"),
+                      expression(beta["f"]*"RHmax"),
+                      expression(beta["f"]*"sol"),
+                      expression(beta["f"]*"tmed0cm"),
+                      expression(beta["f"]*"tmin0cm"),
+                      expression(beta["f"]*"precip"),
+                      expression(beta["f"]*"perf"),
+                      expression(beta["f"]*"ha"),
+                      expression(beta["f"]*"fire"),
+                      expression(beta["f"]*"TSLF"),
+                      expression(alpha["prep"]),
+                      expression(beta["prep"]*"SVL"),
+                      #expression(beta["prep"]*"SVL"^2),
+                      expression(alpha["nb"]),
+                      expression(beta["nb"]*"SVL"),
+                      expression(beta["nb"]*"SVL"^2),
+                      expression(alpha[phi]),
+                      expression(mu["K"]),
+                      expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.amp.C[,-1],las=2,
+        ylab="Compensation", ylim = c(0,0.25),
+        main=expression("C - "*italic("T. itambere")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.amp.Q[, -1],las=2,ylab="Compensation",main=expression("Q - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2730,19 +3284,69 @@ x<-barplot(sens.Titambere.fst.amp.C[-c(1,31)],las=2,ylab="Compensation",main=exp
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.amp.C[-c(1,31)]+.5,labels=round(sens.Titambere.fst.amp.C[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.amp.Q[-c(1,31)],las=2,ylab="Compensation",main=expression("Q - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.amp.Q[, -1],las=2,ylab="Compensation",main=expression("Q - "*italic("T. itambere")),
+        ylim=c(0,0.25),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.amp.EB[, -1],las=2,ylab="Compensation",main=expression("EB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2773,19 +3377,69 @@ x<-barplot(sens.Titambere.fst.amp.Q[-c(1,31)],las=2,ylab="Compensation",main=exp
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.amp.Q[-c(1,31)]+.1,labels=round(sens.Titambere.fst.amp.Q[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.amp.EB[-c(1,31)],las=2,ylab="Compensation",main=expression("EB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.amp.EB[, -1],las=2,ylab="Compensation",main=expression("EB - "*italic("T. itambere")),
+        ylim = c(0,.25),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.amp.MB[, -1],las=2,ylab="Compensation",main=expression("MB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2816,19 +3470,69 @@ x<-barplot(sens.Titambere.fst.amp.EB[-c(1,31)],las=2,ylab="Compensation",main=ex
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.amp.EB[-c(1,31)]+.1,labels=round(sens.Titambere.fst.amp.EB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.amp.MB[-c(1,31)],las=2,ylab="Compensation",main=expression("MB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.amp.MB[, -1],las=2,ylab="Compensation",main=expression("MB - "*italic("T. itambere")),
+        ylim = c(0,.3),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.amp.LB[, -1],las=2,ylab="Compensation",main=expression("LB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2859,19 +3563,69 @@ x<-barplot(sens.Titambere.fst.amp.MB[-c(1,31)],las=2,ylab="Compensation",main=ex
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.amp.MB[-c(1,31)]+.1,labels=round(sens.Titambere.fst.amp.MB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.amp.LB[-c(1,31)],las=2,ylab="Compensation",main=expression("LB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.amp.LB[, -1],las=2,ylab="Compensation",main=expression("LB - "*italic("T. itambere")),
+        ylim = c(0,.25),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.att.C[, -1],las=2,ylab="Resistance",main=expression("C - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2902,20 +3656,69 @@ x<-barplot(sens.Titambere.fst.amp.LB[-c(1,31)],las=2,ylab="Compensation",main=ex
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.amp.LB[-c(1,31)]+.1,labels=round(sens.Titambere.fst.amp.LB[-c(1,31)],3),cex=.5,col="red")
-
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.att.C[-c(1,31)],las=2,ylab="Resistance",main=expression("C - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.att.C[, -1],las=2,ylab="Resistance",main=expression("C - "*italic("T. itambere")),
+        ylim = c(-4,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.att.Q[, -1],las=2,ylab="Resistance",main=expression("Q - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2946,19 +3749,69 @@ x<-barplot(sens.Titambere.fst.att.C[-c(1,31)],las=2,ylab="Resistance",main=expre
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.att.C[-c(1,31)]-.1,labels=round(sens.Titambere.fst.att.C[-c(1,31)],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.att.Q[-c(1,31)],las=2,ylab="Resistance",main=expression("Q - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.att.Q[, -1],las=2,ylab="Resistance",main=expression("Q - "*italic("T. itambere")),
+        ylim = c(-4, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.att.EB[, -1],las=2,ylab="Resistance",main=expression("EB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2989,19 +3842,69 @@ x<-barplot(sens.Titambere.fst.att.Q[-c(1,31)],las=2,ylab="Resistance",main=expre
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.att.Q[-c(1,31)]-0.05,labels=round(sens.Titambere.fst.att.Q[-c(1,31)],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.att.EB[-c(1,31)],las=2,ylab="Resistance",main=expression("EB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.att.EB[, -1],las=2,ylab="Resistance",main=expression("EB - "*italic("T. itambere")),
+        ylim = c(-4,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.att.MB[, -1],las=2,ylab="Resistance",main=expression("MB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3032,19 +3935,69 @@ x<-barplot(sens.Titambere.fst.att.EB[-c(1,31)],las=2,ylab="Resistance",main=expr
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.att.EB[-c(1,31)]-.02,labels=round(sens.Titambere.fst.att.EB[-c(1,31)],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.att.MB[-c(1,31)],las=2,ylab="Resistance",main=expression("MB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.att.MB[, -1],las=2,ylab="Resistance",main=expression("MB - "*italic("T. itambere")),
+        ylim = c(-4,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.fst.att.LB[, -1],las=2,ylab="Resistance",main=expression("LB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3075,19 +4028,69 @@ x<-barplot(sens.Titambere.fst.att.MB[-c(1,31)],las=2,ylab="Resistance",main=expr
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.att.MB[-c(1,31)]-.02,labels=round(sens.Titambere.fst.att.MB[-c(1,31)],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.fst.att.LB[-c(1,31)],las=2,ylab="Resistance",main=expression("LB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.fst.att.LB[, -1],las=2,ylab="Resistance",main=expression("LB - "*italic("T. itambere")),
+        ylim = c(-4,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.recov.t.C[, -1],las=2,ylab="Recovery time",main=expression("C - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3118,19 +4121,69 @@ x<-barplot(sens.Titambere.fst.att.LB[-c(1,31)],las=2,ylab="Resistance",main=expr
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.fst.att.LB[-c(1,31)]-.02,labels=round(sens.Titambere.fst.att.LB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.recov.t.C[-c(1,31)],las=2,ylab="Recovery time",main=expression("C - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.recov.t.C[, -1],las=2,ylab="Recovery time",main=expression("C - "*italic("T. itambere")),
+        ylim = c(-250,250),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.recov.t.Q[, -1],las=2,ylab="Recovery time",main=expression("Q - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3161,19 +4214,69 @@ x<-barplot(sens.Titambere.recov.t.C[-c(1,31)],las=2,ylab="Recovery time",main=ex
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.recov.t.C[-c(1,31)]-.1,labels=round(sens.Titambere.recov.t.C[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.recov.t.Q[-c(1,31)],las=2,ylab="Recovery time",main=expression("Q - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.recov.t.Q[, -1],las=2,ylab="Recovery time",main=expression("Q - "*italic("T. itambere")),
+        ylim = c(-250,250),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.recov.t.EB[, -1],las=2,ylab="Recovery time",main=expression("EB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3204,19 +4307,69 @@ x<-barplot(sens.Titambere.recov.t.Q[-c(1,31)],las=2,ylab="Recovery time",main=ex
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.recov.t.Q[-c(1,31)]-0.1,labels=round(sens.Titambere.recov.t.Q[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.recov.t.EB[-c(1,31)],las=2,ylab="Recovery time",main=expression("EB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.recov.t.EB[, -1],las=2,ylab="Recovery time",main=expression("EB - "*italic("T. itambere")),
+        ylim = c(-250,250),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.recov.t.MB[, -1],las=2,ylab="Recovery time",main=expression("MB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3247,19 +4400,69 @@ x<-barplot(sens.Titambere.recov.t.EB[-c(1,31)],las=2,ylab="Recovery time",main=e
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.recov.t.EB[-c(1,31)]-.2,labels=round(sens.Titambere.recov.t.EB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.recov.t.MB[-c(1,31)],las=2,ylab="Recovery time",main=expression("MB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Titambere.recov.t.MB[, -1],las=2,ylab="Recovery time",main=expression("MB - "*italic("T. itambere")),
+        ylim = c(-250, 250),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Titambere.recov.t.LB[, -1],las=2,ylab="Recovery time",main=expression("LB - "*italic("T. itambere")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3290,55 +4493,371 @@ x<-barplot(sens.Titambere.recov.t.MB[-c(1,31)],las=2,ylab="Recovery time",main=e
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.recov.t.MB[-c(1,31)]-.2,labels=round(sens.Titambere.recov.t.MB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Titambere.recov.t.LB[-c(1,31)],las=2,ylab="Recovery time",main=expression("LB - "*italic("T. itambere")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         #expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(beta["nb"]*"SVL"^2),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+boxplot(sens.Titambere.recov.t.LB[, -1],las=2,ylab="Recovery time",main=expression("LB - "*italic("T. itambere")),
+        ylim = c(-250, 250),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Titambere.recov.t.LB[-c(1,31)]-.2,labels=round(sens.Titambere.recov.t.LB[-c(1,31)],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
+#Average among plots
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Titambere.fst.amp.C[, -1],
+              sens.Titambere.fst.amp.Q[, -1],
+              sens.Titambere.fst.amp.EB[, -1],
+              sens.Titambere.fst.amp.MB[, -1],
+              sens.Titambere.fst.amp.LB[, -1]),
+        las=2,ylab="log10(Compensation)",main=expression("Average - "*italic("T. itambere")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Titambere.fst.amp.C[, -1],
+              sens.Titambere.fst.amp.Q[, -1],
+              sens.Titambere.fst.amp.EB[, -1],
+              sens.Titambere.fst.amp.MB[, -1],
+              sens.Titambere.fst.amp.LB[, -1]),
+        las=2,ylab="log10(Compensation)",main=expression("Average - "*italic("T. itambere")),
+        ylim = c(0,25),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Titambere.fst.amp.C[, -1],
+              sens.Titambere.fst.amp.Q[, -1],
+              sens.Titambere.fst.amp.EB[, -1],
+              sens.Titambere.fst.amp.MB[, -1],
+              sens.Titambere.fst.amp.LB[, -1]),
+        las=2,ylab="log10(Compensation)",main=expression("Average - "*italic("T. itambere")),
+        ylim = c(0,0.3),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Titambere.fst.att.C[, -1],
+              sens.Titambere.fst.att.Q[, -1],
+              sens.Titambere.fst.att.EB[, -1],
+              sens.Titambere.fst.att.MB[, -1],
+              sens.Titambere.fst.att.LB[, -1]),
+        las=2,ylab="log10(Resistance)",main=expression("Average - "*italic("T. itambere")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Titambere.fst.att.C[, -1],
+              sens.Titambere.fst.att.Q[, -1],
+              sens.Titambere.fst.att.EB[, -1],
+              sens.Titambere.fst.att.MB[, -1],
+              sens.Titambere.fst.att.LB[, -1]),
+        las=2,ylab="log10(Resistance)",main=expression("Average - "*italic("T. itambere")),
+        ylim = c(-4,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(log10(rbind(sens.Titambere.recov.t.C[, -1]+1,
+              sens.Titambere.recov.t.Q[, -1]+1,
+              sens.Titambere.recov.t.EB[, -1]+1,
+              sens.Titambere.recov.t.MB[, -1]+1,
+              sens.Titambere.recov.t.LB[, -1]+1)),
+        las=2,ylab="log10(Recovery time +1)",main=expression("Average - "*italic("T. itambere")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(beta["nb"]*"SVL"^2),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))

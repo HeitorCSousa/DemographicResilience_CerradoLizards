@@ -1,6 +1,6 @@
 rm(list = ls())
 
-setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -10,25 +10,68 @@ library(tidyverse)
 library(tidybayes)
 library(BayesPostEst)
 library(MCMCvis)
+library(mcmcr)
+library(viridis)
 
 Matticolus.data <- readRDS("Matticolus.data.rds")
 ipm2.Matticolus <- readRDS("results_imp2_Matticolus.rds")
-ipm2.Matticolus.samples <- as.mcmc.list(ipm2.Matticolus$samples)
+#ipm2.Matticolus.samples <- as.mcmc.list(ipm2.Matticolus$samples)
 
+ipm2.Matticolus.samples <- ipm2.Matticolus$samples
 
+muK.Matticolus.samples <- ipm2.Matticolus$sims.list$mu.K
 
-ipm2.Matticolus.df <- MCMCsummary(ipm2.Matticolus.samples,Rhat=F)
-ipm2.Matticolus.rhat <- gelman.diag(ipm2.Matticolus$samples, multivariate = F)
-ipm2.Matticolus.df2 <- cbind(ipm2.Matticolus.df,as.data.frame(ipm2.Matticolus.rhat$psrf))
-write.csv(ipm2.Matticolus.df2, "results.ipm2.Matticolus.df.csv")
+rm(ipm2.Matticolus)
+gc()
+# ipm2.Matticolus.df <- MCMCsummary(ipm2.Matticolus.samples)
 
-View(ipm2.Matticolus.df2)
+# write.csv(ipm2.Matticolus.df, "results.ipm2.Matticolus.df_100000iters.csv")
+ipm2.Matticolus.df <- read.csv("results.ipm2.Matticolus.df_100000iters.csv")
+
+View(ipm2.Matticolus.df)
+
+f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
+
+rho.ipm2 <- ipm2.Matticolus.df[grep(pattern = "rho", x = ipm2.Matticolus.df$X)[1:850],]
+
+phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+
+f.ipm2$plot <- rep(1:5,170)
+f.ipm2$time <- rep(1:170, each = 5)
+
+rho.ipm2$plot <- rep(1:5,170)
+rho.ipm2$time <- rep(1:170, each = 5)
+
+phi.ipm2$plot <- rep(1:5,170)
+phi.ipm2$time <- rep(1:170, each = 5)
+
+tapply(rho.ipm2$mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
+table(Matticolus.data$plot)
+plot(y = colSums(Matticolus.data$y), x = (1:170)/12, type = "l")
+
+f.ipm2$plot <- as.factor(f.ipm2$plot)
+phi.ipm2$plot <- as.factor(phi.ipm2$plot)
+
+ggplot(f.ipm2, aes(x = time, y = mean, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  ylim(c(0,2.5))+
+  scale_color_manual(values=turbo(5))
+
+ggplot(phi.ipm2, aes(x = time, y = mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0.3,1))+
+  scale_color_manual(values=turbo(5))
+
 
 
 library(ggmcmc)
 
-S <- ggs(ipm2.Matticolus.samples[,c(851:877,1723:1749,2600:2626,3472:3505)])
+S <- ggs(ipm2.Matticolus.samples[,c(851:877,1723:1749,2600:2626,3472:3505),])
 S <- ggs(ipm2.Matticolus.samples[,c(3475:3480)])
+
+rm(ipm2.Matticolus.samples)
 
 str(S)
 levels(S$Parameter)
@@ -192,71 +235,71 @@ ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_cr
 # Define some fixed parameters
 
 fixed_list <- list(
-  s_mu_slope   = ipm2.Matticolus.df['beta.phi','mean'],    #survival slope
+  s_mu_slope   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta.phi'],    #survival slope
   #s_mu_slope2   = ipm2.Matticolus.df['beta.phi2','mean'],    #survival slope
   
-  s_sd_slope   = ipm2.Matticolus.df['beta.phi','sd'],    #survival slope
+  s_sd_slope   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='beta.phi'],    #survival slope
   #s_sd_slope2  = ipm2.Matticolus.df['beta.phi2','sd'],    #survival slope
   
   
   #Environmental slopes for survival
-  s_mu_tmed2m  = ipm2.Matticolus.df['betaphiJS[1]','mean'],
-  s_mu_RHmax   = ipm2.Matticolus.df['betaphiJS[2]','mean'],
-  s_mu_sol     = ipm2.Matticolus.df['betaphiJS[3]','mean'],
-  s_mu_tmed0cm = ipm2.Matticolus.df['betaphiJS[4]','mean'],
-  s_mu_tmin0cm = ipm2.Matticolus.df['betaphiJS[5]','mean'],
-  s_mu_precip  = ipm2.Matticolus.df['betaphiJS[6]','mean'],
-  s_mu_perf    = ipm2.Matticolus.df['betaphiJS[7]','mean'],
-  s_mu_ha_90   = ipm2.Matticolus.df['betaphiJS[8]','mean'],
-  s_mu_fire    = ipm2.Matticolus.df['betaphiJS[9]','mean'],
-  s_mu_TSLF    = ipm2.Matticolus.df['betaphiJS[10]','mean'],
+  s_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[1]'],
+  s_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[2]'],
+  s_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[3]'],
+  s_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[4]'],
+  s_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[5]'],
+  s_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[6]'],
+  s_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[7]'],
+  s_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[8]'],
+  s_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[9]'],
+  s_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[10]'],
   
-  s_sd_tmed2m  = ipm2.Matticolus.df['betaphiJS[1]','sd'],
-  s_sd_RHmax   = ipm2.Matticolus.df['betaphiJS[2]','sd'],
-  s_sd_sol     = ipm2.Matticolus.df['betaphiJS[3]','sd'],
-  s_sd_tmed0cm = ipm2.Matticolus.df['betaphiJS[4]','sd'],
-  s_sd_tmin0cm = ipm2.Matticolus.df['betaphiJS[5]','sd'],
-  s_sd_precip  = ipm2.Matticolus.df['betaphiJS[6]','sd'],
-  s_sd_perf    = ipm2.Matticolus.df['betaphiJS[7]','sd'],
-  s_sd_ha_90   = ipm2.Matticolus.df['betaphiJS[8]','sd'],
-  s_sd_fire    = ipm2.Matticolus.df['betaphiJS[9]','sd'],
-  s_sd_TSLF    = ipm2.Matticolus.df['betaphiJS[10]','sd'],
+  s_sd_tmed2m  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[1]'],
+  s_sd_RHmax   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[2]'],
+  s_sd_sol     = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[3]'],
+  s_sd_tmed0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[4]'],
+  s_sd_tmin0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[5]'],
+  s_sd_precip  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[6]'],
+  s_sd_perf    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[7]'],
+  s_sd_ha_90   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[8]'],
+  s_sd_fire    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[9]'],
+  s_sd_TSLF    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[10]'],
   
-  sigma.phiJS = ipm2.Matticolus.df['sigma.phiJS','mean'],
+  sigma.phiJS = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='sigma.phiJS'],
   
   #Environmental slopes for reproduction
-  r_f_mu_tmed2m  = ipm2.Matticolus.df['betaf[1]','mean'],
-  r_f_mu_RHmax   = ipm2.Matticolus.df['betaf[2]','mean'],
-  r_f_mu_sol     = ipm2.Matticolus.df['betaf[3]','mean'],
-  r_f_mu_tmed0cm = ipm2.Matticolus.df['betaf[4]','mean'],
-  r_f_mu_tmin0cm = ipm2.Matticolus.df['betaf[5]','mean'],
-  r_f_mu_precip  = ipm2.Matticolus.df['betaf[6]','mean'],
-  r_f_mu_perf    = ipm2.Matticolus.df['betaf[7]','mean'],
-  r_f_mu_ha_90   = ipm2.Matticolus.df['betaf[8]','mean'],
-  r_f_mu_fire    = ipm2.Matticolus.df['betaf[9]','mean'],
-  r_f_mu_TSLF    = ipm2.Matticolus.df['betaf[10]','mean'],
+  r_f_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[1]'],
+  r_f_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[2]'],
+  r_f_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[3]'],
+  r_f_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[4]'],
+  r_f_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[5]'],
+  r_f_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[6]'],
+  r_f_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[7]'],
+  r_f_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[8]'],
+  r_f_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[9]'],
+  r_f_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[10]'],
   
-  r_f_sd_tmed2m  = ipm2.Matticolus.df['betaf[1]','sd'],
-  r_f_sd_RHmax   = ipm2.Matticolus.df['betaf[2]','sd'],
-  r_f_sd_sol     = ipm2.Matticolus.df['betaf[3]','sd'],
-  r_f_sd_tmed0cm = ipm2.Matticolus.df['betaf[4]','sd'],
-  r_f_sd_tmin0cm = ipm2.Matticolus.df['betaf[5]','sd'],
-  r_f_sd_precip  = ipm2.Matticolus.df['betaf[6]','sd'],
-  r_f_sd_perf    = ipm2.Matticolus.df['betaf[7]','sd'],
-  r_f_sd_ha_90   = ipm2.Matticolus.df['betaf[8]','sd'],
-  r_f_sd_fire    = ipm2.Matticolus.df['betaf[9]','sd'],
-  r_f_sd_TSLF    = ipm2.Matticolus.df['betaf[10]','sd'],
+  r_f_sd_tmed2m  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[1]'],
+  r_f_sd_RHmax   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[2]'],
+  r_f_sd_sol     = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[3]'],
+  r_f_sd_tmed0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[4]'],
+  r_f_sd_tmin0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[5]'],
+  r_f_sd_precip  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[6]'],
+  r_f_sd_perf    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[7]'],
+  r_f_sd_ha_90   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[8]'],
+  r_f_sd_fire    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[9]'],
+  r_f_sd_TSLF    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[10]'],
   
-  sigma.f = ipm2.Matticolus.df['sigma.f','mean'],
+  sigma.f = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='sigma.f'],
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.Matticolus.df['alpha.prep','mean'],
-  r_r_mu_slope = ipm2.Matticolus.df['beta1.prep','mean'],  
+  r_r_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.prep'],
+  r_r_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.prep'],  
   #r_r_mu_slope2 = ipm2.Matticolus.df['beta2.fec','mean'], 
   
-  r_r_sd_int   = ipm2.Matticolus.df['alpha.prep','sd'],
-  r_r_sd_slope = ipm2.Matticolus.df['beta1.prep','sd'],  
+  r_r_sd_int   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.prep'],
+  r_r_sd_slope = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='beta1.prep'],  
   #r_r_sd_slope2 = ipm2.Matticolus.df['beta2.prep','sd'], 
   
   #Number of eggs/embryos
@@ -272,7 +315,7 @@ fixed_list <- list(
   #Size of newborns
   mu_rd     = Matticolus.data$mu.L0,   
   sd_rd     = sqrt(Matticolus.data$tau.L0),
-  mu_LI = ipm2.Matticolus.df['mu.LI','mean']
+  mu_LI = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.LI']
   
 )
 
@@ -282,52 +325,52 @@ fixed_list <- list(
 
 # First, we create vector of values that each random component can take.
 s_params  <- list(
-  s_g_mu_int_1 = ipm2.Matticolus.df['alpha.phiJS[1]','mean'],
-  s_g_mu_int_2 = ipm2.Matticolus.df['alpha.phiJS[2]','mean'],
-  s_g_mu_int_3 = ipm2.Matticolus.df['alpha.phiJS[3]','mean'],
-  s_g_mu_int_4 = ipm2.Matticolus.df['alpha.phiJS[4]','mean'],
-  s_g_mu_int_5 = ipm2.Matticolus.df['alpha.phiJS[5]','mean'],
+  s_g_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[1]'],
+  s_g_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[2]'],
+  s_g_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[3]'],
+  s_g_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[4]'],
+  s_g_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[5]'],
   
-  s_g_sd_int_1 = ipm2.Matticolus.df['alpha.phiJS[1]','sd'],
-  s_g_sd_int_2 = ipm2.Matticolus.df['alpha.phiJS[2]','sd'],
-  s_g_sd_int_3 = ipm2.Matticolus.df['alpha.phiJS[3]','sd'],
-  s_g_sd_int_4 = ipm2.Matticolus.df['alpha.phiJS[4]','sd'],
-  s_g_sd_int_5 = ipm2.Matticolus.df['alpha.phiJS[5]','sd']
+  s_g_sd_int_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[1]'],
+  s_g_sd_int_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[2]'],
+  s_g_sd_int_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[3]'],
+  s_g_sd_int_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[4]'],
+  s_g_sd_int_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[5]']
 )
 
 g_params <- list(
   
-  g_g_mu_K_1 = ipm2.Matticolus.df['mu.K[1]','mean'],
-  g_g_mu_K_2 = ipm2.Matticolus.df['mu.K[2]','mean'],
-  g_g_mu_K_3 = ipm2.Matticolus.df['mu.K[3]','mean'],
-  g_g_mu_K_4 = ipm2.Matticolus.df['mu.K[4]','mean'],
-  g_g_mu_K_5 = ipm2.Matticolus.df['mu.K[5]','mean'],
+  g_g_mu_K_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[1]'],
+  g_g_mu_K_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[2]'],
+  g_g_mu_K_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[3]'],
+  g_g_mu_K_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[4]'],
+  g_g_mu_K_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[5]'],
   
-  g_g_sd_K_1 = ipm2.Matticolus.df['mu.K[1]','sd'],
-  g_g_sd_K_2 = ipm2.Matticolus.df['mu.K[2]','sd'],
-  g_g_sd_K_3 = ipm2.Matticolus.df['mu.K[3]','sd'],
-  g_g_sd_K_4 = ipm2.Matticolus.df['mu.K[4]','sd'],
-  g_g_sd_K_5 = ipm2.Matticolus.df['mu.K[5]','sd']
+  g_g_sd_K_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[1]'],
+  g_g_sd_K_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[2]'],
+  g_g_sd_K_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[3]'],
+  g_g_sd_K_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[4]'],
+  g_g_sd_K_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[5]']
 )
 
 r_params <- list(
-  r_f_mu_int_1 = ipm2.Matticolus.df['alpha.f[1]','mean'],
-  r_f_mu_int_2 = ipm2.Matticolus.df['alpha.f[2]','mean'],
-  r_f_mu_int_3 = ipm2.Matticolus.df['alpha.f[3]','mean'],
-  r_f_mu_int_4 = ipm2.Matticolus.df['alpha.f[4]','mean'],
-  r_f_mu_int_5 = ipm2.Matticolus.df['alpha.f[5]','mean'],
+  r_f_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[1]'],
+  r_f_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[2]'],
+  r_f_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[3]'],
+  r_f_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[4]'],
+  r_f_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[5]'],
   
-  r_f_sd_int_1 = ipm2.Matticolus.df['alpha.f[1]','sd'],
-  r_f_sd_int_2 = ipm2.Matticolus.df['alpha.f[2]','sd'],
-  r_f_sd_int_3 = ipm2.Matticolus.df['alpha.f[3]','sd'],
-  r_f_sd_int_4 = ipm2.Matticolus.df['alpha.f[4]','sd'],
-  r_f_sd_int_5 = ipm2.Matticolus.df['alpha.f[5]','sd'],
+  r_f_sd_int_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[1]'],
+  r_f_sd_int_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[2]'],
+  r_f_sd_int_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[3]'],
+  r_f_sd_int_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[4]'],
+  r_f_sd_int_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[5]'],
   
-  r_p_mu_int_1 = ipm2.Matticolus.df['alpha.pJS[1]','mean'],
-  r_p_mu_int_2 = ipm2.Matticolus.df['alpha.pJS[2]','mean'],
-  r_p_mu_int_3 = ipm2.Matticolus.df['alpha.pJS[3]','mean'],
-  r_p_mu_int_4 = ipm2.Matticolus.df['alpha.pJS[4]','mean'],
-  r_p_mu_int_5 = ipm2.Matticolus.df['alpha.pJS[5]','mean']
+  r_p_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[1]'],
+  r_p_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[2]'],
+  r_p_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[3]'],
+  r_p_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[4]'],
+  r_p_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[5]']
 )
 
 # Each set of parameters is converted to a named list. The names should match
@@ -362,8 +405,7 @@ sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+
 ####################
 
 sd_growth <- function(x,mu.L0,mu.LI,site){
-  mean.values <- sizet0_t1(x,mu.L0,mu.LI,
-                           unlist(ipm2.Matticolus.samples[,paste0('mu.K[',site,']')]))
+  mean.values <- sizet0_t1(x,mu.L0,mu.LI, muK.Matticolus.samples[, site])
   return(sd(mean.values,na.rm=T))
 }
 
@@ -373,62 +415,23 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-env.states <- Matticolus.data$amb
+f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
 
-# env.states <- list(tmed2m_1  = Matticolus.data$amb[1,,1],
-#                    RHmax_1   = Matticolus.data$amb[1,,2],
-#                    sol_1     = Matticolus.data$amb[1,,3],
-#                    tmed0cm_1 = Matticolus.data$amb[1,,4],
-#                    tmin0cm_1 = Matticolus.data$amb[1,,5],
-#                    precip_1  = Matticolus.data$amb[1,,6],
-#                    perf_1    = Matticolus.data$amb[1,,7],
-#                    ha_90_1   = Matticolus.data$amb[1,,8],
-#                    fire_1    = Matticolus.data$amb[1,,9],
-#                    TSLF_1    = Matticolus.data$amb[1,,10],
-#                    
-#                     tmed2m_2 = Matticolus.data$amb[2,,1],
-#                      RHmax_2 = Matticolus.data$amb[2,,2],
-#                        sol_2 = Matticolus.data$amb[2,,3],
-#                    tmed0cm_2 = Matticolus.data$amb[2,,4],
-#                    tmin0cm_2 = Matticolus.data$amb[2,,5],
-#                     precip_2 = Matticolus.data$amb[2,,6],
-#                       perf_2 = Matticolus.data$amb[2,,7],
-#                      ha_90_2 = Matticolus.data$amb[2,,8],
-#                       fire_2 = Matticolus.data$amb[2,,9],
-#                       TSLF_2 = Matticolus.data$amb[2,,10],
-#                    
-#                    tmed2m_3 = Matticolus.data$amb[3,,1],
-#                    RHmax_3 = Matticolus.data$amb[3,,2],
-#                    sol_3 = Matticolus.data$amb[3,,3],
-#                    tmed0cm_3 = Matticolus.data$amb[3,,4],
-#                    tmin0cm_3 = Matticolus.data$amb[3,,5],
-#                    precip_3 = Matticolus.data$amb[3,,6],
-#                    perf_3 = Matticolus.data$amb[3,,7],
-#                    ha_90_3 = Matticolus.data$amb[3,,8],
-#                    fire_3 = Matticolus.data$amb[3,,9],
-#                    TSLF_3 = Matticolus.data$amb[3,,10],
-#                    
-#                    tmed2m_4 = Matticolus.data$amb[4,,1],
-#                    RHmax_4 = Matticolus.data$amb[4,,2],
-#                    sol_4 = Matticolus.data$amb[4,,3],
-#                    tmed0cm_4 = Matticolus.data$amb[4,,4],
-#                    tmin0cm_4 = Matticolus.data$amb[4,,5],
-#                    precip_4 = Matticolus.data$amb[4,,6],
-#                    perf_4 = Matticolus.data$amb[4,,7],
-#                    ha_90_4 = Matticolus.data$amb[4,,8],
-#                    fire_4 = Matticolus.data$amb[4,,9],
-#                    TSLF_4 = Matticolus.data$amb[4,,10],
-#                    
-#                    tmed2m_5 = Matticolus.data$amb[5,,1],
-#                    RHmax_5 = Matticolus.data$amb[5,,2],
-#                    sol_5 = Matticolus.data$amb[5,,3],
-#                    tmed0cm_5 = Matticolus.data$amb[5,,4],
-#                    tmin0cm_5 = Matticolus.data$amb[5,,5],
-#                    precip_5 = Matticolus.data$amb[5,,6],
-#                    perf_5 = Matticolus.data$amb[5,,7],
-#                    ha_90_5 = Matticolus.data$amb[5,,8],
-#                    fire_5 = Matticolus.data$amb[5,,9],
-#                    TSLF_5 = Matticolus.data$amb[5,,10])
+phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+
+
+f.ipm2$plot <- rep(1:5,170)
+f.ipm2$time <- rep(1:170, each = 5)
+
+phi.ipm2$plot <- rep(1:5,170)
+phi.ipm2$time <- rep(1:170, each = 5)
+
+surv.pradel <- matrix(phi.ipm2$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.ipm2$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+
+env.states[,,12]
 
 all_params_list <- c(fixed_list, g_params, s_params, r_params)
 
@@ -462,9 +465,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , s_sd_ha_90  ) * ha_90_site+
                           rnorm(1, s_mu_fire   , s_sd_fire   ) * fire_site+
                           rnorm(1, s_mu_TSLF   , s_sd_TSLF   ) * TSLF_site+
-                          rnorm(1, s_mu_slope, s_sd_slope) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)) ,
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, s_sd_slope) * ht_1) ,
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -501,7 +504,7 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * (r_r_site * r_d)/2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -516,7 +519,7 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # r_n_lin_site          = (rnorm(1,r_n_mu_int, r_n_sd_int) +
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,r_n_sd_slope) * ht_1),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, r_f_sd_int_site) +
                                rnorm(1, r_f_mu_tmed2m , r_f_sd_tmed2m ) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  , r_f_sd_RHmax  ) * RHmax_site +
@@ -527,9 +530,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   , r_f_sd_perf   ) * perf_site+
                                rnorm(1, r_f_mu_ha_90  , r_f_sd_ha_90  ) * ha_90_site+
                                rnorm(1, r_f_mu_fire   , r_f_sd_fire   ) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -569,7 +572,10 @@ sample_env <- function(env_states, site, iteration) {
                   paste0("perf_",site)   ,
                   paste0("ha_90_",site)  ,
                   paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
   
   return(out)
   
@@ -608,6 +614,7 @@ plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+par(mfrow=c(1,1))
 plot(20:38,sizet0_t1(c(20:38),all_params_list$mu_rd,all_params_list$mu_LI,all_params_list$g_g_mu_K_5))
 
 ######################
@@ -644,9 +651,10 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -683,7 +691,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -691,7 +699,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -699,7 +707,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -710,9 +718,9 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -735,29 +743,10 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(20, 40, 60)) 
+  define_domains(ht = c(20, all_params_list$mu_LI, 60)) 
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
-
-sample_env <- function(env_states, site, iteration) {
-  
-  out <- as.list(env_states[site, iteration, ])
-  names(out) <- c(paste0("tmed2m_",site), 
-                  paste0("RHmax_",site),  
-                  paste0("sol_",site),    
-                  paste0("tmed0cm_",site),
-                  paste0("tmin0cm_",site),
-                  paste0("precip_",site) ,
-                  paste0("perf_",site)   ,
-                  paste0("ha_90_",site)  ,
-                  paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
-  
-  return(out)
-  
-}
-
 
 my_ipm2 <- my_ipm2 %>%
   define_env_state(env_params = sample_env(env.states, site=site,
@@ -781,7 +770,7 @@ lambda(my_ipm2,type_lambda = 'all')
 lambda(my_ipm2,log = F)
 quartz(8,12)
 par(mfrow=c(1,2))
-mean.kernel<-mean_kernel(my_ipm)
+mean.kernel<-mean_kernel(my_ipm2)
 plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
@@ -819,9 +808,10 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -858,7 +848,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -866,7 +856,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -874,7 +864,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -885,9 +875,9 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -936,9 +926,11 @@ C_ipm <- C_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 1),)
 
+#Lambdas
 lambda(C_ipm,type_lambda = 'all')
 lambda(C_ipm,log = F)
 
+#Kernels
 C.mean.kernel<-mean_kernel(C_ipm)
 
 quartz(8,12)
@@ -947,12 +939,11 @@ plot(C.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(C.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
-
-
+#Stable size distributions and reproductive values
 plot_ipm_sd_rv <- function(ipm_sd, xmin, xmax, ylab){
-  plot(seq(xmin, xmax,length.out=60),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd)),
+  plot(seq(xmin, xmax,length.out=60),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd[,-ncol(ipm_sd)])),
        xlab = "SVL (mm)", ylab = ylab, bty="n")
-  for(i in 2:ncol(ipm_sd)){
+  for(i in 2:ncol(ipm_sd)-1){
     lines(seq(xmin, xmax,length.out=60),ipm_sd[,i],col=i)
   }
 }
@@ -963,6 +954,23 @@ plot_ipm_sd_rv(C_ipm_sd$ht_w, 20, all_params_list$mu_LI, "Stable distribution")
 C_ipm_rv <- left_ev(C_ipm, iterations = 170)
 plot_ipm_sd_rv(C_ipm_rv$ht_v, 20, all_params_list$mu_LI, "Reproductive value")
 
+par(mfrow=c(1,1))
+
+
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.8), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)])
+
+quartz(8,8)
+plot(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)])
+
+summary(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Quadriennial#
@@ -996,9 +1004,10 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1035,7 +1044,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1043,7 +1052,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -1051,7 +1060,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -1062,9 +1071,9 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1088,6 +1097,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     )
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 60)) 
+
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1113,9 +1123,11 @@ Q_ipm <- Q_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 2),)
 
+#Lambdas
 lambda(Q_ipm,type_lambda = 'all')
 lambda(Q_ipm,log = F)
 
+#Kernels
 Q.mean.kernel<-mean_kernel(Q_ipm)
 
 quartz(8,12)
@@ -1124,6 +1136,7 @@ plot(Q.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(Q.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 Q_ipm_sd <- right_ev(Q_ipm)
 plot_ipm_sd_rv(Q_ipm_sd$ht_w, 
                Q_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1133,6 +1146,21 @@ Q_ipm_rv <- left_ev(Q_ipm, iterations = 170)
 plot_ipm_sd_rv(Q_ipm_rv$ht_v, 
                Q_ipm$proto_ipm$domain[[1]][[1]][1], 
                Q_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.6,2.2), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+
+quartz(8,8)
+plot(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+
+summary(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ################
 #Early biennial#
@@ -1165,9 +1193,10 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1204,7 +1233,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1212,7 +1241,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -1220,7 +1249,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -1231,9 +1260,9 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1257,6 +1286,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     )
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 60)) 
+
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1282,9 +1312,11 @@ EB_ipm <- EB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 3),)
 
+#Lambdas
 lambda(EB_ipm,type_lambda = 'all')
 lambda(EB_ipm,log = F)
 
+#Kernels
 EB.mean.kernel<-mean_kernel(EB_ipm)
 
 quartz(8,12)
@@ -1293,6 +1325,7 @@ plot(EB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(EB.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 EB_ipm_sd <- right_ev(EB_ipm)
 plot_ipm_sd_rv(EB_ipm_sd$ht_w, 
                EB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1303,6 +1336,20 @@ plot_ipm_sd_rv(EB_ipm_rv$ht_v,
                EB_ipm$proto_ipm$domain[[1]][[1]][1], 
                EB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
 
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.2), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)])
+
+quartz(8,8)
+plot(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)])
+
+summary(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Mid biennial#
@@ -1335,9 +1382,10 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1374,7 +1422,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1382,7 +1430,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -1390,7 +1438,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -1401,9 +1449,9 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1428,6 +1476,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 60)) 
 
+
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
 
@@ -1451,10 +1500,11 @@ MB_ipm <- MB_ipm %>%
            return_sub_kernels = TRUE,
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 4),)
-
+#Lambdas
 lambda(MB_ipm,type_lambda = 'all')
 lambda(MB_ipm,log = F)
 
+#Kernels
 MB.mean.kernel<-mean_kernel(MB_ipm)
 
 quartz(8,12)
@@ -1463,6 +1513,7 @@ plot(MB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(MB.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 MB_ipm_sd <- right_ev(MB_ipm)
 plot_ipm_sd_rv(MB_ipm_sd$ht_w, 
                MB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1472,6 +1523,23 @@ MB_ipm_rv <- left_ev(MB_ipm, iterations = 170)
 plot_ipm_sd_rv(MB_ipm_rv$ht_v, 
                MB_ipm$proto_ipm$domain[[1]][[1]][1], 
                MB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+par(mfrow = c(1,1))
+
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.5), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)])
+
+quartz(8,8)
+plot(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)])
+
+summary(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+
 ###############
 #Late biennial#
 ###############
@@ -1503,9 +1571,10 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                           rnorm(1, s_mu_fire   , 0) * fire_site+
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                          rnorm(1, s_mu_slope, 0) * ht_1 +
-                          rnorm(1,0,sigma.phiJS)),
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope, 0) * ht_1),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+    
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1542,7 +1611,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1550,7 +1619,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     # 
@@ -1558,7 +1627,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     #                            r_f_lin_site +
     #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
     #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-    # r_n_site         = pois_r(r_n_lin_site),
+    # 2         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -1571,7 +1640,8 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
                                rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1595,6 +1665,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     )
   ) %>%
   define_domains(ht = c(20, all_params_list$mu_LI, 60)) 
+
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1620,11 +1691,11 @@ LB_ipm <- LB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 5),)
 
+#Lambdas
 lambda(LB_ipm,type_lambda = 'all')
 lambda(LB_ipm,log = F)
 
-
-
+#Kernels
 LB.mean.kernel<-mean_kernel(LB_ipm)
 
 quartz(8,12)
@@ -1633,6 +1704,7 @@ plot(LB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(LB.mean.kernel$mean_F_site, do_contour=T, col=turbo(1000))
 
+#Stable size distributions and reproductive values
 LB_ipm_sd <- right_ev(LB_ipm)
 plot_ipm_sd_rv(LB_ipm_sd$ht_w, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1642,8 +1714,21 @@ LB_ipm_rv <- left_ev(LB_ipm, iterations = 170)
 plot_ipm_sd_rv(LB_ipm_rv$ht_v, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
                LB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+par(mfrow=c(1,1))
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.5), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)])
 
+quartz(8,8)
+plot(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
+ccf(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+
+summary(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 #######################
 #Perturbation analyses#
@@ -1798,7 +1883,14 @@ net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_sit
 net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site)   
 net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site)   
 net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site)   
-net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site)   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site)
+
+net_repro_rate(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site, method = "start") 
 
 mature_age(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, start = 1)
 mature_age(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, start = 1)
@@ -1819,11 +1911,6 @@ lx <- mpm_to_lx(matU = mean.kernel$mean_P_site, start = 1)
 px <- mpm_to_px(matU = mean.kernel$mean_P_site, start = 1)
 hx <- mpm_to_hx(matU = mean.kernel$mean_P_site, start = 1)
 mx <- mpm_to_mx(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, start = 1)
-
-lx.C <- mpm_to_lx(matU = C.mean.kernel$mean_P_site, start = 1)
-px.C <- mpm_to_px(matU = C.mean.kernel$mean_P_site, start = 1)
-hx.C <- mpm_to_hx(matU = C.mean.kernel$mean_P_site, start = 1)
-mx.C <- mpm_to_mx(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, start = 1)
 
 lx.C <- mpm_to_lx(matU = C.mean.kernel$mean_P_site, start = 1)
 px.C <- mpm_to_px(matU = C.mean.kernel$mean_P_site, start = 1)
@@ -1853,7 +1940,7 @@ mx.LB <- mpm_to_mx(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean
 quartz(8,8)
 plot(lx, xlab="Survival time (years)", ylab="Survivorship", type="s", col="black")
 lines(lx.C, type="s", col="forestgreen")
-lines(lx.Q, type="s", col="darkblue")
+lines(lx.Q, type="s", col="darkcyan")
 lines(lx.EB, type="s", col="gold")
 lines(lx.MB, type="s", col="orange")
 lines(lx.LB, type="s", col="red")
@@ -1925,6 +2012,12 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 (life.expect.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 (life.expect.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 
+(life.expect.var.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+
 (longev.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
@@ -1939,11 +2032,17 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 
 
 #Reproduction and maturation traits
-(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
-(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
-(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
-(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
-(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+(repro.value.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
+(repro.value.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
+(repro.value.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
+(repro.value.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
+(repro.value.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+
+(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i], method = "start")))
 
 #Life-table component traits
 (lx.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),mpm_to_lx,  start = 1)))
@@ -2065,7 +2164,7 @@ isErgodic(LB.mean.kernel$mean_K_site)
 isIrreducible(LB.mean.kernel$mean_K_site)
 isPrimitive(as.matrix(unlist(LB.mean.kernel$mean_K_site),60,60))
 
-#Some are imprimitive!!!
+#Perfect!!!
 
 #Reactivity (first-timestep amplification) and first-time step attenuation
 (r.up.K <- reac(mean.kernel$mean_K_site, bound = "upper"))
@@ -2236,7 +2335,7 @@ dr.stoch <- function(K, n){
 # (kreiss.low.K.LB.stoch <- unlist(apply(array(unlist(stoch.K.LB),dim = c(60,60,170)), MARGIN = c(3),FUN=  Kreiss, bound = "lower", simplify = F)))
 
 
-
+par(mfrow=c(1,1))
 Lizpd <- project(mean.kernel$mean_K_site, "diri", time = 12,
                  standard.A = TRUE)
 plot(Lizpd, plottype = "shady", bounds = T, log = "y", bty="n")
@@ -2261,15 +2360,28 @@ Lizpd.LB <- project(LB.mean.kernel$mean_K_site, "diri", time = 12,
                     standard.A = TRUE)
 plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
 
+bounds.ipms <- as.data.frame(rbind(bounds(Lizpd.C),bounds(Lizpd.Q),bounds(Lizpd.EB),
+                                   bounds(Lizpd.MB),bounds(Lizpd.LB)))
 
+bounds.ipms$plot <- rep(c(1:5), each = 13)
+bounds.ipms$time <- rep(c(1:13), 5)
+
+ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
+  geom_line()+
+  geom_line(aes(y = V2))+
+  scale_color_viridis_d(option = "H") +
+  labs(x = "Time (months)", y = "Population growth")
 
 (res.lh.param.Ma <- data.frame(species = c(rep("M_atticolus", 850)),
                                plot = rep(c("C", "Q", "EB", "MB", "LB"),each = 170),
                                life.expect = c(life.expect.C, life.expect.Q, life.expect.EB, life.expect.MB, life.expect.LB),
+                               life.expect.var = c(life.expect.var.C, life.expect.var.Q, life.expect.var.EB, life.expect.var.MB, life.expect.var.LB),
                                longev = c(longev.C, longev.Q, longev.EB, longev.MB, longev.LB),
                                gen.time = c(gen.time.C, gen.time.Q, gen.time.EB, gen.time.MB, gen.time.LB),
                                net.repro = c(net.repro.rate.C, net.repro.rate.Q, net.repro.rate.EB, net.repro.rate.MB, net.repro.rate.LB),
+                               repro.value = c(repro.value.C, repro.value.Q, repro.value.EB, repro.value.MB, repro.value.LB),
                                semel = c(semel.C, semel.Q, semel.EB, semel.MB, semel.LB),
+                               surv.curv = c(surv.curv.C, surv.curv.Q, surv.curv.EB, surv.curv.MB, surv.curv.LB),
                                shape.surv = c(shape.surv.C, shape.surv.Q, shape.surv.EB, shape.surv.MB, shape.surv.LB),
                                shape.rep = c(shape.rep.C, shape.rep.Q, shape.rep.EB, shape.rep.MB, shape.rep.LB),
                                fst.amp = c(r.up.C.K.stoch, r.up.Q.K.stoch, r.up.EB.K.stoch, r.up.MB.K.stoch, r.up.LB.K.stoch),
@@ -2282,135 +2394,240 @@ plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
                                recovery.time = c(dr.K.C.stoch$t, dr.K.Q.stoch$t, dr.K.EB.stoch$t, dr.K.MB.stoch$t, dr.K.LB.stoch$t)
 ))
 
-cor(res.lh.param.Ma[,c(3:9)],use="na.or.complete") 
-cor(res.lh.param.Ma[,c(10:13)],use="na.or.complete")   
+cor(res.lh.param.Ma[,c(3:12)],use="na.or.complete") 
+cor(res.lh.param.Ma[,c(13:16)],use="na.or.complete")  
 
 saveRDS(res.lh.param.Ma, "res.lh.param.Ma.rds")
 
 #########################################################################
 #Bring more perturbation analyses from IPM Book - parameter perturbation#
 #########################################################################
+rm(list = ls())
+
+# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+library(jagsUI)
+library(rjags)
+library(ipmr)
+library(Rage)
+library(popdemo)
+library(tidyverse)
+library(tidybayes)
+library(BayesPostEst)
+library(MCMCvis)
+library(mcmcr)
+library(viridis)
+
+Matticolus.data <- readRDS("Matticolus.data.rds")
+ipm2.Matticolus <- readRDS("results_imp2_Matticolus.rds")
+#ipm2.Matticolus.samples <- as.mcmc.list(ipm2.Matticolus$samples)
+
+muK.Matticolus.samples <- ipm2.Matticolus$sims.list$mu.K
+rm(ipm2.Matticolus)
+gc()
+# ipm2.Matticolus.df <- MCMCsummary(ipm2.Matticolus.samples)
+
+# write.csv(ipm2.Matticolus.df, "results.ipm2.Matticolus.df_100000iters.csv")
+ipm2.Matticolus.df <- read.csv("results.ipm2.Matticolus.df_100000iters.csv")
+
+#Functions
+##########
+inv_logit <- function(x) {
+  return(
+    1/(1 + exp(-(x)))
+  )
+}
+
+
+pois_r <- function(x) {
+  return(
+    exp(x)
+  )
+}
+
+#Function to estimate size from age
+age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-inv_logit(K)^x)
+
+#Function to estimate age from size
+size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/log(inv_logit(K))
+
+#Function to estimate size in t1 from size in t0
+sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
+
+#Variance in growth#
+sd_growth <- function(x,mu.L0,mu.LI,site){
+  mean.values <- sizet0_t1(x,mu.L0,mu.LI, muK.Matticolus.samples[, site])
+  return(sd(mean.values,na.rm=T))
+}
+
+
+my_funs <- list(inv_logit   = inv_logit,
+                pois_r      = pois_r,
+                sizet0_t1 = sizet0_t1,
+                sd_growth = sd_growth)
+
+f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
+phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+
+
+f.ipm2$plot <- rep(1:5,170)
+f.ipm2$time <- rep(1:170, each = 5)
+
+phi.ipm2$plot <- rep(1:5,170)
+phi.ipm2$time <- rep(1:170, each = 5)
+
+surv.pradel <- matrix(phi.ipm2$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.ipm2$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+
+env.states[,,12]
+
+sample_env <- function(env_states, site, iteration) {
+  
+  out <- as.list(env_states[site, iteration, ])
+  names(out) <- c(paste0("tmed2m_",site), 
+                  paste0("RHmax_",site),  
+                  paste0("sol_",site),    
+                  paste0("tmed0cm_",site),
+                  paste0("tmin0cm_",site),
+                  paste0("precip_",site) ,
+                  paste0("perf_",site)   ,
+                  paste0("ha_90_",site)  ,
+                  paste0("fire_" ,site)  ,
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
+  
+  return(out)
+  
+}
+
+stoch_K <- function(ipm,sites,time){
+  stoch.K <- array(0,dim = c(60,60,sites,time))
+  seq.t <- seq(0,(sites*time*2)-(sites*2),sites*2)
+  ipm_array <- array(unlist(ipm$sub_kernels),dim=c(60,60,sites*time*2))
+  #stoch.K.list <- list()
+  
+  for(j in 1:time){
+    
+    for(i in 1:sites){
+      stoch.K[,,i,j] <- ipm_array[,,i+seq.t[j]] + ipm_array[,,(i)+(sites+seq.t[j])]
+      
+    }
+  }
+  list.K <- apply(stoch.K,MARGIN = c(1,2),FUN=c)
+  list.K <- aperm(list.K,c(2,3,1))
+  list.K2 <- list()
+  for(i in 1:(sites*time)){
+    list.K2[[i]] <- list.K[,,i] 
+  }
+  return(list.K2)
+}
+
+dr.stoch <- function(K, n){
+  dr.K.stoch <- apply(array(unlist(K),dim = c(60,60,n)), MARGIN = c(3), FUN =  dr , return.time = T)
+  dr.K.stoch.dr <- dr.K.stoch.t<- rep(NA, n)
+  for(i in 1:n){
+    dr.K.stoch.dr[i] <- dr.K.stoch[[i]]$dr
+    dr.K.stoch.t[i] <- dr.K.stoch[[i]]$t
+    dr.K.stoch.list <- list(dr = dr.K.stoch.dr, t = dr.K.stoch.t)
+  }
+  return(dr.K.stoch.list)
+}
+
+############################################
+#Function to perform parameter perturbations
+############################################
 res_param_perturb <- function(plot,mu_LI_plot,nkernel){
   add.s <- seq(0.0,0.01,0.001)
-  ord <- array(c(rep(1,11),rep(0,28*11),
-                 rep(0,11),rep(1,11),rep(0,27*11),
-                 rep(0,11*2),rep(1,11),rep(0,26*11),
-                 rep(0,11*3),rep(1,11),rep(0,25*11),
-                 rep(0,11*4),rep(1,11),rep(0,24*11),
-                 rep(0,11*5),rep(1,11),rep(0,23*11),
-                 rep(0,11*6),rep(1,11),rep(0,22*11),
-                 rep(0,11*7),rep(1,11),rep(0,21*11),
-                 rep(0,11*8),rep(1,11),rep(0,20*11),
-                 rep(0,11*9),rep(1,11),rep(0,19*11),
-                 rep(0,11*10),rep(1,11),rep(0,18*11),
-                 rep(0,11*11),rep(1,11),rep(0,17*11),
-                 rep(0,11*12),rep(1,11),rep(0,16*11),
-                 rep(0,11*13),rep(1,11),rep(0,15*11),
-                 rep(0,11*14),rep(1,11),rep(0,14*11),
-                 rep(0,11*15),rep(1,11),rep(0,13*11),
-                 rep(0,11*16),rep(1,11),rep(0,12*11),
-                 rep(0,11*17),rep(1,11),rep(0,11*11),
-                 rep(0,11*18),rep(1,11),rep(0,10*11),
-                 rep(0,11*19),rep(1,11),rep(0,9*11),
-                 rep(0,11*20),rep(1,11),rep(0,8*11),
-                 rep(0,11*21),rep(1,11),rep(0,7*11),
-                 rep(0,11*22),rep(1,11),rep(0,6*11),
-                 rep(0,11*23),rep(1,11),rep(0,5*11),
-                 rep(0,11*24),rep(1,11),rep(0,4*11),
-                 rep(0,11*25),rep(1,11),rep(0,3*11),
-                 rep(0,11*26),rep(1,11),rep(0,2*11),
-                 rep(0,11*27),rep(1,11),rep(0,1*11),
-                 rep(0,11*28),rep(1,11)),
-               dim=c(11,29,29))
+  ord <- array(c(rep(1,11),rep(0,26*11),
+                 rep(0,11),rep(1,11),rep(0,25*11),
+                 rep(0,11*2),rep(1,11),rep(0,24*11),
+                 rep(0,11*3),rep(1,11),rep(0,23*11),
+                 rep(0,11*4),rep(1,11),rep(0,22*11),
+                 rep(0,11*5),rep(1,11),rep(0,21*11),
+                 rep(0,11*6),rep(1,11),rep(0,20*11),
+                 rep(0,11*7),rep(1,11),rep(0,19*11),
+                 rep(0,11*8),rep(1,11),rep(0,18*11),
+                 rep(0,11*9),rep(1,11),rep(0,17*11),
+                 rep(0,11*10),rep(1,11),rep(0,16*11),
+                 rep(0,11*11),rep(1,11),rep(0,15*11),
+                 rep(0,11*12),rep(1,11),rep(0,14*11),
+                 rep(0,11*13),rep(1,11),rep(0,13*11),
+                 rep(0,11*14),rep(1,11),rep(0,12*11),
+                 rep(0,11*15),rep(1,11),rep(0,11*11),
+                 rep(0,11*16),rep(1,11),rep(0,10*11),
+                 rep(0,11*17),rep(1,11),rep(0,9*11),
+                 rep(0,11*18),rep(1,11),rep(0,8*11),
+                 rep(0,11*19),rep(1,11),rep(0,7*11),
+                 rep(0,11*20),rep(1,11),rep(0,6*11),
+                 rep(0,11*21),rep(1,11),rep(0,5*11),
+                 rep(0,11*22),rep(1,11),rep(0,4*11),
+                 rep(0,11*23),rep(1,11),rep(0,3*11),
+                 rep(0,11*24),rep(1,11),rep(0,2*11),
+                 rep(0,11*25),rep(1,11),rep(0,1*11),
+                 rep(0,11*26),rep(1,11)),
+               dim=c(11,27,27))
   
-  res.sens <- list(fst.amp = array(NA,dim=c(170,11,29)), fst.att = array(NA,dim=c(170,11,29)), recov.t = array(NA,dim=c(170,11,29)))
+  res.sens <- list(fst.amp = array(NA,dim=c(170,11,27)), fst.att = array(NA,dim=c(170,11,27)), recov.t = array(NA,dim=c(170,11,27)))
   
-  for(i in 1:29){
+  for(i in 1:27){
     for(j in 1:11){
       
       
       fixed_list <- list(
-        s_mu_slope   = ipm2.Matticolus.df['beta.phi','mean']+ add.s[j]*ord[j,12,i],    #survival slope
-        # s_mu_slope2   = ipm2.Matticolus.df['beta2.phi','mean']+ add.s[j]*ord[j,13,i],    #survival slope
-        
-        s_sd_slope   = ipm2.Matticolus.df['beta.phi','sd'],    #survival slope
-        # s_sd_slope2  = ipm2.Matticolus.df['beta2.phi','sd'],    #survival slope
-        
+        s_mu_slope   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
         
         #Environmental slopes for survival
-        s_mu_tmed2m  = ipm2.Matticolus.df['betaphiJS[1]','mean'] + add.s[j]*ord[j,2,i],
-        s_mu_RHmax   = ipm2.Matticolus.df['betaphiJS[2]','mean']+ add.s[j] *ord[j,3,i],
-        s_mu_sol     = ipm2.Matticolus.df['betaphiJS[3]','mean']+ add.s[j] *ord[j,4,i],
-        s_mu_tmed0cm = ipm2.Matticolus.df['betaphiJS[4]','mean']+ add.s[j]*ord[j,5,i],
-        s_mu_tmin0cm = ipm2.Matticolus.df['betaphiJS[5]','mean']+ add.s[j]*ord[j,6,i],
-        s_mu_precip  = ipm2.Matticolus.df['betaphiJS[6]','mean']+ add.s[j]*ord[j,7,i],
-        s_mu_perf    = ipm2.Matticolus.df['betaphiJS[7]','mean']+ add.s[j]*ord[j,8,i],
-        s_mu_ha_90   = ipm2.Matticolus.df['betaphiJS[8]','mean']+ add.s[j]*ord[j,9,i],
-        s_mu_fire    = ipm2.Matticolus.df['betaphiJS[9]','mean']+ add.s[j]*ord[j,10,i],
-        s_mu_TSLF    = ipm2.Matticolus.df['betaphiJS[10]','mean']+ add.s[j]*ord[j,11,i],
+        s_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[1]'] + add.s[j]*ord[j,2,i],
+        s_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[2]']+ add.s[j] *ord[j,3,i],
+        s_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[3]']+ add.s[j] *ord[j,4,i],
+        s_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[4]']+ add.s[j]*ord[j,5,i],
+        s_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[5]']+ add.s[j]*ord[j,6,i],
+        s_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[6]']+ add.s[j]*ord[j,7,i],
+        s_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[7]']+ add.s[j]*ord[j,8,i],
+        s_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[8]']+ add.s[j]*ord[j,9,i],
+        s_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[9]']+ add.s[j]*ord[j,10,i],
+        s_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[10]']+ add.s[j]*ord[j,11,i],
+
         
-        s_sd_tmed2m  = ipm2.Matticolus.df['betaphiJS[1]','sd'],
-        s_sd_RHmax   = ipm2.Matticolus.df['betaphiJS[2]','sd'],
-        s_sd_sol     = ipm2.Matticolus.df['betaphiJS[3]','sd'],
-        s_sd_tmed0cm = ipm2.Matticolus.df['betaphiJS[4]','sd'],
-        s_sd_tmin0cm = ipm2.Matticolus.df['betaphiJS[5]','sd'],
-        s_sd_precip  = ipm2.Matticolus.df['betaphiJS[6]','sd'],
-        s_sd_perf    = ipm2.Matticolus.df['betaphiJS[7]','sd'],
-        s_sd_ha_90   = ipm2.Matticolus.df['betaphiJS[8]','sd'],
-        s_sd_fire    = ipm2.Matticolus.df['betaphiJS[9]','sd'],
-        s_sd_TSLF    = ipm2.Matticolus.df['betaphiJS[10]','sd'],
-        
-        sigma.phiJS = ipm2.Matticolus.df['sigma.phiJS','mean'],
+        #sigma.phiJS = ipm2.Matticolus.df['sigma.phiJS','mean'],
         
         #Environmental slopes for reproduction
-        r_f_mu_tmed2m  = ipm2.Matticolus.df['betaf[1]','mean']+ add.s[j]*ord[j,13,i],
-        r_f_mu_RHmax   = ipm2.Matticolus.df['betaf[2]','mean']+ add.s[j]*ord[j,14,i],
-        r_f_mu_sol     = ipm2.Matticolus.df['betaf[3]','mean']+ add.s[j]*ord[j,15,i],
-        r_f_mu_tmed0cm = ipm2.Matticolus.df['betaf[4]','mean']+ add.s[j]*ord[j,16,i],
-        r_f_mu_tmin0cm = ipm2.Matticolus.df['betaf[5]','mean']+ add.s[j]*ord[j,17,i],
-        r_f_mu_precip  = ipm2.Matticolus.df['betaf[6]','mean']+ add.s[j]*ord[j,18,i],
-        r_f_mu_perf    = ipm2.Matticolus.df['betaf[7]','mean']+ add.s[j]*ord[j,19,i],
-        r_f_mu_ha_90   = ipm2.Matticolus.df['betaf[8]','mean']+ add.s[j]*ord[j,20,i],
-        r_f_mu_fire    = ipm2.Matticolus.df['betaf[9]','mean']+ add.s[j]*ord[j,21,i],
-        r_f_mu_TSLF    = ipm2.Matticolus.df['betaf[10]','mean']+ add.s[j]*ord[j,22,i],
+        r_f_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[1]']+ add.s[j]*ord[j,13,i],
+        r_f_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[2]']+ add.s[j]*ord[j,14,i],
+        r_f_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[3]']+ add.s[j]*ord[j,15,i],
+        r_f_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[4]']+ add.s[j]*ord[j,16,i],
+        r_f_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[5]']+ add.s[j]*ord[j,17,i],
+        r_f_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[6]']+ add.s[j]*ord[j,18,i],
+        r_f_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[7]']+ add.s[j]*ord[j,19,i],
+        r_f_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[8]']+ add.s[j]*ord[j,20,i],
+        r_f_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[9]']+ add.s[j]*ord[j,21,i],
+        r_f_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[10]']+ add.s[j]*ord[j,22,i],
+
         
-        r_f_sd_tmed2m  = ipm2.Matticolus.df['betaf[1]','sd'],
-        r_f_sd_RHmax   = ipm2.Matticolus.df['betaf[2]','sd'],
-        r_f_sd_sol     = ipm2.Matticolus.df['betaf[3]','sd'],
-        r_f_sd_tmed0cm = ipm2.Matticolus.df['betaf[4]','sd'],
-        r_f_sd_tmin0cm = ipm2.Matticolus.df['betaf[5]','sd'],
-        r_f_sd_precip  = ipm2.Matticolus.df['betaf[6]','sd'],
-        r_f_sd_perf    = ipm2.Matticolus.df['betaf[7]','sd'],
-        r_f_sd_ha_90   = ipm2.Matticolus.df['betaf[8]','sd'],
-        r_f_sd_fire    = ipm2.Matticolus.df['betaf[9]','sd'],
-        r_f_sd_TSLF    = ipm2.Matticolus.df['betaf[10]','sd'],
-        
-        sigma.f = ipm2.Matticolus.df['sigma.f','mean'],
+        #sigma.f = ipm2.Matticolus.df['sigma.f','mean'],
         
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.Matticolus.df['alpha.prep','mean']+ add.s[j]*ord[j,23,i],
-        r_r_mu_slope = ipm2.Matticolus.df['beta1.prep','mean']+ add.s[j]*ord[j,24,i],  
+        r_r_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.prep']+ add.s[j]*ord[j,23,i],
+        r_r_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.prep']+ add.s[j]*ord[j,24,i],  
         # r_r_mu_slope2 = ipm2.Matticolus.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
-        
-        r_r_sd_int   = ipm2.Matticolus.df['alpha.prep','sd'],
-        r_r_sd_slope = ipm2.Matticolus.df['beta1.prep','sd'],  
         # r_r_sd_slope2 = ipm2.Matticolus.df['beta2.prep','sd'], 
         
         #Number of eggs/embryos
-        r_n_mu_int   = ipm2.Matticolus.df['alpha.fec','mean']+ add.s[j]*ord[j,25,i], 
-        r_n_mu_slope = ipm2.Matticolus.df['beta1.fec','mean']+ add.s[j]*ord[j,26,i],   
+        # r_n_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.fec']+ add.s[j]*ord[j,25,i], 
+        # r_n_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.fec']+ add.s[j]*ord[j,26,i],   
         #r_n_mu_slope2 =ipm2.Matticolus.df['beta2.fec','mean'],  
         
-        r_n_sd_int   = ipm2.Matticolus.df['alpha.fec','sd'], 
-        r_n_sd_slope = ipm2.Matticolus.df['beta1.fec','sd'],   
         #r_n_sd_slope2 =ipm2.Matticolus.df['beta2.fec','sd'],  
         
         
         #Size of newborns
         mu_rd     = Matticolus.data$mu.L0,   
         sd_rd     = sqrt(Matticolus.data$tau.L0),
-        mu_LI = Matticolus.data$mu.LI
+        mu_LI = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.LI']
         
       )
       
@@ -2420,52 +2637,30 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       # First, we create vector of values that each random component can take.
       s_params  <- list(
-        s_g_mu_int_1 = ipm2.Matticolus.df['alpha.phiJS[1]','mean'] + add.s[j]*ord[j,27,i],
-        s_g_mu_int_2 = ipm2.Matticolus.df['alpha.phiJS[2]','mean']+ add.s[j]*ord[j,27,i],
-        s_g_mu_int_3 = ipm2.Matticolus.df['alpha.phiJS[3]','mean']+ add.s[j]*ord[j,27,i],
-        s_g_mu_int_4 = ipm2.Matticolus.df['alpha.phiJS[4]','mean']+ add.s[j]*ord[j,27,i],
-        s_g_mu_int_5 = ipm2.Matticolus.df['alpha.phiJS[5]','mean']+ add.s[j]*ord[j,27,i],
-        
-        s_g_sd_int_1 = ipm2.Matticolus.df['alpha.phiJS[1]','sd'],
-        s_g_sd_int_2 = ipm2.Matticolus.df['alpha.phiJS[2]','sd'],
-        s_g_sd_int_3 = ipm2.Matticolus.df['alpha.phiJS[3]','sd'],
-        s_g_sd_int_4 = ipm2.Matticolus.df['alpha.phiJS[4]','sd'],
-        s_g_sd_int_5 = ipm2.Matticolus.df['alpha.phiJS[5]','sd']
+        s_g_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[1]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[2]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[3]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[4]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[5]']+ add.s[j]*ord[j,25,i]
+
       )
       
       g_params <- list(
         
-        g_g_mu_K_1 = ipm2.Matticolus.df['mu.K[1]','mean'],
-        g_g_mu_K_2 = ipm2.Matticolus.df['mu.K[2]','mean'],
-        g_g_mu_K_3 = ipm2.Matticolus.df['mu.K[3]','mean'],
-        g_g_mu_K_4 = ipm2.Matticolus.df['mu.K[4]','mean'],
-        g_g_mu_K_5 = ipm2.Matticolus.df['mu.K[5]','mean'],
+        g_g_mu_K_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[1]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[2]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[3]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[4]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[5]']+ add.s[j]*ord[j,26,i]
         
-        g_g_sd_K_1 = ipm2.Matticolus.df['mu.K[1]','sd']+ add.s[j]*ord[j,28,i],
-        g_g_sd_K_2 = ipm2.Matticolus.df['mu.K[2]','sd']+ add.s[j]*ord[j,28,i],
-        g_g_sd_K_3 = ipm2.Matticolus.df['mu.K[3]','sd']+ add.s[j]*ord[j,28,i],
-        g_g_sd_K_4 = ipm2.Matticolus.df['mu.K[4]','sd']+ add.s[j]*ord[j,28,i],
-        g_g_sd_K_5 = ipm2.Matticolus.df['mu.K[5]','sd']+ add.s[j]*ord[j,28,i]
       )
       
       r_params <- list(
-        r_f_mu_int_1 = ipm2.Matticolus.df['alpha.f[1]','mean']+ add.s[j]*ord[j,29,i],
-        r_f_mu_int_2 = ipm2.Matticolus.df['alpha.f[2]','mean']+ add.s[j]*ord[j,29,i],
-        r_f_mu_int_3 = ipm2.Matticolus.df['alpha.f[3]','mean']+ add.s[j]*ord[j,29,i],
-        r_f_mu_int_4 = ipm2.Matticolus.df['alpha.f[4]','mean']+ add.s[j]*ord[j,29,i],
-        r_f_mu_int_5 = ipm2.Matticolus.df['alpha.f[5]','mean']+ add.s[j]*ord[j,29,i],
-        
-        r_f_sd_int_1 = ipm2.Matticolus.df['alpha.f[1]','sd'],
-        r_f_sd_int_2 = ipm2.Matticolus.df['alpha.f[2]','sd'],
-        r_f_sd_int_3 = ipm2.Matticolus.df['alpha.f[3]','sd'],
-        r_f_sd_int_4 = ipm2.Matticolus.df['alpha.f[4]','sd'],
-        r_f_sd_int_5 = ipm2.Matticolus.df['alpha.f[5]','sd'],
-        
-        r_p_mu_int_1 = ipm2.Matticolus.df['alpha.pJS[1]','mean'],
-        r_p_mu_int_2 = ipm2.Matticolus.df['alpha.pJS[2]','mean'],
-        r_p_mu_int_3 = ipm2.Matticolus.df['alpha.pJS[3]','mean'],
-        r_p_mu_int_4 = ipm2.Matticolus.df['alpha.pJS[4]','mean'],
-        r_p_mu_int_5 = ipm2.Matticolus.df['alpha.pJS[5]','mean']
+        r_f_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[1]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[2]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[3]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[4]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[5]']+ add.s[j]*ord[j,27,i]
       )
       
       all_params_list <- c(fixed_list, g_params, s_params, r_params)
@@ -2498,9 +2693,10 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
                                 rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                                 rnorm(1, s_mu_fire   , 0) * fire_site+
                                 rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                                rnorm(1, s_mu_slope, 0) * ht_1 +
-                                rnorm(1,0,sigma.phiJS)),
-          s_site           =  inv_logit(s_lin_site),
+                                rnorm(1, s_mu_slope, 0) * ht_1),
+          s_sigma_site = surv_site - inv_logit(s_lin_site), 
+          s_site           =  inv_logit(s_lin_site) + s_sigma_site,
+          
           
           # Again, we modify the vital rate expression to include "_site".
           
@@ -2537,7 +2733,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           # The F kernel also varies from site to site
           
           name             = "F_site",
-          formula          = (r_f_site/2) * 2*r_r_site * r_d*2 ,
+          formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * 2 * r_d,
           family           = "CC",
           
           # We didn't include a site level effect for probability
@@ -2545,7 +2741,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           
           r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                                 rnorm(1, r_r_mu_slope, 0) * ht_1),
-          r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+          r_r_site              = inv_logit(r_r_lin),
           
           # We index the seed production expression with the site effect
           # 
@@ -2553,7 +2749,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           #                            r_f_lin_site +
           #                            rnorm(1,r_n_mu_slope,0) * ht_1 +
           #                            rnorm(1,r_n_mu_slope2,0)* ht_1^2),
-          # r_n_site         = pois_r(r_n_lin_site),
+          # 2         = pois_r(r_n_lin_site),
           r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
                                      rnorm(1, r_f_mu_tmed2m ,0) * tmed2m_site +
                                      rnorm(1, r_f_mu_RHmax  ,0) * RHmax_site +
@@ -2564,9 +2760,9 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
                                      rnorm(1, r_f_mu_perf   ,0) * perf_site+
                                      rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                      rnorm(1, r_f_mu_fire   ,0) * fire_site+
-                                     rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site +
-                                     rnorm(1,0,sigma.f)),
-          r_f_site = pois_r(r_f_lin_site),
+                                     rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
+          r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+          r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
           r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
           data_list        = all_params_list,
           states           = list(c('ht')),
@@ -2589,7 +2785,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
             state_end      = rep("ht", 2)
           )
         ) %>%
-        define_domains(ht = c(20, mu_LI_plot, nkernel)) 
+        define_domains(ht = c(20, all_params_list$mu_LI, nkernel)) 
       
       # We also append the suffix in define_pop_state(). THis will create a deterministic
       # simulation for every "site"
@@ -2617,8 +2813,17 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       stoch.K <- stoch_K(ipm, sites = 1,time = 170)
       
-      res.sens$fst.amp[,j,i] <- unlist(apply(array(unlist(stoch.K),dim = c(60,60,170)), MARGIN = c(3),FUN =  reac, bound = "upper", simplify = F))
-      res.sens$fst.att[,j,i] <- unlist(apply(array(unlist(stoch.K),dim = c(60,60,170)), MARGIN = c(3),FUN =  reac, bound = "lower", simplify = F))
+      res.sens$fst.amp[,j,i] <- unlist(apply(array(unlist(stoch.K),
+                                                   dim = c(60,60,170)), 
+                                             MARGIN = c(3),FUN =  reac, 
+                                             bound = "upper", 
+                                             simplify = F))
+      res.sens$fst.att[,j,i] <- unlist(apply(array(unlist(stoch.K),
+                                                   dim = c(60,60,170)), 
+                                             MARGIN = c(3),
+                                             FUN =  reac, 
+                                             bound = "lower", 
+                                             simplify = F))
       res.sens$recov.t[,j,i] <- dr.stoch(stoch.K, 170)$t
       
     }
@@ -2626,56 +2831,64 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
   return(res.sens)
 }
 
-res.param.sens.C <- res_param_perturb(1, all_params_list$mu_LI, 60)
-res.param.sens.Q <- res_param_perturb(2, all_params_list$mu_LI, 60)
-res.param.sens.EB <- res_param_perturb(3, all_params_list$mu_LI, 60)
-res.param.sens.MB <- res_param_perturb(4, all_params_list$mu_LI, 60)
-res.param.sens.LB <- res_param_perturb(5, all_params_list$mu_LI, 60)
+res.Matticolus.param.sens.C <- res_param_perturb(1, all_params_list$mu_LI, 60)
+res.Matticolus.param.sens.Q <- res_param_perturb(2, all_params_list$mu_LI, 60)
+res.Matticolus.param.sens.EB <- res_param_perturb(3, all_params_list$mu_LI, 60)
+res.Matticolus.param.sens.MB <- res_param_perturb(4, all_params_list$mu_LI, 60)
+res.Matticolus.param.sens.LB <- res_param_perturb(5, all_params_list$mu_LI, 60)
 
-saveRDS(res.param.sens.C,"res.param.sens.C.Matticolus.rds")
-saveRDS(res.param.sens.Q,"res.param.sens.Q.Matticolus.rds")
-saveRDS(res.param.sens.EB,"res.param.sens.EB.Matticolus.rds")
-saveRDS(res.param.sens.MB,"res.param.sens.MB.Matticolus.rds")
-saveRDS(res.param.sens.LB,"res.param.sens.LB.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.C,"res.param.sens.C.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.Q,"res.param.sens.Q.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.EB,"res.param.sens.EB.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.MB,"res.param.sens.MB.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.LB,"res.param.sens.LB.Matticolus.rds")
 
-res.Matticolus.param.sens.C<-readRDS("res.param.sens.C.Matticolus.rds")
-res.Matticolus.param.sens.Q<-readRDS("res.param.sens.Q.Matticolus.rds")
-res.Matticolus.param.sens.EB<-readRDS("res.param.sens.EB.Matticolus.rds")
-res.Matticolus.param.sens.MB<-readRDS("res.param.sens.MB.Matticolus.rds")
-res.Matticolus.param.sens.LB<-readRDS("res.param.sens.LB.Matticolus.rds")
+res.Matticolus.param.sens.C  <- readRDS("res.param.sens.C.Matticolus.rds")
+res.Matticolus.param.sens.Q  <- readRDS("res.param.sens.Q.Matticolus.rds")
+res.Matticolus.param.sens.EB <- readRDS("res.param.sens.EB.Matticolus.rds")
+res.Matticolus.param.sens.MB <- readRDS("res.param.sens.MB.Matticolus.rds")
+res.Matticolus.param.sens.LB <- readRDS("res.param.sens.LB.Matticolus.rds")
 
-# data.frame(comp = c(res.Matticolus.param.sens.C$fst.amp,
-#                     res.Matticolus.param.sens.Q$fst.amp,
-#                     res.Matticolus.param.sens.EB$fst.amp,
-#                     res.Matticolus.param.sens.MB$fst.amp,
-#                     res.Matticolus.param.sens.LB$fst.amp),
-#            resist = c(res.Matticolus.param.sens.C$fst.att,
-#                       res.Matticolus.param.sens.Q$fst.att,
-#                       res.Matticolus.param.sens.EB$fst.att,
-#                       res.Matticolus.param.sens.MB$fst.att,
-#                       res.Matticolus.param.sens.LB$fst.att),
-#            recov.t = c(res.Matticolus.param.sens.C$recov.t,
-#                        res.Matticolus.param.sens.Q$recov.t,
-#                        res.Matticolus.param.sens.EB$recov.t,
-#                        res.Matticolus.param.sens.MB$recov.t,
-#                        res.Matticolus.param.sens.LB$recov.t),
-#            plot = factor(c(rep("C",56100),rep("Q",56100),rep("EB",56100),
-#                            rep("MB",56100),rep("LB",56100)),levels = c("C","Q","EB","MB","LB"))
-#            deg = ,
-#            param = )
-
-boxplot(log10(res.Matticolus.param.sens.C$fst.amp[,,20]))
 
 sens.res <- function(res.array){
-  add.s <- seq(0.001,0.01,0.001)
-  res.sens <- array(NA, dim = c(10,29))
-  mean.res.array <- apply(res.array,MARGIN =c(2,3),mean,na.rm=T)
-  for(j in 1:10){
-    for(k in 1:29){
-      res.sens[j,k] <- (mean.res.array[j,k] - mean(res.array[,,c(1)]))/add.s[j]
+  add.s <- seq(0,0.01,0.001)
+  res.sens <- array(NA, dim = c(169,10,27))
+  for(i in 1:169){
+    for(j in 2:11){
+      for(k in 1:27){
+        res.sens[i,j-1,k] <- (res.array[i,j,k] - res.array[i,1,k]) / add.s[j]
+      }
     }
   }
-  return(apply(res.sens, MARGIN = c(2), mean, na.rm=T))
+  return(data.frame(X1 = c(res.sens[,,1]),
+                    X2 = c(res.sens[,,2]),
+                    X3 = c(res.sens[,,3]),
+                    X4 = c(res.sens[,,4]),
+                    X5 = c(res.sens[,,5]),
+                    X6 = c(res.sens[,,6]),
+                    X7 = c(res.sens[,,7]),
+                    X8 = c(res.sens[,,8]),
+                    X9 = c(res.sens[,,9]),
+                    X10 = c(res.sens[,,10]),
+                    X11 = c(res.sens[,,11]),
+                    X12 = c(res.sens[,,12]),
+                    X13 = c(res.sens[,,13]),
+                    X14 = c(res.sens[,,14]),
+                    X15 = c(res.sens[,,15]),
+                    X16 = c(res.sens[,,16]),
+                    X17 = c(res.sens[,,17]),
+                    X18 = c(res.sens[,,18]),
+                    X19 = c(res.sens[,,19]),
+                    X20 = c(res.sens[,,20]),
+                    X21 = c(res.sens[,,21]),
+                    X22 = c(res.sens[,,22]),
+                    X23 = c(res.sens[,,23]),
+                    X24 = c(res.sens[,,24]),
+                    X25 = c(res.sens[,,25]),
+                    X26 = c(res.sens[,,26]),
+                    X27 = c(res.sens[,,27])
+                    )
+         )
 }
 
 (sens.Matticolus.fst.amp.C <- sens.res(log10(res.Matticolus.param.sens.C$fst.amp)))
@@ -2684,11 +2897,11 @@ sens.res <- function(res.array){
 (sens.Matticolus.fst.amp.MB <- sens.res(log10(res.Matticolus.param.sens.MB$fst.amp)))
 (sens.Matticolus.fst.amp.LB <- sens.res(log10(res.Matticolus.param.sens.LB$fst.amp)))
 
-(sens.Matticolus.fst.att.C <- sens.res(log10(res.Matticolus.param.sens.C$fst.att+1)))
-(sens.Matticolus.fst.att.Q <- sens.res(log10(res.Matticolus.param.sens.Q$fst.att+1)))
-(sens.Matticolus.fst.att.EB <- sens.res(log10(res.Matticolus.param.sens.EB$fst.att)))
-(sens.Matticolus.fst.att.MB <- sens.res(log10(res.Matticolus.param.sens.MB$fst.att)))
-(sens.Matticolus.fst.att.LB <- sens.res(log10(res.Matticolus.param.sens.LB$fst.att)))
+(sens.Matticolus.fst.att.C <- sens.res(res.Matticolus.param.sens.C$fst.att))
+(sens.Matticolus.fst.att.Q <- sens.res(res.Matticolus.param.sens.Q$fst.att))
+(sens.Matticolus.fst.att.EB <- sens.res(res.Matticolus.param.sens.EB$fst.att))
+(sens.Matticolus.fst.att.MB <- sens.res(res.Matticolus.param.sens.MB$fst.att))
+(sens.Matticolus.fst.att.LB <- sens.res(res.Matticolus.param.sens.LB$fst.att))
 
 (sens.Matticolus.recov.t.C <- sens.res(res.Matticolus.param.sens.C$recov.t))
 (sens.Matticolus.recov.t.Q <- sens.res(res.Matticolus.param.sens.Q$recov.t))
@@ -2696,10 +2909,202 @@ sens.res <- function(res.array){
 (sens.Matticolus.recov.t.MB <- sens.res(res.Matticolus.param.sens.MB$recov.t))
 (sens.Matticolus.recov.t.LB <- sens.res(res.Matticolus.param.sens.LB$recov.t))
 
+#Summary statistics
+library(psych)
+sens.Matticolus.fst.amp.summary <- print(describe(rbind(sens.Matticolus.fst.amp.C, 
+                                             sens.Matticolus.fst.amp.Q, 
+                                             sens.Matticolus.fst.amp.EB,
+                                             sens.Matticolus.fst.amp.MB,
+                                             sens.Matticolus.fst.amp.LB),
+                                            quant = c(0.25, 0.75)),3)
+
+
+write.csv(sens.Matticolus.fst.amp.summary , "sens_Matticolus_fst_amp_summary.csv")
+
+sens.Matticolus.fst.att.summary <- print(describe(rbind(sens.Matticolus.fst.att.C, 
+                                             sens.Matticolus.fst.att.Q, 
+                                             sens.Matticolus.fst.att.EB,
+                                             sens.Matticolus.fst.att.MB,
+                                             sens.Matticolus.fst.att.LB),
+                                            quant = c(0.25, 0.75)),3)
+
+
+write.csv(sens.Matticolus.fst.att.summary , "sens_Matticolus_fst_att_summary.csv")
+
+sens.Matticolus.recov.t.summary <- print(describe(rbind(sens.Matticolus.recov.t.C, 
+                                             sens.Matticolus.recov.t.Q, 
+                                             sens.Matticolus.recov.t.EB,
+                                             sens.Matticolus.recov.t.MB,
+                                             sens.Matticolus.recov.t.LB),
+                                             quant = c(0.25, 0.75)),3)
+
+
+write.csv(sens.Matticolus.recov.t.summary , "sens_Matticolus_recov_t_summary.csv")
+
+#Plots
+#Resilience x Perturbation magnitude
+fst.amp.Matticolus.param.sens.mean <- (res.Matticolus.param.sens.C$fst.amp+
+                                     res.Matticolus.param.sens.Q$fst.amp +
+                                     res.Matticolus.param.sens.EB$fst.amp+
+                                     res.Matticolus.param.sens.MB$fst.amp+
+                                     res.Matticolus.param.sens.LB$fst.amp)/5
+
+
+(fst.amp.Matticolus.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              log10(apply(fst.amp.Matticolus.param.sens.mean[,,c(which(sens.Matticolus.fst.amp.summary$mean!=0))], 
+                                                          MARGIN = c(2,3), mean))))
+
+fst.amp.Matticolus.param.sens.mean <- pivot_longer(data = fst.amp.Matticolus.param.sens.mean, 
+                                               cols = `X1`:`X3`,
+                                               names_to = "parameter",
+                                               values_to = "compensation")
+quartz(height = 6, width = 8)
+ggplot(fst.amp.Matticolus.param.sens.mean,
+       aes(x = perturb, y = compensation, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(3),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 # expression(alpha["nb"]),
+                                 # expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Matticolus.fst.amp.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Compensation")
+
+fst.att.Matticolus.param.sens.mean <- (res.Matticolus.param.sens.C$fst.att+
+                                     res.Matticolus.param.sens.Q$fst.att +
+                                     res.Matticolus.param.sens.EB$fst.att+
+                                     res.Matticolus.param.sens.MB$fst.att+
+                                     res.Matticolus.param.sens.LB$fst.att)/5
+
+(fst.att.Matticolus.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(fst.att.Matticolus.param.sens.mean[,,c(which(sens.Matticolus.fst.att.summary$mean!=0))], 
+                                                    MARGIN = c(2,3), mean)))
+
+fst.att.Matticolus.param.sens.mean <- pivot_longer(data = fst.att.Matticolus.param.sens.mean, 
+                                               cols = `X1`:`X3`,
+                                               names_to = "parameter",
+                                               values_to = "resistance")
+quartz(height = 6, width = 8)
+ggplot(fst.att.Matticolus.param.sens.mean,
+       aes(x = perturb, y = resistance, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(3),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 # expression(alpha["nb"]),
+                                 # expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Matticolus.fst.att.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Resistance")
+
+recov.t.Matticolus.param.sens.mean <- (res.Matticolus.param.sens.C$recov.t+
+                                     res.Matticolus.param.sens.Q$recov.t +
+                                     res.Matticolus.param.sens.EB$recov.t+
+                                     res.Matticolus.param.sens.MB$recov.t+
+                                     res.Matticolus.param.sens.LB$recov.t)/5
+
+
+(recov.t.Matticolus.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(recov.t.Matticolus.param.sens.mean[,,c(which(sens.Matticolus.recov.t.summary$mean!=0))], 
+                                                    MARGIN = c(2,3), mean)))
+
+recov.t.Matticolus.param.sens.mean <- pivot_longer(data = recov.t.Matticolus.param.sens.mean, 
+                                               cols = `X1`:`X3`,
+                                               names_to = "parameter",
+                                               values_to = "recov.t")
+quartz(height = 6, width = 8)
+ggplot(recov.t.Matticolus.param.sens.mean,
+       aes(x = perturb, y = recov.t, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(3),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 #expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 #expression(beta["prep"]*"SVL"^2),
+                                 # expression(alpha["nb"]),
+                                 # expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Matticolus.recov.t.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Recovery time")
+
+
+#Barplots
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.amp.C[-1],las=2,ylab="Compensation",main=expression("C - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.amp.C[, -1],las=2,ylab="Compensation",main=expression("C - "*italic("M. atticolus")),
+        ylim = c(0,2),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2724,24 +3129,28 @@ x<-barplot(sens.Matticolus.fst.amp.C[-1],las=2,ylab="Compensation",main=expressi
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",11),
+                   rep("darkcyan",12),
+                   rep("brown",2),
+                   "darkcyan"),
+           border = c(rep("brown",11),
+                     rep("darkcyan",12),
+                     rep("brown",2),
+                     "darkcyan"),
+                     notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.amp.C[-1]-.5,labels=round(sens.Matticolus.fst.amp.C[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.amp.Q[-1],las=2,ylab="Compensation",main=expression("Q - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.amp.Q[, -1],las=2,ylab="Compensation",main=expression("Q - "*italic("M. atticolus")),
+        ylim = c(0,1.5),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2766,24 +3175,28 @@ x<-barplot(sens.Matticolus.fst.amp.Q[-1],las=2,ylab="Compensation",main=expressi
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.amp.Q[-1]-.1,labels=round(sens.Matticolus.fst.amp.Q[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.amp.EB[-1],las=2,ylab="Compensation",main=expression("EB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.amp.EB[, -1],las=2,ylab="Compensation",main=expression("EB - "*italic("M. atticolus")),
+        ylim = c(0,1.2),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2808,24 +3221,28 @@ x<-barplot(sens.Matticolus.fst.amp.EB[-1],las=2,ylab="Compensation",main=express
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.amp.EB[-1]-.1,labels=round(sens.Matticolus.fst.amp.EB[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.amp.MB[-1],las=2,ylab="Compensation",main=expression("MB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.amp.MB[, -1],las=2,ylab="Compensation",main=expression("MB - "*italic("M. atticolus")),
+        ylim = c(0,1.2),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2850,24 +3267,28 @@ x<-barplot(sens.Matticolus.fst.amp.MB[-1],las=2,ylab="Compensation",main=express
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.amp.MB[-1]-.1,labels=round(sens.Matticolus.fst.amp.MB[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.amp.LB[-1],las=2,ylab="Compensation",main=expression("LB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.amp.LB[, -1],las=2,ylab="Compensation",main=expression("LB - "*italic("M. atticolus")),
+        ylim = c(0,2),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2892,25 +3313,28 @@ x<-barplot(sens.Matticolus.fst.amp.LB[-1],las=2,ylab="Compensation",main=express
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.amp.LB[-1]-.1,labels=round(sens.Matticolus.fst.amp.LB[-1],3),cex=.5,col="red")
-
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.att.C[-1],las=2,ylab="Resistance",main=expression("C - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.att.C[, -1],las=2,ylab="Resistance",main=expression("C - "*italic("M. atticolus")),
+        ylim = c(-.7,0),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2935,24 +3359,28 @@ x<-barplot(sens.Matticolus.fst.att.C[-1],las=2,ylab="Resistance",main=expression
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.att.C[-1]-.1,labels=round(sens.Matticolus.fst.att.C[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.att.Q[-1],las=2,ylab="Resistance",main=expression("Q - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.att.Q[, -1],las=2,ylab="Resistance",main=expression("Q - "*italic("M. atticolus")),
+        ylim = c(-.8,0),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2977,24 +3405,28 @@ x<-barplot(sens.Matticolus.fst.att.Q[-1],las=2,ylab="Resistance",main=expression
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.att.Q[-1],labels=round(sens.Matticolus.fst.att.Q[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.att.EB[-1],las=2,ylab="Resistance",main=expression("EB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.att.EB[, -1],las=2,ylab="Resistance",main=expression("EB - "*italic("M. atticolus")),
+        ylim = c(-1,0),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3019,24 +3451,28 @@ x<-barplot(sens.Matticolus.fst.att.EB[-1],las=2,ylab="Resistance",main=expressio
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.att.EB[-1]-.01,labels=round(sens.Matticolus.fst.att.EB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.att.MB[-1],las=2,ylab="Resistance",main=expression("MB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.att.MB[, -1],las=2,ylab="Resistance",main=expression("MB - "*italic("M. atticolus")),
+        ylim = c(-1.2,0),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3061,24 +3497,28 @@ x<-barplot(sens.Matticolus.fst.att.MB[-1],las=2,ylab="Resistance",main=expressio
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.att.MB[-1]-.01,labels=round(sens.Matticolus.fst.att.MB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.fst.att.LB[-1],las=2,ylab="Resistance",main=expression("LB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.fst.att.LB[, -1],las=2,ylab="Resistance",main=expression("LB - "*italic("M. atticolus")),
+        ylim = c(-1.1,0),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3103,24 +3543,28 @@ x<-barplot(sens.Matticolus.fst.att.LB[-1],las=2,ylab="Resistance",main=expressio
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.fst.att.LB[-1]-.01,labels=round(sens.Matticolus.fst.att.LB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.recov.t.C[-1],las=2,ylab="Recovery time",main=expression("C - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.recov.t.C[, -1],las=2,ylab="Recovery time",main=expression("C - "*italic("M. atticolus")),
+        ylim = c(-25,2),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3145,24 +3589,27 @@ x<-barplot(sens.Matticolus.recov.t.C[-1],las=2,ylab="Recovery time",main=express
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.recov.t.C[-1]-1,labels=round(sens.Matticolus.recov.t.C[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.recov.t.Q[-1],las=2,ylab="Recovery time",main=expression("Q - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.recov.t.Q[, -1],las=2,ylab="Recovery time",main=expression("Q - "*italic("M. atticolus")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3187,24 +3634,28 @@ x<-barplot(sens.Matticolus.recov.t.Q[-1],las=2,ylab="Recovery time",main=express
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.recov.t.Q[-1]-1,labels=round(sens.Matticolus.recov.t.Q[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.recov.t.EB[-1],las=2,ylab="Recovery time",main=expression("EB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.recov.t.EB[, -1],las=2,ylab="Recovery time",main=expression("EB - "*italic("M. atticolus")),
+        ylim = c(-60,10),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3229,24 +3680,27 @@ x<-barplot(sens.Matticolus.recov.t.EB[-1],las=2,ylab="Recovery time",main=expres
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.recov.t.EB[-1]-1,labels=round(sens.Matticolus.recov.t.EB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.recov.t.MB[-1],las=2,ylab="Recovery time",main=expression("MB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.recov.t.MB[, -1],las=2,ylab="Recovery time",main=expression("MB - "*italic("M. atticolus")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3271,24 +3725,27 @@ x<-barplot(sens.Matticolus.recov.t.MB[-1],las=2,ylab="Recovery time",main=expres
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.recov.t.MB[-1]-.1,labels=round(sens.Matticolus.recov.t.MB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Matticolus.recov.t.LB[-1],las=2,ylab="Recovery time",main=expression("LB - "*italic("M. atticolus")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Matticolus.recov.t.LB[, -1],las=2,ylab="Recovery time",main=expression("LB - "*italic("M. atticolus")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3313,17 +3770,174 @@ x<-barplot(sens.Matticolus.recov.t.LB[-1],las=2,ylab="Recovery time",main=expres
                          expression(alpha["prep"]),
                          expression(beta["prep"]*"SVL"),
                          #expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
+                         # expression(alpha["nb"]),
+                         # expression(beta["nb"]*"SVL"),
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",11),
-                   rep("blue",14),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Matticolus.recov.t.LB[-1]-1,labels=round(sens.Matticolus.recov.t.LB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+
+#Average among plots
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Matticolus.fst.amp.C[, -1],
+              sens.Matticolus.fst.amp.Q[, -1],
+              sens.Matticolus.fst.amp.EB[, -1],
+              sens.Matticolus.fst.amp.MB[, -1],
+              sens.Matticolus.fst.amp.LB[, -1]),
+        las=2,ylab="Compensation",main=expression("Average - "*italic("M. atticolus")),
+        ylim = c(0,1.5),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  # expression(alpha["nb"]),
+                  # expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Matticolus.fst.att.C[, -1],
+              sens.Matticolus.fst.att.Q[, -1],
+              sens.Matticolus.fst.att.EB[, -1],
+              sens.Matticolus.fst.att.MB[, -1],
+              sens.Matticolus.fst.att.LB[, -1]),
+        las=2,ylab="Resistance",main=expression("Average - "*italic("M. atticolus")),
+        ylim = c(-1.2,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  # expression(alpha["nb"]),
+                  # expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Matticolus.recov.t.C[, -1],
+              sens.Matticolus.recov.t.Q[, -1],
+              sens.Matticolus.recov.t.EB[, -1],
+              sens.Matticolus.recov.t.MB[, -1],
+              sens.Matticolus.recov.t.LB[, -1]),las=2,ylab="Recovery time",main=expression("Average - "*italic("M. atticolus")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  #expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  #expression(beta["prep"]*"SVL"^2),
+                  # expression(alpha["nb"]),
+                  # expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",11),
+                rep("darkcyan",12),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",11),
+                           rep("darkcyan",12),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
 

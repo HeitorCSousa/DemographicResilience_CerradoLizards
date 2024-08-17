@@ -1,6 +1,6 @@
 rm(list = ls())
 
-setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -9,125 +9,29 @@ library(popdemo)
 library(tidyverse)
 library(BayesPostEst)
 library(MCMCvis)
+library(viridis)
+library(ggplot2)
 
 Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
-ipm2.Cnigro <- readRDS("results_imp2_Cnigro.rds")
-ipm2.Cnigro.samples <- as.mcmc.list(ipm2.Cnigro$samples)
+cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
 
-ipm2.Cnigro.2 <- ipm2.Cnigro
-load(file = "results2_imp2_Cnigro.Rdata")
-ipm2.Cnigro.samples <- ipm2.Cnigro$samples
-# ipm2.Cnigro.samples<-list(ipm2.Cnigro$samples[[1]],ipm2.Cnigro$samples[[2]],ipm2.Cnigro$samples[[3]],
-#                               ipm2.Cnigro$samples[[4]],ipm2.Cnigro$samples[[5]],ipm2.Cnigro$samples[[6]],
-#                               ipm2.Cnigro$samples[[7]],ipm2.Cnigro$samples[[8]],ipm2.Cnigro$samples[[9]],
-#                               ipm2.Cnigro$samples[[10]],ipm2.Cnigro$samples[[11]],ipm2.Cnigro$samples[[12]],
-#                               ipm2.Cnigro$samples[[13]],ipm2.Cnigro$samples[[14]],ipm2.Cnigro$samples[[15]],
-#                               ipm2.Cnigro$samples[[16]],ipm2.Cnigro$samples[[17]],ipm2.Cnigro$samples[[18]],
-#                               ipm2.Cnigro$samples[[19]],ipm2.Cnigro$samples[[20]],
-#                               ipm2.Cnigro.2$samples[[1]],ipm2.Cnigro.2$samples[[3]],ipm2.Cnigro.2$samples[[3]],
-#                               ipm2.Cnigro.2$samples[[4]],ipm2.Cnigro.2$samples[[5]],ipm2.Cnigro.2$samples[[6]],
-#                               ipm2.Cnigro.2$samples[[7]],ipm2.Cnigro.2$samples[[8]],ipm2.Cnigro.2$samples[[9]],
-#                               ipm2.Cnigro.2$samples[[10]],ipm2.Cnigro.2$samples[[11]],ipm2.Cnigro.2$samples[[12]],
-#                               ipm2.Cnigro.2$samples[[13]],ipm2.Cnigro.2$samples[[14]],ipm2.Cnigro.2$samples[[15]],
-#                               ipm2.Cnigro.2$samples[[16]],ipm2.Cnigro.2$samples[[17]],ipm2.Cnigro.2$samples[[18]],
-#                               ipm2.Cnigro.2$samples[[19]],ipm2.Cnigro.2$samples[[20]])
-# ipm2.Cnigro.samples<- as.mcmc.list(ipm2.Cnigro.samples)
+cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
 
-print(ipm2.Cnigro)
-rm(ipm2.Cnigro)
-rm(ipm2.Cnigro.2)
+
+# print(ipm2.Cnigro)
+rm(cjs.Cnigro)
 gc()
-ipm2.Cnigro.df <- MCMCsummary(ipm2.Cnigro.samples)
+# ipm2.Cnigro.df <- MCMCsummary(ipm2.Cnigro.samples)
 
-write.csv(ipm2.Cnigro.df, "results.ipm2.Cnigro.df.csv")
+# write.csv(ipm2.Cnigro.df, "results.ipm2.Cnigro.df.csv")
+ipm2.Cnigro.df <- readRDS("results_ipm2_Cnigro_df.rds")
+cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
+pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")
 
 View(ipm2.Cnigro.df)
+View(cjs.Cnigro.df)
+View(pradel.Cnigro.df)
 
-library(ggmcmc)
-
-S <- ggs(ipm2.Cnigro.samples[,c(851:877,1723:1749,2600:2626,3472:3505)])
-S <- ggs(ipm2.Cnigro.samples[,c(3467:3471)])
-
-str(S)
-levels(S$Parameter)
-
-ggmcmc(S)
-ggmcmc(S, file="model_density.pdf",family=c("c"),plot="ggs_density")
-
-quartz(12,8)
-ggs_density(S,family="alpha.phiJS")
-ggs_density(S,family="alpha.f")
-ggs_density(S,family="alpha.pJS")
-ggs_density(S,family="mu.K")
-ggs_density(S,family="mu.LI")
-ggs_density(S,family="mn.AFC")
-ggs_density(S,family="p.AFC")
-ggs_density(S,family="r.AFC")
-
-
-ggs_traceplot(S,family="alpha.phiJS")
-ggs_traceplot(S,family="alpha.f")
-ggs_traceplot(S,family="alpha.pJS")
-ggs_traceplot(S,family="mu.K")
-ggs_traceplot(S,family="mu.LI")
-ggs_traceplot(S,family="sigma.phiJS")
-ggs_traceplot(S,family="sigma.f")
-ggs_traceplot(S,family="sigma.pJS")
-
-
-ggs_running(S,family="c")
-ggs_running(S,family="beta0")
-ggs_running(S,family="beta1")
-ggs_running(S,family="mu.K")
-ggs_running(S,family="sd.K")
-ggs_running(S,family="mu.LI")
-ggs_running(S,family="sd.LI")
-
-ggs_compare_partial(S,family="c")
-ggs_compare_partial(S,family="beta0")
-ggs_compare_partial(S,family="beta1")
-ggs_compare_partial(S,family="mu.K")
-ggs_compare_partial(S,family="sd.K")
-ggs_compare_partial(S,family="mu.LI")
-ggs_compare_partial(S,family="sd.LI")
-
-ggs_autocorrelation(S,family="c")
-ggs_autocorrelation(S,family="beta0")
-ggs_autocorrelation(S,family="beta1")
-ggs_autocorrelation(S,family="mu.K")
-ggs_autocorrelation(S,family="sd.K")
-ggs_autocorrelation(S,family="mu.LI")
-ggs_autocorrelation(S,family="sd.LI")
-
-ggs_crosscorrelation(S,family="c")
-ggs_crosscorrelation(S,family="beta0")
-ggs_crosscorrelation(S,family="beta1")
-ggs_crosscorrelation(S,family="mu.K")
-ggs_crosscorrelation(S,family="mu.LI")
-
-ggs_geweke(S,family="c")
-ggs_geweke(S,family="beta0")
-ggs_geweke(S,family="beta1")
-ggs_geweke(S,family="mu.K")
-ggs_geweke(S,family="sd.K")
-ggs_geweke(S,family="mu.LI")
-ggs_geweke(S,family="sd.LI")
-
-ggs_effective(S,family="c")
-ggs_effective(S,family="beta0")
-ggs_effective(S,family="beta1")
-ggs_effective(S,family="mu.K")
-ggs_effective(S,family="sd.K")
-ggs_effective(S,family="mu.LI")
-ggs_effective(S,family="sd.LI")
-
-ggs_caterpillar(S,family="c")
-ggs_caterpillar(S,family="beta0")
-ggs_caterpillar(S,family="beta1")
-ggs_caterpillar(S,family="mu.K")
-ggs_caterpillar(S,family="sd.K")
-ggs_caterpillar(S,family="mu.LI")
-ggs_caterpillar(S,family="sd.LI")
 
 #Use the param option
 #One with continuous varying environments and another with pre-defined ones
@@ -139,87 +43,87 @@ ggs_caterpillar(S,family="sd.LI")
 # Define some fixed parameters
 
 fixed_list <- list(
-  s_mu_slope   = ipm2.Cnigro.df['beta.phi','mean'],    #survival slope
-  s_mu_slope2   = ipm2.Cnigro.df['beta2.phi','mean'],    #survival slope
+  s_mu_slope   = cjs.Cnigro.df['beta.phi','Mean'],    #survival slope
+  s_mu_slope2  = cjs.Cnigro.df['beta2.phi','Mean'],    #survival slope
   
-  s_sd_slope   = ipm2.Cnigro.df['beta.phi','sd'],    #survival slope
-  s_sd_slope2  = ipm2.Cnigro.df['beta2.phi','sd'],    #survival slope
+  s_sd_slope   = cjs.Cnigro.df['beta.phi','SD'],    #survival slope
+  s_sd_slope2  = cjs.Cnigro.df['beta2.phi','SD'],    #survival slope
   
   
   #Environmental slopes for survival
-  s_mu_tmed2m  = ipm2.Cnigro.df['betaphiJS[1]','mean'],
-  s_mu_RHmax   = ipm2.Cnigro.df['betaphiJS[2]','mean'],
-  s_mu_sol     = ipm2.Cnigro.df['betaphiJS[3]','mean'],
-  s_mu_tmed0cm = ipm2.Cnigro.df['betaphiJS[4]','mean'],
-  s_mu_tmin0cm = ipm2.Cnigro.df['betaphiJS[5]','mean'],
-  s_mu_precip  = ipm2.Cnigro.df['betaphiJS[6]','mean'],
-  s_mu_perf    = ipm2.Cnigro.df['betaphiJS[7]','mean'],
-  s_mu_ha_90   = ipm2.Cnigro.df['betaphiJS[8]','mean'],
-  s_mu_fire    = ipm2.Cnigro.df['betaphiJS[9]','mean'],
-  s_mu_TSLF    = ipm2.Cnigro.df['betaphiJS[10]','mean'],
+  s_mu_tmed2m  = pradel.Cnigro.df['betaphiJS[1]','mean'],
+  s_mu_RHmax   = pradel.Cnigro.df['betaphiJS[2]','mean'],
+  s_mu_sol     = pradel.Cnigro.df['betaphiJS[3]','mean'],
+  s_mu_tmed0cm = pradel.Cnigro.df['betaphiJS[4]','mean'],
+  s_mu_tmin0cm = pradel.Cnigro.df['betaphiJS[5]','mean'],
+  s_mu_precip  = pradel.Cnigro.df['betaphiJS[6]','mean'],
+  s_mu_perf    = pradel.Cnigro.df['betaphiJS[7]','mean'],
+  s_mu_ha_90   = pradel.Cnigro.df['betaphiJS[8]','mean'],
+  s_mu_fire    = pradel.Cnigro.df['betaphiJS[9]','mean'],
+  s_mu_TSLF    = pradel.Cnigro.df['betaphiJS[10]','mean'],
   
-  s_sd_tmed2m  = ipm2.Cnigro.df['betaphiJS[1]','sd'],
-  s_sd_RHmax   = ipm2.Cnigro.df['betaphiJS[2]','sd'],
-  s_sd_sol     = ipm2.Cnigro.df['betaphiJS[3]','sd'],
-  s_sd_tmed0cm = ipm2.Cnigro.df['betaphiJS[4]','sd'],
-  s_sd_tmin0cm = ipm2.Cnigro.df['betaphiJS[5]','sd'],
-  s_sd_precip  = ipm2.Cnigro.df['betaphiJS[6]','sd'],
-  s_sd_perf    = ipm2.Cnigro.df['betaphiJS[7]','sd'],
-  s_sd_ha_90   = ipm2.Cnigro.df['betaphiJS[8]','sd'],
-  s_sd_fire    = ipm2.Cnigro.df['betaphiJS[9]','sd'],
-  s_sd_TSLF    = ipm2.Cnigro.df['betaphiJS[10]','sd'],
+  s_sd_tmed2m  = pradel.Cnigro.df['betaphiJS[1]','sd'],
+  s_sd_RHmax   = pradel.Cnigro.df['betaphiJS[2]','sd'],
+  s_sd_sol     = pradel.Cnigro.df['betaphiJS[3]','sd'],
+  s_sd_tmed0cm = pradel.Cnigro.df['betaphiJS[4]','sd'],
+  s_sd_tmin0cm = pradel.Cnigro.df['betaphiJS[5]','sd'],
+  s_sd_precip  = pradel.Cnigro.df['betaphiJS[6]','sd'],
+  s_sd_perf    = pradel.Cnigro.df['betaphiJS[7]','sd'],
+  s_sd_ha_90   = pradel.Cnigro.df['betaphiJS[8]','sd'],
+  s_sd_fire    = pradel.Cnigro.df['betaphiJS[9]','sd'],
+  s_sd_TSLF    = pradel.Cnigro.df['betaphiJS[10]','sd'],
   
-  sigma.phiJS = ipm2.Cnigro.df['sigma.phiJS','mean'],
+  sigma.phiJS = pradel.Cnigro.df['sigma.phiJS','mean'],
   
   #Environmental slopes for reproduction
-  r_f_mu_tmed2m  = ipm2.Cnigro.df['betaf[1]','mean'],
-  r_f_mu_RHmax   = ipm2.Cnigro.df['betaf[2]','mean'],
-  r_f_mu_sol     = ipm2.Cnigro.df['betaf[3]','mean'],
-  r_f_mu_tmed0cm = ipm2.Cnigro.df['betaf[4]','mean'],
-  r_f_mu_tmin0cm = ipm2.Cnigro.df['betaf[5]','mean'],
-  r_f_mu_precip  = ipm2.Cnigro.df['betaf[6]','mean'],
-  r_f_mu_perf    = ipm2.Cnigro.df['betaf[7]','mean'],
-  r_f_mu_ha_90   = ipm2.Cnigro.df['betaf[8]','mean'],
-  r_f_mu_fire    = ipm2.Cnigro.df['betaf[9]','mean'],
-  r_f_mu_TSLF    = ipm2.Cnigro.df['betaf[10]','mean'],
+  r_f_mu_tmed2m  = pradel.Cnigro.df['betaf[1]','mean'],
+  r_f_mu_RHmax   = pradel.Cnigro.df['betaf[2]','mean'],
+  r_f_mu_sol     = pradel.Cnigro.df['betaf[3]','mean'],
+  r_f_mu_tmed0cm = pradel.Cnigro.df['betaf[4]','mean'],
+  r_f_mu_tmin0cm = pradel.Cnigro.df['betaf[5]','mean'],
+  r_f_mu_precip  = pradel.Cnigro.df['betaf[6]','mean'],
+  r_f_mu_perf    = pradel.Cnigro.df['betaf[7]','mean'],
+  r_f_mu_ha_90   = pradel.Cnigro.df['betaf[8]','mean'],
+  r_f_mu_fire    = pradel.Cnigro.df['betaf[9]','mean'],
+  r_f_mu_TSLF    = pradel.Cnigro.df['betaf[10]','mean'],
   
-  r_f_sd_tmed2m  = ipm2.Cnigro.df['betaf[1]','sd'],
-  r_f_sd_RHmax   = ipm2.Cnigro.df['betaf[2]','sd'],
-  r_f_sd_sol     = ipm2.Cnigro.df['betaf[3]','sd'],
-  r_f_sd_tmed0cm = ipm2.Cnigro.df['betaf[4]','sd'],
-  r_f_sd_tmin0cm = ipm2.Cnigro.df['betaf[5]','sd'],
-  r_f_sd_precip  = ipm2.Cnigro.df['betaf[6]','sd'],
-  r_f_sd_perf    = ipm2.Cnigro.df['betaf[7]','sd'],
-  r_f_sd_ha_90   = ipm2.Cnigro.df['betaf[8]','sd'],
-  r_f_sd_fire    = ipm2.Cnigro.df['betaf[9]','sd'],
-  r_f_sd_TSLF    = ipm2.Cnigro.df['betaf[10]','sd'],
+  r_f_sd_tmed2m  = pradel.Cnigro.df['betaf[1]','sd'],
+  r_f_sd_RHmax   = pradel.Cnigro.df['betaf[2]','sd'],
+  r_f_sd_sol     = pradel.Cnigro.df['betaf[3]','sd'],
+  r_f_sd_tmed0cm = pradel.Cnigro.df['betaf[4]','sd'],
+  r_f_sd_tmin0cm = pradel.Cnigro.df['betaf[5]','sd'],
+  r_f_sd_precip  = pradel.Cnigro.df['betaf[6]','sd'],
+  r_f_sd_perf    = pradel.Cnigro.df['betaf[7]','sd'],
+  r_f_sd_ha_90   = pradel.Cnigro.df['betaf[8]','sd'],
+  r_f_sd_fire    = pradel.Cnigro.df['betaf[9]','sd'],
+  r_f_sd_TSLF    = pradel.Cnigro.df['betaf[10]','sd'],
   
-  sigma.f = ipm2.Cnigro.df['sigma.f','mean'],
+  sigma.f = pradel.Cnigro.df['sigma.f','mean'],
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','mean'],
-  r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','mean'],  
-  r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','mean'], 
+  r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','Mean'],
+  r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','Mean'],  
+  r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','Mean'], 
   
-  r_r_sd_int   = ipm2.Cnigro.df['alpha.prep','sd'],
-  r_r_sd_slope = ipm2.Cnigro.df['beta1.prep','sd'],  
-  r_r_sd_slope2 = ipm2.Cnigro.df['beta2.prep','sd'], 
+  r_r_sd_int   = ipm2.Cnigro.df['alpha.prep','SD'],
+  r_r_sd_slope = ipm2.Cnigro.df['beta1.prep','SD'],  
+  r_r_sd_slope2 = ipm2.Cnigro.df['beta2.prep','SD'], 
   
   #Number of eggs/embryos
-  r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','mean'], 
-  r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','mean'],   
-  #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','mean'],  
+  r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','Mean'], 
+  r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','Mean'],   
+  #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','Mean'],  
   
-  r_n_sd_int   = ipm2.Cnigro.df['alpha.fec','sd'], 
-  r_n_sd_slope = ipm2.Cnigro.df['beta1.fec','sd'],   
-  #r_n_sd_slope2 =ipm2.Cnigro.df['beta2.fec','sd'],  
+  r_n_sd_int   = ipm2.Cnigro.df['alpha.fec','SD'], 
+  r_n_sd_slope = ipm2.Cnigro.df['beta1.fec','SD'],   
+  #r_n_sd_slope2 =ipm2.Cnigro.df['beta2.fec','SD'],  
   
   
   #Size of newborns
   mu_rd     = Cnigropunctatum.data$mu.L0,   
   sd_rd     = sqrt(Cnigropunctatum.data$tau.L0),
-  mu_LI = ipm2.Cnigro.df['mu.LI','mean']
+  mu_LI = cjs.Cnigro.df['mu.LI','Mean']
   
 )
 
@@ -229,52 +133,51 @@ fixed_list <- list(
 
 # First, we create vector of values that each random component can take.
 s_params  <- list(
-  s_g_mu_int_1 = ipm2.Cnigro.df['alpha.phiJS[1]','mean'],
-  s_g_mu_int_2 = ipm2.Cnigro.df['alpha.phiJS[2]','mean'],
-  s_g_mu_int_3 = ipm2.Cnigro.df['alpha.phiJS[3]','mean'],
-  s_g_mu_int_4 = ipm2.Cnigro.df['alpha.phiJS[4]','mean'],
-  s_g_mu_int_5 = ipm2.Cnigro.df['alpha.phiJS[5]','mean'],
+  s_g_mu_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
+  s_g_mu_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
+  s_g_mu_int_3 = pradel.Cnigro.df['alpha.phiJS[3]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
+  s_g_mu_int_4 = pradel.Cnigro.df['alpha.phiJS[4]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
+  s_g_mu_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
   
-  s_g_sd_int_1 = ipm2.Cnigro.df['alpha.phiJS[1]','sd'],
-  s_g_sd_int_2 = ipm2.Cnigro.df['alpha.phiJS[2]','sd'],
-  s_g_sd_int_3 = ipm2.Cnigro.df['alpha.phiJS[3]','sd'],
-  s_g_sd_int_4 = ipm2.Cnigro.df['alpha.phiJS[4]','sd'],
-  s_g_sd_int_5 = ipm2.Cnigro.df['alpha.phiJS[5]','sd']
+  s_g_sd_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','sd'],
+  s_g_sd_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','sd'],
+  s_g_sd_int_3 = pradel.Cnigro.df['alpha.phiJS[3]','sd'],
+  s_g_sd_int_4 = pradel.Cnigro.df['alpha.phiJS[4]','sd'],
+  s_g_sd_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','sd']
 )
 
 g_params <- list(
+  g_g_mu_K_1 = cjs.Cnigro.df['mu.K[1]','Mean'],
+  g_g_mu_K_2 = cjs.Cnigro.df['mu.K[2]','Mean'],
+  g_g_mu_K_3 = cjs.Cnigro.df['mu.K[3]','Mean'],
+  g_g_mu_K_4 = cjs.Cnigro.df['mu.K[4]','Mean'],
+  g_g_mu_K_5 = cjs.Cnigro.df['mu.K[5]','Mean'],
   
-  g_g_mu_K_1 = ipm2.Cnigro.df['mu.K[1]','mean'],
-  g_g_mu_K_2 = ipm2.Cnigro.df['mu.K[2]','mean'],
-  g_g_mu_K_3 = ipm2.Cnigro.df['mu.K[3]','mean'],
-  g_g_mu_K_4 = ipm2.Cnigro.df['mu.K[4]','mean'],
-  g_g_mu_K_5 = ipm2.Cnigro.df['mu.K[5]','mean'],
-  
-  g_g_sd_K_1 = ipm2.Cnigro.df['mu.K[1]','sd'],
-  g_g_sd_K_2 = ipm2.Cnigro.df['mu.K[2]','sd'],
-  g_g_sd_K_3 = ipm2.Cnigro.df['mu.K[3]','sd'],
-  g_g_sd_K_4 = ipm2.Cnigro.df['mu.K[4]','sd'],
-  g_g_sd_K_5 = ipm2.Cnigro.df['mu.K[5]','sd']
+  g_g_sd_K_1 = cjs.Cnigro.df['mu.K[1]','SD'],
+  g_g_sd_K_2 = cjs.Cnigro.df['mu.K[2]','SD'],
+  g_g_sd_K_3 = cjs.Cnigro.df['mu.K[3]','SD'],
+  g_g_sd_K_4 = cjs.Cnigro.df['mu.K[4]','SD'],
+  g_g_sd_K_5 = cjs.Cnigro.df['mu.K[5]','SD']
 )
 
 r_params <- list(
-  r_f_mu_int_1 = ipm2.Cnigro.df['alpha.f[1]','mean'],
-  r_f_mu_int_2 = ipm2.Cnigro.df['alpha.f[2]','mean'],
-  r_f_mu_int_3 = ipm2.Cnigro.df['alpha.f[3]','mean'],
-  r_f_mu_int_4 = ipm2.Cnigro.df['alpha.f[4]','mean'],
-  r_f_mu_int_5 = ipm2.Cnigro.df['alpha.f[5]','mean'],
+  r_f_mu_int_1 = pradel.Cnigro.df['alpha.f[1]','mean'],
+  r_f_mu_int_2 = pradel.Cnigro.df['alpha.f[2]','mean'],
+  r_f_mu_int_3 = pradel.Cnigro.df['alpha.f[3]','mean'],
+  r_f_mu_int_4 = pradel.Cnigro.df['alpha.f[4]','mean'],
+  r_f_mu_int_5 = pradel.Cnigro.df['alpha.f[5]','mean'],
   
-  r_f_sd_int_1 = ipm2.Cnigro.df['alpha.f[1]','sd'],
-  r_f_sd_int_2 = ipm2.Cnigro.df['alpha.f[2]','sd'],
-  r_f_sd_int_3 = ipm2.Cnigro.df['alpha.f[3]','sd'],
-  r_f_sd_int_4 = ipm2.Cnigro.df['alpha.f[4]','sd'],
-  r_f_sd_int_5 = ipm2.Cnigro.df['alpha.f[5]','sd'],
+  r_f_sd_int_1 = pradel.Cnigro.df['alpha.f[1]','sd'],
+  r_f_sd_int_2 = pradel.Cnigro.df['alpha.f[2]','sd'],
+  r_f_sd_int_3 = pradel.Cnigro.df['alpha.f[3]','sd'],
+  r_f_sd_int_4 = pradel.Cnigro.df['alpha.f[4]','sd'],
+  r_f_sd_int_5 = pradel.Cnigro.df['alpha.f[5]','sd'],
   
-  r_p_mu_int_1 = ipm2.Cnigro.df['alpha.pJS[1]','mean'],
-  r_p_mu_int_2 = ipm2.Cnigro.df['alpha.pJS[2]','mean'],
-  r_p_mu_int_3 = ipm2.Cnigro.df['alpha.pJS[3]','mean'],
-  r_p_mu_int_4 = ipm2.Cnigro.df['alpha.pJS[4]','mean'],
-  r_p_mu_int_5 = ipm2.Cnigro.df['alpha.pJS[5]','mean']
+  r_p_mu_int_1 = pradel.Cnigro.df['alpha.pJS[1]','mean'],
+  r_p_mu_int_2 = pradel.Cnigro.df['alpha.pJS[2]','mean'],
+  r_p_mu_int_3 = pradel.Cnigro.df['alpha.pJS[3]','mean'],
+  r_p_mu_int_4 = pradel.Cnigro.df['alpha.pJS[4]','mean'],
+  r_p_mu_int_5 = pradel.Cnigro.df['alpha.pJS[5]','mean']
 )
 
 # Each set of parameters is converted to a named list. The names should match
@@ -311,7 +214,7 @@ sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+
 sd_growth <- function(x,mu.L0,mu.LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu.LI,
-                           unlist(ipm2.Cnigro.samples[,paste0('mu.K[',site,']')]))
+                           unlist(cjs.Cnigro.samples[][[2]][,paste0('mu.K[',site,']')]))
   return(sd(mean.values,na.rm=T))
 }
 
@@ -321,62 +224,115 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-env.states <- Cnigropunctatum.data$amb
+f.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "f", 
+                                            x = row.names(ipm2.Cnigro.df))[1:850],])
+tail(f.ipm2)
 
-# env.states <- list(tmed2m_1  = Cnigro.data$amb[1,,1],
-#                    RHmax_1   = Cnigro.data$amb[1,,2],
-#                    sol_1     = Cnigro.data$amb[1,,3],
-#                    tmed0cm_1 = Cnigro.data$amb[1,,4],
-#                    tmin0cm_1 = Cnigro.data$amb[1,,5],
-#                    precip_1  = Cnigro.data$amb[1,,6],
-#                    perf_1    = Cnigro.data$amb[1,,7],
-#                    ha_90_1   = Cnigro.data$amb[1,,8],
-#                    fire_1    = Cnigro.data$amb[1,,9],
-#                    TSLF_1    = Cnigro.data$amb[1,,10],
-#                    
-#                     tmed2m_2 = Cnigro.data$amb[2,,1],
-#                      RHmax_2 = Cnigro.data$amb[2,,2],
-#                        sol_2 = Cnigro.data$amb[2,,3],
-#                    tmed0cm_2 = Cnigro.data$amb[2,,4],
-#                    tmin0cm_2 = Cnigro.data$amb[2,,5],
-#                     precip_2 = Cnigro.data$amb[2,,6],
-#                       perf_2 = Cnigro.data$amb[2,,7],
-#                      ha_90_2 = Cnigro.data$amb[2,,8],
-#                       fire_2 = Cnigro.data$amb[2,,9],
-#                       TSLF_2 = Cnigro.data$amb[2,,10],
-#                    
-#                    tmed2m_3 = Cnigro.data$amb[3,,1],
-#                    RHmax_3 = Cnigro.data$amb[3,,2],
-#                    sol_3 = Cnigro.data$amb[3,,3],
-#                    tmed0cm_3 = Cnigro.data$amb[3,,4],
-#                    tmin0cm_3 = Cnigro.data$amb[3,,5],
-#                    precip_3 = Cnigro.data$amb[3,,6],
-#                    perf_3 = Cnigro.data$amb[3,,7],
-#                    ha_90_3 = Cnigro.data$amb[3,,8],
-#                    fire_3 = Cnigro.data$amb[3,,9],
-#                    TSLF_3 = Cnigro.data$amb[3,,10],
-#                    
-#                    tmed2m_4 = Cnigro.data$amb[4,,1],
-#                    RHmax_4 = Cnigro.data$amb[4,,2],
-#                    sol_4 = Cnigro.data$amb[4,,3],
-#                    tmed0cm_4 = Cnigro.data$amb[4,,4],
-#                    tmin0cm_4 = Cnigro.data$amb[4,,5],
-#                    precip_4 = Cnigro.data$amb[4,,6],
-#                    perf_4 = Cnigro.data$amb[4,,7],
-#                    ha_90_4 = Cnigro.data$amb[4,,8],
-#                    fire_4 = Cnigro.data$amb[4,,9],
-#                    TSLF_4 = Cnigro.data$amb[4,,10],
-#                    
-#                    tmed2m_5 = Cnigro.data$amb[5,,1],
-#                    RHmax_5 = Cnigro.data$amb[5,,2],
-#                    sol_5 = Cnigro.data$amb[5,,3],
-#                    tmed0cm_5 = Cnigro.data$amb[5,,4],
-#                    tmin0cm_5 = Cnigro.data$amb[5,,5],
-#                    precip_5 = Cnigro.data$amb[5,,6],
-#                    perf_5 = Cnigro.data$amb[5,,7],
-#                    ha_90_5 = Cnigro.data$amb[5,,8],
-#                    fire_5 = Cnigro.data$amb[5,,9],
-#                    TSLF_5 = Cnigro.data$amb[5,,10])
+phi.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "phi", 
+                                              x = row.names(ipm2.Cnigro.df))[1:850],])
+tail(phi.ipm2)
+
+rho.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "rho", 
+                                              x = row.names(ipm2.Cnigro.df))[1:845],])
+head(rho.ipm2)
+tail(rho.ipm2)
+
+f.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "f", 
+                                                x = row.names(pradel.Cnigro.df))[1:850],])
+tail(f.pradel)
+
+phi.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "phi", 
+                                                  x = row.names(pradel.Cnigro.df))[1:850],])
+tail(phi.pradel)
+
+rho.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "rho", 
+                                              x = row.names(pradel.Cnigro.df))[1:845],])
+head(rho.pradel)
+tail(rho.pradel)
+
+
+f.ipm2$plot <- rep(1:5,170)
+f.ipm2$time <- rep(1:170, each = 5)
+
+phi.ipm2$plot <- rep(1:5,170)
+phi.ipm2$time <- rep(1:170, each = 5)
+
+rho.ipm2$plot <- rep(1:5,169)
+rho.ipm2$time <- rep(1:169, each = 5)
+
+f.pradel$plot <- rep(1:5,170)
+f.pradel$time <- rep(1:170, each = 5)
+
+phi.pradel$plot <- rep(1:5,170)
+phi.pradel$time <- rep(1:170, each = 5)
+
+rho.pradel$plot <- rep(1:5,169)
+rho.pradel$time <- rep(1:169, each = 5)
+
+f.diffmean <- f.ipm2$Mean - f.pradel$mean
+
+phi.diffmean <- phi.ipm2$Mean - phi.pradel$mean
+
+rho.diffmean <- rho.ipm2$Mean - rho.pradel$mean
+
+f.ipm2[f.diffmean > 1,]
+rho.ipm2[rho.diffmean > .5,]
+
+summary(f.diffmean)
+boxplot(f.diffmean ~ rep(1:5,170))
+
+summary(rho.diffmean)
+boxplot(rho.diffmean ~ rep(1:5,169))
+
+summary(phi.diffmean)
+boxplot(phi.diffmean ~ rep(1:5,170))
+
+f.pradel$plot <- as.factor(f.pradel$plot)
+f.ipm2$plot <- as.factor(f.ipm2$plot)
+phi.pradel$plot <- as.factor(phi.pradel$plot)
+phi.ipm2$plot <- as.factor(phi.ipm2$plot)
+
+tapply(rho.pradel$mean, rho.pradel$plot, FUN = function(x) exp(mean(log(x))))
+tapply(rho.ipm2$Mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x))))
+
+
+ggplot(f.ipm2, aes(x = time, y = Mean, colour = plot))+
+  geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  ylim(c(0,0.3))+
+  scale_color_manual(values=turbo(5))
+
+ggplot(f.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0,0.3))+
+  scale_color_manual(values=turbo(5))
+#scale_fill_manual(values=turbo(5))
+
+ggplot(phi.ipm2, aes(x = time, y = Mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0.75,1))+
+  scale_color_manual(values=turbo(5))
+#scale_fill_manual(values=turbo(5))
+
+ggplot(phi.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
+  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
+  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
+  ylim(c(0.75,1))+
+  scale_color_manual(values=turbo(5))
+#scale_fill_manual(values=turbo(5))
+
+plot(colSums(Cnigropunctatum.data$y), type = "l")
+table(Cnigropunctatum.data$plot)
+
+surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Cnigropunctatum.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+
+env.states[,,12]
+dim(env.states)
 
 all_params_list <- c(fixed_list, g_params, s_params, r_params)
 
@@ -411,9 +367,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_fire   , s_sd_fire   ) * fire_site+
                           rnorm(1, s_mu_TSLF   , s_sd_TSLF   ) * TSLF_site+
                           rnorm(1, s_mu_slope, s_sd_slope) * ht_1 +
-                          rnorm(1, s_mu_slope2, s_sd_slope2) * (ht_1^2) +
-                          rnorm(1,0,sigma.phiJS)) ,
-    s_site           =  inv_logit(s_lin_site),
+                          rnorm(1, s_mu_slope2, s_sd_slope2) * (ht_1^2)) ,
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -450,7 +406,7 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = (1-(surv_site/(surv_site+r_f_site))) * r_n_site*r_r_site * r_d ,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -459,12 +415,11 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     r_r_lin          = (rnorm(1,r_r_mu_int,r_r_sd_int) + 
                           rnorm(1, r_r_mu_slope, r_r_sd_slope) * ht_1 + 
                           rnorm(1, r_r_mu_slope2, r_r_sd_slope2) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, r_n_sd_int) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,r_n_sd_slope) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, r_f_sd_int_site) +
@@ -477,9 +432,9 @@ my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_perf   , r_f_sd_perf   ) * perf_site+
                                rnorm(1, r_f_mu_ha_90  , r_f_sd_ha_90  ) * ha_90_site+
                                rnorm(1, r_f_mu_fire   , r_f_sd_fire   ) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site+
-                               rnorm(1,0,sigma.f)),
-    r_f_site = pois_r(r_f_lin_site),
+                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -519,7 +474,10 @@ sample_env <- function(env_states, site, iteration) {
                   paste0("perf_",site)   ,
                   paste0("ha_90_",site)  ,
                   paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
   
   return(out)
   
@@ -557,6 +515,7 @@ par(mfrow=c(1,2))
 plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
+par(mfrow=c(1,1))
 
 ######################
 #Without sd estimates#
@@ -594,7 +553,8 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -631,7 +591,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = (r_r_site) * (r_n_site) * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -640,12 +600,11 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin) + (1-(surv_site/(surv_site+r_f_site))),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -659,7 +618,8 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -687,24 +647,6 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
 
-sample_env <- function(env_states, site, iteration) {
-  
-  out <- as.list(env_states[site, iteration, ])
-  names(out) <- c(paste0("tmed2m_",site), 
-                  paste0("RHmax_",site),  
-                  paste0("sol_",site),    
-                  paste0("tmed0cm_",site),
-                  paste0("tmin0cm_",site),
-                  paste0("precip_",site) ,
-                  paste0("perf_",site)   ,
-                  paste0("ha_90_",site)  ,
-                  paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site) )
-  
-  return(out)
-  
-}
-
 
 my_ipm2 <- my_ipm2 %>%
   define_env_state(env_params = sample_env(env.states, site=site,
@@ -728,12 +670,13 @@ lambda(my_ipm2,type_lambda = 'all')
 lambda(my_ipm2,log = F)
 quartz(8,12)
 
-mean.kernel<-mean_kernel(my_ipm)
+mean.kernel<-mean_kernel(my_ipm2)
 par(mfrow=c(1,2))
 
 plot(mean.kernel$mean_P_site,do_contour=T,col=turbo(1000))
 
 plot(mean.kernel$mean_F_site,do_contour=T,col=turbo(1000))
+par(mfrow=c(1,1))
 
 
 ###############
@@ -770,7 +713,8 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -807,7 +751,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * (r_n_site) * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -816,12 +760,11 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -835,7 +778,8 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -858,7 +802,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100))  
+  define_domains(ht = c(30, all_params_list$mu_LI, 100))
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -883,10 +827,11 @@ C_ipm <- C_ipm %>%
            return_sub_kernels = TRUE,
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 1),)
-
+#Lambdas
 lambda(C_ipm,type_lambda = 'all')
 lambda(C_ipm,log = F)
 
+#Kernels
 C.mean.kernel<-mean_kernel(C_ipm)
 
 quartz(8,12)
@@ -895,13 +840,13 @@ plot(C.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(C.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
-
+#Stable size distributions and reproductive values
 
 plot_ipm_sd_rv <- function(ipm_sd, xmin, xmax, ylab){
-  plot(seq(xmin, xmax,length.out=100),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd)),
-       xlab = "SVL (mm)", ylab = ylab, bty="n")
-  for(i in 2:ncol(ipm_sd)){
-    lines(seq(xmin, xmax,length.out=100),ipm_sd[,i],col=rgb(0,0,0,.1))
+  plot(seq(xmin, xmax,length.out=100),ipm_sd[,1],type="l",ylim=c(0,max(ipm_sd[,-ncol(ipm_sd)])),
+       xlab = "SVL (mm)", ylab = ylab, bty="n", col = rgb(0,0,0,0.1))
+  for(i in 2:ncol(ipm_sd)-1){
+    lines(seq(xmin, xmax,length.out=100),ipm_sd[,i],col= rgb(0,0,0,0.1))
   }
 }
 
@@ -912,7 +857,24 @@ plot_ipm_sd_rv(C_ipm_sd$ht_w, 30, all_params_list$mu_LI, "Stable distribution")
 
 C_ipm_rv <- left_ev(C_ipm, iterations = 170)
 plot_ipm_sd_rv(C_ipm_rv$ht_v, 30, all_params_list$mu_LI, "Reproductive value")
+par(mfrow=c(1,1))
 
+#Lambdas IPM x PJS
+quartz(10,10)
+plot(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.3), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==1][-1])
+lines(rho.pradel$`2.5%`[rho.pradel$plot==1][-1], lty = 2)
+lines(rho.pradel$`97.5%`[rho.pradel$plot==1][-1], lty = 2)
+
+quartz(8,8)
+plot(rho.pradel$mean[rho.pradel$plot==1][-1], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==1][-1], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==1][-1])
+
+summary(rho.pradel$mean[rho.pradel$plot==1][-1] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Quadriennial#
@@ -948,7 +910,8 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -985,7 +948,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -994,12 +957,11 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -1013,7 +975,8 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1036,7 +999,8 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100))  
+  define_domains(ht = c(30, all_params_list$mu_LI, 100))
+
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
 
@@ -1061,9 +1025,11 @@ Q_ipm <- Q_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 2),)
 
+#Lambdas
 lambda(Q_ipm,type_lambda = 'all')
 lambda(Q_ipm,log = F)
 
+#Kernels
 Q.mean.kernel<-mean_kernel(Q_ipm)
 
 quartz(8,12)
@@ -1072,6 +1038,7 @@ plot(Q.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(Q.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 quartz(8,12)
 par(mfrow=c(1,2))
 Q_ipm_sd <- right_ev(Q_ipm)
@@ -1083,6 +1050,22 @@ Q_ipm_rv <- left_ev(Q_ipm, iterations = 170)
 plot_ipm_sd_rv(Q_ipm_rv$ht_v, 
                Q_ipm$proto_ipm$domain[[1]][[1]][1], 
                Q_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+par(mfrow=c(1,1))
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.5), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==2][-1])
+
+quartz(h = 8, w = 8)
+plot(rho.pradel$mean[rho.pradel$plot==2][-1], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==2][-1], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==2][-1])
+
+summary(rho.pradel$mean[rho.pradel$plot==2][-1] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ################
 #Early biennial#
@@ -1117,7 +1100,8 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1154,7 +1138,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1163,12 +1147,11 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -1182,7 +1165,8 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1205,7 +1189,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100))  
+  define_domains(ht = c(30, all_params_list$mu_LI, 100))
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1231,9 +1215,11 @@ EB_ipm <- EB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 3),)
 
+#Lambdas
 lambda(EB_ipm,type_lambda = 'all')
 lambda(EB_ipm,log = F)
 
+#Kernels
 EB.mean.kernel<-mean_kernel(EB_ipm)
 
 quartz(8,12)
@@ -1242,6 +1228,7 @@ plot(EB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(EB.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 quartz(8,12)
 par(mfrow=c(1,2))
 EB_ipm_sd <- right_ev(EB_ipm)
@@ -1254,6 +1241,23 @@ plot_ipm_sd_rv(EB_ipm_rv$ht_v,
                EB_ipm$proto_ipm$domain[[1]][[1]][1], 
                EB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
 
+par(mfrow=c(1,1))
+
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.4), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==3][-1])
+
+quartz(8,8)
+plot(rho.pradel$mean[rho.pradel$plot==3][-1], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==3][-1], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==3][-1])
+
+summary(rho.pradel$mean[rho.pradel$plot==3][-1] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Mid biennial#
@@ -1288,7 +1292,8 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1325,7 +1330,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1334,12 +1339,11 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -1353,7 +1357,8 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1376,7 +1381,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100))  
+  define_domains(ht = c(30, all_params_list$mu_LI, 100))
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1402,9 +1407,11 @@ MB_ipm <- MB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 4),)
 
+#Lambdas
 lambda(MB_ipm,type_lambda = 'all')
 lambda(MB_ipm,log = F)
 
+#Kernels
 MB.mean.kernel<-mean_kernel(MB_ipm)
 
 quartz(8,12)
@@ -1413,6 +1420,7 @@ plot(MB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(MB.mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
 
+#Stable size distributions and reproductive values
 quartz(8,12)
 par(mfrow=c(1,2))
 MB_ipm_sd <- right_ev(MB_ipm)
@@ -1424,6 +1432,23 @@ MB_ipm_rv <- left_ev(MB_ipm, iterations = 170)
 plot_ipm_sd_rv(MB_ipm_rv$ht_v, 
                MB_ipm$proto_ipm$domain[[1]][[1]][1], 
                MB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+par(mfrow=c(1,1))
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.4), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==4][-1])
+
+quartz(8,8)
+plot(rho.pradel$mean[rho.pradel$plot==4][-1], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==4][-1], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==1][-1])
+
+summary(rho.pradel$mean[rho.pradel$plot==4][-1] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+
 ###############
 #Late biennial#
 ###############
@@ -1457,7 +1482,8 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
                           rnorm(1, s_mu_slope, 0) * ht_1+
                           rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
-    s_site           =  inv_logit(s_lin_site),
+    s_sigma_site = surv_site - inv_logit(s_lin_site), 
+    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
     
     # Again, we modify the vital rate expression to include "_site".
     
@@ -1494,7 +1520,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     # The F kernel also varies from site to site
     
     name             = "F_site",
-    formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+    formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
     family           = "CC",
     
     # We didn't include a site level effect for probability
@@ -1503,12 +1529,11 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
     r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                           rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+    r_r_site              = inv_logit(r_r_lin),
     
     # We index the seed production expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                               r_f_lin_site +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
     r_n_site         = pois_r(r_n_lin_site),
     r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -1522,7 +1547,8 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                                rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-    r_f_site = pois_r(r_f_lin_site),
+    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
     r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
     data_list        = all_params_list,
     states           = list(c('ht')),
@@ -1545,7 +1571,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
       state_end      = rep("ht", 2)
     )
   ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100))  
+  define_domains(ht = c(30, all_params_list$mu_LI, 100))
 
 # We also append the suffix in define_pop_state(). THis will create a deterministic
 # simulation for every "site"
@@ -1571,11 +1597,11 @@ LB_ipm <- LB_ipm %>%
            uses_par_sets    = TRUE,
            par_set_indices  = list(site = 5),)
 
+#Lambdas
 lambda(LB_ipm,type_lambda = 'all')
 lambda(LB_ipm,log = F)
 
-
-
+#Kernels
 LB.mean.kernel<-mean_kernel(LB_ipm)
 
 quartz(8,12)
@@ -1584,6 +1610,7 @@ plot(LB.mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
 
 plot(LB.mean.kernel$mean_F_site, do_contour=T, col=turbo(1000))
 
+#Stable size distributions and reproductive values
 LB_ipm_sd <- right_ev(LB_ipm)
 plot_ipm_sd_rv(LB_ipm_sd$ht_w, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
@@ -1593,6 +1620,22 @@ LB_ipm_rv <- left_ev(LB_ipm, iterations = 170)
 plot_ipm_sd_rv(LB_ipm_rv$ht_v, 
                LB_ipm$proto_ipm$domain[[1]][[1]][1], 
                LB_ipm$proto_ipm$domain[[1]][[1]][2], "Reproductive value")
+par(mfrow=c(1,1))
+
+#Lambdas IPM x PJS
+quartz(h = 6, w = 8)
+plot(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.3), 
+     bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
+lines(rho.pradel$mean[rho.pradel$plot==5][-1])
+
+quartz(8,8)
+plot(rho.pradel$mean[rho.pradel$plot==5][-1], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+     ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
+
+ccf(rho.pradel$mean[rho.pradel$plot==5][-1], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.pradel$plot==5][-1])
+
+summary(rho.pradel$mean[rho.pradel$plot==5][-1] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 #######################
 #Perturbation analyses#
@@ -1747,7 +1790,14 @@ net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_sit
 net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site)   
 net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site)   
 net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site)   
-net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site)   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site) 
+
+net_repro_rate(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = Q.mean.kernel$mean_P_site, matR = Q.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = EB.mean.kernel$mean_P_site, matR = EB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = MB.mean.kernel$mean_P_site, matR = MB.mean.kernel$mean_F_site, method = "start")   
+net_repro_rate(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean_F_site, method = "start") 
 
 mature_age(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, start = 1)
 mature_age(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, start = 1)
@@ -1768,6 +1818,11 @@ lx <- mpm_to_lx(matU = mean.kernel$mean_P_site, start = 1)
 px <- mpm_to_px(matU = mean.kernel$mean_P_site, start = 1)
 hx <- mpm_to_hx(matU = mean.kernel$mean_P_site, start = 1)
 mx <- mpm_to_mx(matU = mean.kernel$mean_P_site, matR = mean.kernel$mean_F_site, start = 1)
+
+lx.C <- mpm_to_lx(matU = C.mean.kernel$mean_P_site, start = 1)
+px.C <- mpm_to_px(matU = C.mean.kernel$mean_P_site, start = 1)
+hx.C <- mpm_to_hx(matU = C.mean.kernel$mean_P_site, start = 1)
+mx.C <- mpm_to_mx(matU = C.mean.kernel$mean_P_site, matR = C.mean.kernel$mean_F_site, start = 1)
 
 lx.C <- mpm_to_lx(matU = C.mean.kernel$mean_P_site, start = 1)
 px.C <- mpm_to_px(matU = C.mean.kernel$mean_P_site, start = 1)
@@ -1797,7 +1852,7 @@ mx.LB <- mpm_to_mx(matU = LB.mean.kernel$mean_P_site, matR = LB.mean.kernel$mean
 quartz(8,8)
 plot(lx, xlab="Survival time (years)", ylab="Survivorship", type="s", col="black")
 lines(lx.C, type="s", col="forestgreen")
-lines(lx.Q, type="s", col="darkblue")
+lines(lx.Q, type="s", col="darkcyan")
 lines(lx.EB, type="s", col="gold")
 lines(lx.MB, type="s", col="orange")
 lines(lx.LB, type="s", col="red")
@@ -1869,6 +1924,12 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 (life.expect.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 (life.expect.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_mean,  start = 1)))  # mean life expectancy
 
+(life.expect.var.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.MB <- (apply(P_F_MB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+(life.expect.var.LB <- (apply(P_F_LB_ipm$stoch.P, MARGIN = c(3),life_expect_var,  start = 1)))  # mean life expectancy
+
 (longev.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.Q <- (apply(P_F_Q_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
 (longev.EB <- (apply(P_F_EB_ipm$stoch.P, MARGIN = c(3),longevity,  start = 1)))  # longevity
@@ -1883,11 +1944,17 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 
 
 #Reproduction and maturation traits
-(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
-(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
-(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
-(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
-(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+(repro.value.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i])))
+(repro.value.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i])))
+(repro.value.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i])))
+(repro.value.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i])))
+(repro.value.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i])))
+
+(net.repro.rate.C <- sapply(1:170,function(i) net_repro_rate(P_F_C_ipm$stoch.P[,,i],P_F_C_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.Q <- sapply(1:170,function(i) net_repro_rate(P_F_Q_ipm$stoch.P[,,i],P_F_Q_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.EB <- sapply(1:170,function(i) net_repro_rate(P_F_EB_ipm$stoch.P[,,i],P_F_EB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.MB <- sapply(1:170,function(i) net_repro_rate(P_F_MB_ipm$stoch.P[,,i],P_F_MB_ipm$stoch.F[,,i], method = "start")))
+(net.repro.rate.LB <- sapply(1:170,function(i) net_repro_rate(P_F_LB_ipm$stoch.P[,,i],P_F_LB_ipm$stoch.F[,,i], method = "start")))
 
 #Life-table component traits
 (lx.C <- (apply(P_F_C_ipm$stoch.P, MARGIN = c(3),mpm_to_lx,  start = 1)))
@@ -2009,7 +2076,7 @@ isErgodic(LB.mean.kernel$mean_K_site)
 isIrreducible(LB.mean.kernel$mean_K_site)
 isPrimitive(as.matrix(unlist(LB.mean.kernel$mean_K_site),100,100))
 
-#Some are imprimitive!!!
+#Everything okay
 
 #Reactivity (first-timestep amplification) and first-time step attenuation
 (r.up.K <- reac(mean.kernel$mean_K_site, bound = "upper"))
@@ -2180,6 +2247,7 @@ dr.stoch <- function(K, n){
 # (kreiss.low.K.LB.stoch <- unlist(apply(array(unlist(stoch.K.LB),dim = c(100,100,170)), MARGIN = c(3),FUN=  Kreiss, bound = "lower", simplify = F)))
 
 
+par(mfrow=c(1,1))
 Lizpd <- project(mean.kernel$mean_K_site, "diri", time = 12,
                  standard.A = TRUE)
 plot(Lizpd, plottype = "shady", bounds = T, log = "y", bty="n")
@@ -2204,17 +2272,30 @@ Lizpd.LB <- project(LB.mean.kernel$mean_K_site, "diri", time = 12,
                     standard.A = TRUE)
 plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
 
+bounds.ipms <- as.data.frame(rbind(bounds(Lizpd.C),bounds(Lizpd.Q),bounds(Lizpd.EB),
+                     bounds(Lizpd.MB),bounds(Lizpd.LB)))
+
+bounds.ipms$plot <- rep(c(1:5), each = 13)
+bounds.ipms$time <- rep(c(1:13), 5)
+
+ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
+  geom_line()+
+  geom_line(aes(y = V2))+
+  scale_color_viridis_d(option = "H") +
+  labs(x = "Time (months)", y = "Population growth")
 
 (res.lh.param.Cn <- data.frame(species = c(rep("C_nigropunctatum", 850)),
                                plot = rep(c("C", "Q", "EB", "MB", "LB"),each = 170),
                                life.expect = c(life.expect.C, life.expect.Q, life.expect.EB, life.expect.MB, life.expect.LB),
+                               life.expect.var = c(life.expect.var.C, life.expect.var.Q, life.expect.var.EB, life.expect.var.MB, life.expect.var.LB),
                                longev = c(longev.C, longev.Q, longev.EB, longev.MB, longev.LB),
                                gen.time = c(gen.time.C, gen.time.Q, gen.time.EB, gen.time.MB, gen.time.LB),
                                net.repro = c(net.repro.rate.C, net.repro.rate.Q, net.repro.rate.EB, net.repro.rate.MB, net.repro.rate.LB),
+                               repro.value = c(repro.value.C, repro.value.Q, repro.value.EB, repro.value.MB, repro.value.LB),
                                semel = c(semel.C, semel.Q, semel.EB, semel.MB, semel.LB),
                                surv.curv = c(surv.curv.C, surv.curv.Q, surv.curv.EB, surv.curv.MB, surv.curv.LB),
-                               # shape.surv = c(shape.surv.C, shape.surv.Q, shape.surv.EB, shape.surv.MB, shape.surv.LB),
-                               # shape.rep = c(shape.rep.C, shape.rep.Q, shape.rep.EB, shape.rep.MB, shape.rep.LB),
+                               shape.surv = c(shape.surv.C, shape.surv.Q, shape.surv.EB, shape.surv.MB, shape.surv.LB),
+                               shape.rep = c(shape.rep.C, shape.rep.Q, shape.rep.EB, shape.rep.MB, shape.rep.LB),
                                fst.amp = c(r.up.C.K.stoch, r.up.Q.K.stoch, r.up.EB.K.stoch, r.up.MB.K.stoch, r.up.LB.K.stoch),
                                fst.att = c(r.low.C.K.stoch, r.low.Q.K.stoch, r.low.EB.K.stoch, r.low.MB.K.stoch, r.low.LB.K.stoch),
                                # max.amp = c(max.up.C.K.stoch, max.up.Q.K.stoch, max.up.EB.K.stoch, max.up.MB.K.stoch, max.up.LB.K.stoch),
@@ -2225,15 +2306,154 @@ plot(Lizpd.LB, plottype = "shady", bounds = T, log = "y", bty="n")
                                recovery.time = c(dr.K.C.stoch$t, dr.K.Q.stoch$t, dr.K.EB.stoch$t, dr.K.MB.stoch$t, dr.K.LB.stoch$t)
 ))
 
-cor(res.lh.param.Cn[,c(3:8)],method="spearman") 
-cor(res.lh.param.Cn[,c(9:12)],method="spearman",use="na.or.complete")   
-
+cor(res.lh.param.Cn[,c(3:12)],use="na.or.complete") 
+cor(res.lh.param.Cn[,c(13:16)],use="na.or.complete")     
 saveRDS(res.lh.param.Cn, "res.lh.param.Cn.rds")
 
 #################################
 #Parameter perturbation analyses#
 #################################
-res_param_perturb <- function(plot,mu_LI_plot,nkernel){
+rm(list = ls())
+
+Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
+cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
+
+cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
+
+
+# print(ipm2.Cnigro)
+rm(cjs.Cnigro)
+gc()
+# ipm2.Cnigro.df <- MCMCsummary(ipm2.Cnigro.samples)
+
+# write.csv(ipm2.Cnigro.df, "results.ipm2.Cnigro.df.csv")
+ipm2.Cnigro.df <- readRDS("results_ipm2_Cnigro_df.rds")
+cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
+pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")
+
+#Functions
+##########
+
+inv_logit <- function(x) {
+  return(
+    1/(1 + exp(-(x)))
+  )
+}
+
+
+pois_r <- function(x) {
+  return(
+    exp(x)
+  )
+}
+
+#Function to estimate size from age
+age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-inv_logit(K)^x)
+
+#Function to estimate age from size
+size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/log(inv_logit(K))
+
+#Function to estimate size in t1 from size in t0
+sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
+
+#Variance in growth
+
+sd_growth <- function(x,mu.L0,mu.LI,site){
+  mean.values <- sizet0_t1(x,mu.L0,
+                           mu.LI,
+                           unlist(cjs.Cnigro.samples[][[2]][,paste0('mu.K[',site,']')]))
+  return(sd(mean.values,na.rm=T))
+}
+
+
+my_funs <- list(inv_logit   = inv_logit,
+                pois_r      = pois_r,
+                sizet0_t1 = sizet0_t1,
+                sd_growth = sd_growth)
+
+f.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "f", 
+                                                x = row.names(pradel.Cnigro.df))[1:850],])
+tail(f.pradel)
+
+phi.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "phi", 
+                                                  x = row.names(pradel.Cnigro.df))[1:850],])
+tail(phi.pradel)
+
+rho.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "rho", 
+                                                  x = row.names(pradel.Cnigro.df))[1:845],])
+head(rho.pradel)
+tail(rho.pradel)
+
+
+f.pradel$plot <- rep(1:5,170)
+f.pradel$time <- rep(1:170, each = 5)
+
+phi.pradel$plot <- rep(1:5,170)
+phi.pradel$time <- rep(1:170, each = 5)
+
+
+surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
+recr.pradel[,170] <- 0.0001
+env.states <- array(c(Cnigropunctatum.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+
+sample_env <- function(env_states, site, iteration) {
+  
+  out <- as.list(env_states[site, iteration, ])
+  names(out) <- c(paste0("tmed2m_",site), 
+                  paste0("RHmax_",site),  
+                  paste0("sol_",site),    
+                  paste0("tmed0cm_",site),
+                  paste0("tmin0cm_",site),
+                  paste0("precip_",site) ,
+                  paste0("perf_",site)   ,
+                  paste0("ha_90_",site)  ,
+                  paste0("fire_" ,site)  ,
+                  paste0("TSLF_",site)   ,
+                  paste0("surv_",site)   ,
+                  paste0("f_",site))
+  
+  
+  return(out)
+  
+}
+
+stoch_K <- function(ipm,sites,time){
+  stoch.K <- array(0,dim = c(100,100,sites,time))
+  seq.t <- seq(0,(sites*time*2)-(sites*2),sites*2)
+  ipm_array <- array(unlist(ipm$sub_kernels),dim=c(100,100,sites*time*2))
+  #stoch.K.list <- list()
+  
+  for(j in 1:time){
+    
+    for(i in 1:sites){
+      stoch.K[,,i,j] <- ipm_array[,,i+seq.t[j]] + ipm_array[,,(i)+(sites+seq.t[j])]
+      
+    }
+  }
+  list.K <- apply(stoch.K,MARGIN = c(1,2),FUN=c)
+  list.K <- aperm(list.K,c(2,3,1))
+  list.K2 <- list()
+  for(i in 1:(sites*time)){
+    list.K2[[i]] <- list.K[,,i] 
+  }
+  return(list.K2)
+}
+
+dr.stoch <- function(K, n){
+  dr.K.stoch <- apply(array(unlist(K),dim = c(100,100,n)), MARGIN = c(3), FUN =  dr , return.time = T)
+  dr.K.stoch.dr <- dr.K.stoch.t<- rep(NA, n)
+  for(i in 1:n){
+    dr.K.stoch.dr[i] <- dr.K.stoch[[i]]$dr
+    dr.K.stoch.t[i] <- dr.K.stoch[[i]]$t
+    dr.K.stoch.list <- list(dr = dr.K.stoch.dr, t = dr.K.stoch.t)
+  }
+  return(dr.K.stoch.list)
+}
+
+#Function to perform parameter perturbation
+
+res_param_perturb <- function(plot, nkernel){
   add.s <- seq(0.0,0.01,0.001)
   ord <- array(c(rep(1,11),rep(0,30*11),
                  rep(0,11),rep(1,11),rep(0,29*11),
@@ -2275,87 +2495,48 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       
       fixed_list <- list(
-        s_mu_slope   = ipm2.Cnigro.df['beta.phi','mean']+ add.s[j]*ord[j,12,i],    #survival slope
-        s_mu_slope2   = ipm2.Cnigro.df['beta2.phi','mean']+ add.s[j]*ord[j,13,i],    #survival slope
-        
-        s_sd_slope   = ipm2.Cnigro.df['beta.phi','sd'],    #survival slope
-        s_sd_slope2  = ipm2.Cnigro.df['beta2.phi','sd'],    #survival slope
+        s_mu_slope   = cjs.Cnigro.df['beta.phi','Mean']+ add.s[j]*ord[j,12,i],    #survival slope
+        s_mu_slope2  = cjs.Cnigro.df['beta2.phi','Mean']+ add.s[j]*ord[j,13,i],    #survival quadratic slope
         
         
         #Environmental slopes for survival
-        s_mu_tmed2m  = ipm2.Cnigro.df['betaphiJS[1]','mean'] + add.s[j]*ord[j,2,i],
-        s_mu_RHmax   = ipm2.Cnigro.df['betaphiJS[2]','mean']+ add.s[j] *ord[j,3,i],
-        s_mu_sol     = ipm2.Cnigro.df['betaphiJS[3]','mean']+ add.s[j] *ord[j,4,i],
-        s_mu_tmed0cm = ipm2.Cnigro.df['betaphiJS[4]','mean']+ add.s[j]*ord[j,5,i],
-        s_mu_tmin0cm = ipm2.Cnigro.df['betaphiJS[5]','mean']+ add.s[j]*ord[j,6,i],
-        s_mu_precip  = ipm2.Cnigro.df['betaphiJS[6]','mean']+ add.s[j]*ord[j,7,i],
-        s_mu_perf    = ipm2.Cnigro.df['betaphiJS[7]','mean']+ add.s[j]*ord[j,8,i],
-        s_mu_ha_90   = ipm2.Cnigro.df['betaphiJS[8]','mean']+ add.s[j]*ord[j,9,i],
-        s_mu_fire    = ipm2.Cnigro.df['betaphiJS[9]','mean']+ add.s[j]*ord[j,10,i],
-        s_mu_TSLF    = ipm2.Cnigro.df['betaphiJS[10]','mean']+ add.s[j]*ord[j,11,i],
-        
-        s_sd_tmed2m  = ipm2.Cnigro.df['betaphiJS[1]','sd'],
-        s_sd_RHmax   = ipm2.Cnigro.df['betaphiJS[2]','sd'],
-        s_sd_sol     = ipm2.Cnigro.df['betaphiJS[3]','sd'],
-        s_sd_tmed0cm = ipm2.Cnigro.df['betaphiJS[4]','sd'],
-        s_sd_tmin0cm = ipm2.Cnigro.df['betaphiJS[5]','sd'],
-        s_sd_precip  = ipm2.Cnigro.df['betaphiJS[6]','sd'],
-        s_sd_perf    = ipm2.Cnigro.df['betaphiJS[7]','sd'],
-        s_sd_ha_90   = ipm2.Cnigro.df['betaphiJS[8]','sd'],
-        s_sd_fire    = ipm2.Cnigro.df['betaphiJS[9]','sd'],
-        s_sd_TSLF    = ipm2.Cnigro.df['betaphiJS[10]','sd'],
-        
-        sigma.phiJS = ipm2.Cnigro.df['sigma.phiJS','mean'],
+        s_mu_tmed2m  = pradel.Cnigro.df['betaphiJS[1]','mean'] + add.s[j]*ord[j,2,i],
+        s_mu_RHmax   = pradel.Cnigro.df['betaphiJS[2]','mean']+ add.s[j] *ord[j,3,i],
+        s_mu_sol     = pradel.Cnigro.df['betaphiJS[3]','mean']+ add.s[j] *ord[j,4,i],
+        s_mu_tmed0cm = pradel.Cnigro.df['betaphiJS[4]','mean']+ add.s[j]*ord[j,5,i],
+        s_mu_tmin0cm = pradel.Cnigro.df['betaphiJS[5]','mean']+ add.s[j]*ord[j,6,i],
+        s_mu_precip  = pradel.Cnigro.df['betaphiJS[6]','mean']+ add.s[j]*ord[j,7,i],
+        s_mu_perf    = pradel.Cnigro.df['betaphiJS[7]','mean']+ add.s[j]*ord[j,8,i],
+        s_mu_ha_90   = pradel.Cnigro.df['betaphiJS[8]','mean']+ add.s[j]*ord[j,9,i],
+        s_mu_fire    = pradel.Cnigro.df['betaphiJS[9]','mean']+ add.s[j]*ord[j,10,i],
+        s_mu_TSLF    = pradel.Cnigro.df['betaphiJS[10]','mean']+ add.s[j]*ord[j,11,i],
         
         #Environmental slopes for reproduction
-        r_f_mu_tmed2m  = ipm2.Cnigro.df['betaf[1]','mean']+ add.s[j]*ord[j,14,i],
-        r_f_mu_RHmax   = ipm2.Cnigro.df['betaf[2]','mean']+ add.s[j]*ord[j,15,i],
-        r_f_mu_sol     = ipm2.Cnigro.df['betaf[3]','mean']+ add.s[j]*ord[j,16,i],
-        r_f_mu_tmed0cm = ipm2.Cnigro.df['betaf[4]','mean']+ add.s[j]*ord[j,17,i],
-        r_f_mu_tmin0cm = ipm2.Cnigro.df['betaf[5]','mean']+ add.s[j]*ord[j,18,i],
-        r_f_mu_precip  = ipm2.Cnigro.df['betaf[6]','mean']+ add.s[j]*ord[j,19,i],
-        r_f_mu_perf    = ipm2.Cnigro.df['betaf[7]','mean']+ add.s[j]*ord[j,20,i],
-        r_f_mu_ha_90   = ipm2.Cnigro.df['betaf[8]','mean']+ add.s[j]*ord[j,21,i],
-        r_f_mu_fire    = ipm2.Cnigro.df['betaf[9]','mean']+ add.s[j]*ord[j,22,i],
-        r_f_mu_TSLF    = ipm2.Cnigro.df['betaf[10]','mean']+ add.s[j]*ord[j,23,i],
-        
-        r_f_sd_tmed2m  = ipm2.Cnigro.df['betaf[1]','sd'],
-        r_f_sd_RHmax   = ipm2.Cnigro.df['betaf[2]','sd'],
-        r_f_sd_sol     = ipm2.Cnigro.df['betaf[3]','sd'],
-        r_f_sd_tmed0cm = ipm2.Cnigro.df['betaf[4]','sd'],
-        r_f_sd_tmin0cm = ipm2.Cnigro.df['betaf[5]','sd'],
-        r_f_sd_precip  = ipm2.Cnigro.df['betaf[6]','sd'],
-        r_f_sd_perf    = ipm2.Cnigro.df['betaf[7]','sd'],
-        r_f_sd_ha_90   = ipm2.Cnigro.df['betaf[8]','sd'],
-        r_f_sd_fire    = ipm2.Cnigro.df['betaf[9]','sd'],
-        r_f_sd_TSLF    = ipm2.Cnigro.df['betaf[10]','sd'],
-        
-        sigma.f = ipm2.Cnigro.df['sigma.f','mean'],
-        
+        r_f_mu_tmed2m  = pradel.Cnigro.df['betaf[1]','mean']+ add.s[j]*ord[j,14,i],
+        r_f_mu_RHmax   = pradel.Cnigro.df['betaf[2]','mean']+ add.s[j]*ord[j,15,i],
+        r_f_mu_sol     = pradel.Cnigro.df['betaf[3]','mean']+ add.s[j]*ord[j,16,i],
+        r_f_mu_tmed0cm = pradel.Cnigro.df['betaf[4]','mean']+ add.s[j]*ord[j,17,i],
+        r_f_mu_tmin0cm = pradel.Cnigro.df['betaf[5]','mean']+ add.s[j]*ord[j,18,i],
+        r_f_mu_precip  = pradel.Cnigro.df['betaf[6]','mean']+ add.s[j]*ord[j,19,i],
+        r_f_mu_perf    = pradel.Cnigro.df['betaf[7]','mean']+ add.s[j]*ord[j,20,i],
+        r_f_mu_ha_90   = pradel.Cnigro.df['betaf[8]','mean']+ add.s[j]*ord[j,21,i],
+        r_f_mu_fire    = pradel.Cnigro.df['betaf[9]','mean']+ add.s[j]*ord[j,22,i],
+        r_f_mu_TSLF    = pradel.Cnigro.df['betaf[10]','mean']+ add.s[j]*ord[j,23,i],
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','mean']+ add.s[j]*ord[j,24,i],
-        r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','mean']+ add.s[j]*ord[j,25,i],  
-        r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
-        
-        r_r_sd_int   = ipm2.Cnigro.df['alpha.prep','sd'],
-        r_r_sd_slope = ipm2.Cnigro.df['beta1.prep','sd'],  
-        r_r_sd_slope2 = ipm2.Cnigro.df['beta2.prep','sd'], 
-        
+        r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','Mean']+ add.s[j]*ord[j,24,i],
+        r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','Mean']+ add.s[j]*ord[j,25,i],  
+        r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','Mean']+ add.s[j]*ord[j,26,i], 
+
         #Number of eggs/embryos
-        r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','mean']+ add.s[j]*ord[j,27,i], 
-        r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','mean']+ add.s[j]*ord[j,28,i],   
-        #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','mean'],  
-        
-        r_n_sd_int   = ipm2.Cnigro.df['alpha.fec','sd'], 
-        r_n_sd_slope = ipm2.Cnigro.df['beta1.fec','sd'],   
-        #r_n_sd_slope2 =ipm2.Cnigro.df['beta2.fec','sd'],  
-        
+        r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','Mean']+ add.s[j]*ord[j,27,i], 
+        r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','Mean']+ add.s[j]*ord[j,28,i],   
+        #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','Mean'],  
         
         #Size of newborns
         mu_rd     = Cnigropunctatum.data$mu.L0,   
         sd_rd     = sqrt(Cnigropunctatum.data$tau.L0),
-        mu_LI = ipm2.Cnigro.df['mu.LI','mean']
+        mu_LI = cjs.Cnigro.df['mu.LI','Mean']
         
       )
       
@@ -2365,52 +2546,28 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       # First, we create vector of values that each random component can take.
       s_params  <- list(
-        s_g_mu_int_1 = ipm2.Cnigro.df['alpha.phiJS[1]','mean'] + add.s[j]*ord[j,29,i],
-        s_g_mu_int_2 = ipm2.Cnigro.df['alpha.phiJS[2]','mean']+ add.s[j]*ord[j,29,i],
-        s_g_mu_int_3 = ipm2.Cnigro.df['alpha.phiJS[3]','mean']+ add.s[j]*ord[j,29,i],
-        s_g_mu_int_4 = ipm2.Cnigro.df['alpha.phiJS[4]','mean']+ add.s[j]*ord[j,29,i],
-        s_g_mu_int_5 = ipm2.Cnigro.df['alpha.phiJS[5]','mean']+ add.s[j]*ord[j,29,i],
-        
-        s_g_sd_int_1 = ipm2.Cnigro.df['alpha.phiJS[1]','sd'],
-        s_g_sd_int_2 = ipm2.Cnigro.df['alpha.phiJS[2]','sd'],
-        s_g_sd_int_3 = ipm2.Cnigro.df['alpha.phiJS[3]','sd'],
-        s_g_sd_int_4 = ipm2.Cnigro.df['alpha.phiJS[4]','sd'],
-        s_g_sd_int_5 = ipm2.Cnigro.df['alpha.phiJS[5]','sd']
+        s_g_mu_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'] + add.s[j]*ord[j,29,i],
+        s_g_mu_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']+ add.s[j]*ord[j,29,i],
+        s_g_mu_int_3 = pradel.Cnigro.df['alpha.phiJS[3]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']+ add.s[j]*ord[j,29,i],
+        s_g_mu_int_4 = pradel.Cnigro.df['alpha.phiJS[4]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']+ add.s[j]*ord[j,29,i],
+        s_g_mu_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']+ add.s[j]*ord[j,29,i]
       )
       
       g_params <- list(
         
-        g_g_mu_K_1 = ipm2.Cnigro.df['mu.K[1]','mean'],
-        g_g_mu_K_2 = ipm2.Cnigro.df['mu.K[2]','mean'],
-        g_g_mu_K_3 = ipm2.Cnigro.df['mu.K[3]','mean'],
-        g_g_mu_K_4 = ipm2.Cnigro.df['mu.K[4]','mean'],
-        g_g_mu_K_5 = ipm2.Cnigro.df['mu.K[5]','mean'],
-        
-        g_g_sd_K_1 = ipm2.Cnigro.df['mu.K[1]','sd']+ add.s[j]*ord[j,30,i],
-        g_g_sd_K_2 = ipm2.Cnigro.df['mu.K[2]','sd']+ add.s[j]*ord[j,30,i],
-        g_g_sd_K_3 = ipm2.Cnigro.df['mu.K[3]','sd']+ add.s[j]*ord[j,30,i],
-        g_g_sd_K_4 = ipm2.Cnigro.df['mu.K[4]','sd']+ add.s[j]*ord[j,30,i],
-        g_g_sd_K_5 = ipm2.Cnigro.df['mu.K[5]','sd']+ add.s[j]*ord[j,30,i]
+        g_g_mu_K_1 = cjs.Cnigro.df['mu.K[1]','Mean']+ add.s[j]*ord[j,30,i],
+        g_g_mu_K_2 = cjs.Cnigro.df['mu.K[2]','Mean']+ add.s[j]*ord[j,30,i],
+        g_g_mu_K_3 = cjs.Cnigro.df['mu.K[3]','Mean']+ add.s[j]*ord[j,30,i],
+        g_g_mu_K_4 = cjs.Cnigro.df['mu.K[4]','Mean']+ add.s[j]*ord[j,30,i],
+        g_g_mu_K_5 = cjs.Cnigro.df['mu.K[5]','Mean']+ add.s[j]*ord[j,30,i]
       )
       
       r_params <- list(
-        r_f_mu_int_1 = ipm2.Cnigro.df['alpha.f[1]','mean']+ add.s[j]*ord[j,31,i],
-        r_f_mu_int_2 = ipm2.Cnigro.df['alpha.f[2]','mean']+ add.s[j]*ord[j,31,i],
-        r_f_mu_int_3 = ipm2.Cnigro.df['alpha.f[3]','mean']+ add.s[j]*ord[j,31,i],
-        r_f_mu_int_4 = ipm2.Cnigro.df['alpha.f[4]','mean']+ add.s[j]*ord[j,31,i],
-        r_f_mu_int_5 = ipm2.Cnigro.df['alpha.f[5]','mean']+ add.s[j]*ord[j,31,i],
-        
-        r_f_sd_int_1 = ipm2.Cnigro.df['alpha.f[1]','sd'],
-        r_f_sd_int_2 = ipm2.Cnigro.df['alpha.f[2]','sd'],
-        r_f_sd_int_3 = ipm2.Cnigro.df['alpha.f[3]','sd'],
-        r_f_sd_int_4 = ipm2.Cnigro.df['alpha.f[4]','sd'],
-        r_f_sd_int_5 = ipm2.Cnigro.df['alpha.f[5]','sd'],
-        
-        r_p_mu_int_1 = ipm2.Cnigro.df['alpha.pJS[1]','mean'],
-        r_p_mu_int_2 = ipm2.Cnigro.df['alpha.pJS[2]','mean'],
-        r_p_mu_int_3 = ipm2.Cnigro.df['alpha.pJS[3]','mean'],
-        r_p_mu_int_4 = ipm2.Cnigro.df['alpha.pJS[4]','mean'],
-        r_p_mu_int_5 = ipm2.Cnigro.df['alpha.pJS[5]','mean']
+        r_f_mu_int_1 = pradel.Cnigro.df['alpha.f[1]','mean']+ add.s[j]*ord[j,31,i],
+        r_f_mu_int_2 = pradel.Cnigro.df['alpha.f[2]','mean']+ add.s[j]*ord[j,31,i],
+        r_f_mu_int_3 = pradel.Cnigro.df['alpha.f[3]','mean']+ add.s[j]*ord[j,31,i],
+        r_f_mu_int_4 = pradel.Cnigro.df['alpha.f[4]','mean']+ add.s[j]*ord[j,31,i],
+        r_f_mu_int_5 = pradel.Cnigro.df['alpha.f[5]','mean']+ add.s[j]*ord[j,31,i]
       )
       
       all_params_list <- c(fixed_list, g_params, s_params, r_params)
@@ -2432,21 +2589,21 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           # into its own expression as well. This might help keep track of things.
           # Survival is indexed by site as well.
           
-          s_lin_site       = (rnorm(1,s_g_mu_int_site ,0) + 
+          s_lin_site       = (rnorm(1,s_g_mu_int_site,0) + 
                                 rnorm(1, s_mu_tmed2m , 0) * tmed2m_site +
-                                rnorm(1, s_mu_RHmax , 0) * RHmax_site +
-                                rnorm(1, s_mu_sol   , 0) * sol_site +
-                                rnorm(1, s_mu_tmed0cm , 0) * tmed0cm_site +
-                                rnorm(1, s_mu_tmin0cm , 0) * tmin0cm_site+
+                                rnorm(1, s_mu_RHmax  , 0) * RHmax_site +
+                                rnorm(1, s_mu_sol    , 0) * sol_site +
+                                rnorm(1, s_mu_tmed0cm, 0) * tmed0cm_site +
+                                rnorm(1, s_mu_tmin0cm, 0) * tmin0cm_site+
                                 rnorm(1, s_mu_precip , 0) * precip_site+
                                 rnorm(1, s_mu_perf   , 0) * perf_site+
                                 rnorm(1, s_mu_ha_90  , 0) * ha_90_site+
                                 rnorm(1, s_mu_fire   , 0) * fire_site+
                                 rnorm(1, s_mu_TSLF   , 0) * TSLF_site+
-                                rnorm(1, s_mu_slope, 0) * ht_1 +
-                                rnorm(1, s_mu_slope2, 0) * (ht_1^2) +
-                                rnorm(1,0,sigma.phiJS)),
-          s_site           =  inv_logit(s_lin_site),
+                                rnorm(1, s_mu_slope, 0) * ht_1+
+                                rnorm(1, s_mu_slope2, 0) * (ht_1^2)),
+          s_sigma_site = surv_site - inv_logit(s_lin_site), 
+          s_site           =  inv_logit(s_lin_site) + s_sigma_site,
           
           # Again, we modify the vital rate expression to include "_site".
           
@@ -2483,7 +2640,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           # The F kernel also varies from site to site
           
           name             = "F_site",
-          formula          = (r_f_site/r_n_site) * r_n_site*r_r_site * r_d ,
+          formula          = ((1-(surv_site/(surv_site+r_f_site)))+r_r_site) * r_n_site * r_d,
           family           = "CC",
           
           # We didn't include a site level effect for probability
@@ -2492,12 +2649,11 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
           r_r_lin          = (rnorm(1,r_r_mu_int,0) + 
                                 rnorm(1, r_r_mu_slope, 0) * ht_1+ 
                                 rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
-          r_r_site              = inv_logit(r_r_lin)/inv_logit(r_p_mu_int_site),
+          r_r_site              = inv_logit(r_r_lin),
           
           # We index the seed production expression with the site effect
           
           r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
-                                     r_f_lin_site +
                                      rnorm(1,r_n_mu_slope,0) * ht_1),
           r_n_site         = pois_r(r_n_lin_site),
           r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, 0) +
@@ -2511,7 +2667,8 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
                                      rnorm(1, r_f_mu_ha_90  ,0) * ha_90_site+
                                      rnorm(1, r_f_mu_fire   ,0) * fire_site+
                                      rnorm(1, r_f_mu_TSLF   ,0) * TSLF_site),
-          r_f_site = pois_r(r_f_lin_site),
+          r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
+          r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
           r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
           data_list        = all_params_list,
           states           = list(c('ht')),
@@ -2534,7 +2691,7 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
             state_end      = rep("ht", 2)
           )
         ) %>%
-        define_domains(ht = c(30, mu_LI_plot, nkernel)) 
+        define_domains(ht = c(30, all_params_list$mu_LI, nkernel))
       
       # We also append the suffix in define_pop_state(). THis will create a deterministic
       # simulation for every "site"
@@ -2571,11 +2728,11 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
   return(res.sens)
 }
 
-res.Cnigro.param.sens.C <- res_param_perturb(1, all_params_list$mu_LI, 100)
-res.Cnigro.param.sens.Q <- res_param_perturb(2, all_params_list$mu_LI, 100)
-res.Cnigro.param.sens.EB <- res_param_perturb(3, all_params_list$mu_LI, 100)
-res.Cnigro.param.sens.MB <- res_param_perturb(4, all_params_list$mu_LI, 100)
-res.Cnigro.param.sens.LB <- res_param_perturb(5, all_params_list$mu_LI, 100)
+res.Cnigro.param.sens.C <- res_param_perturb(1, 100)
+res.Cnigro.param.sens.Q <- res_param_perturb(2, 100)
+res.Cnigro.param.sens.EB <- res_param_perturb(3, 100)
+res.Cnigro.param.sens.MB <- res_param_perturb(4, 100)
+res.Cnigro.param.sens.LB <- res_param_perturb(5, 100)
 
 saveRDS(res.Cnigro.param.sens.C,"res.Cnigro.param.sens.C.rds")
 saveRDS(res.Cnigro.param.sens.Q,"res.Cnigro.param.sens.Q.rds")
@@ -2583,17 +2740,57 @@ saveRDS(res.Cnigro.param.sens.EB,"res.Cnigro.param.sens.EB.rds")
 saveRDS(res.Cnigro.param.sens.MB,"res.Cnigro.param.sens.MB.rds")
 saveRDS(res.Cnigro.param.sens.LB,"res.Cnigro.param.sens.LB.rds")
 
+res.Cnigro.param.sens.C  <- readRDS("res.Cnigro.param.sens.C.rds")
+res.Cnigro.param.sens.Q  <- readRDS("res.Cnigro.param.sens.Q.rds")
+res.Cnigro.param.sens.EB <- readRDS("res.Cnigro.param.sens.EB.rds")
+res.Cnigro.param.sens.MB <- readRDS("res.Cnigro.param.sens.MB.rds")
+res.Cnigro.param.sens.LB <- readRDS("res.Cnigro.param.sens.LB.rds")
+
 sens.res <- function(res.array){
-  add.s <- seq(0.001,0.01,0.001)
-  res.sens <- array(NA, dim = c(10,31))
-  mean.res.array <- apply(res.array,MARGIN =c(2,3),mean,na.rm=T)
-  for(j in 1:10){
-    for(k in 1:31){
-      res.sens[j,k] <- (mean.res.array[j,k] - mean(res.array[,,c(1)]))/add.s[j]
+  add.s <- seq(0,0.01,0.001)
+  res.sens <- array(NA, dim = c(169,10,31))
+  for(i in 1:169){
+    for(j in 2:11){
+      for(k in 1:31){
+      res.sens[i,j-1,k] <- (res.array[i,j,k] - res.array[i,1,k]) / add.s[j]
     }
   }
-  return(apply(res.sens, MARGIN = c(2), mean, na.rm=T))
+  }
+  return(data.frame(X1 = c(res.sens[,,1]),
+                    X2 = c(res.sens[,,2]),
+                    X3 = c(res.sens[,,3]),
+                    X4 = c(res.sens[,,4]),
+                    X5 = c(res.sens[,,5]),
+                    X6 = c(res.sens[,,6]),
+                    X7 = c(res.sens[,,7]),
+                    X8 = c(res.sens[,,8]),
+                    X9 = c(res.sens[,,9]),
+                    X10 = c(res.sens[,,10]),
+                    X11 = c(res.sens[,,11]),
+                    X12 = c(res.sens[,,12]),
+                    X13 = c(res.sens[,,13]),
+                    X14 = c(res.sens[,,14]),
+                    X15 = c(res.sens[,,15]),
+                    X16 = c(res.sens[,,16]),
+                    X17 = c(res.sens[,,17]),
+                    X18 = c(res.sens[,,18]),
+                    X19 = c(res.sens[,,19]),
+                    X20 = c(res.sens[,,20]),
+                    X21 = c(res.sens[,,21]),
+                    X22 = c(res.sens[,,22]),
+                    X23 = c(res.sens[,,23]),
+                    X24 = c(res.sens[,,24]),
+                    X25 = c(res.sens[,,25]),
+                    X26 = c(res.sens[,,26]),
+                    X27 = c(res.sens[,,27]),
+                    X28 = c(res.sens[,,28]),
+                    X29 = c(res.sens[,,29]),
+                    X30 = c(res.sens[,,30]),
+                    X31 = c(res.sens[,,31])
+                    )
+         )
 }
+
 
 (sens.Cnigro.fst.amp.C <- sens.res(log10(res.Cnigro.param.sens.C$fst.amp)))
 (sens.Cnigro.fst.amp.Q <- sens.res(log10(res.Cnigro.param.sens.Q$fst.amp)))
@@ -2601,11 +2798,11 @@ sens.res <- function(res.array){
 (sens.Cnigro.fst.amp.MB <- sens.res(log10(res.Cnigro.param.sens.MB$fst.amp)))
 (sens.Cnigro.fst.amp.LB <- sens.res(log10(res.Cnigro.param.sens.LB$fst.amp)))
 
-(sens.Cnigro.fst.att.C <- sens.res(log10(res.Cnigro.param.sens.C$fst.att+1)))
-(sens.Cnigro.fst.att.Q <- sens.res(log10(res.Cnigro.param.sens.Q$fst.att+1)))
-(sens.Cnigro.fst.att.EB <- sens.res(log10(res.Cnigro.param.sens.EB$fst.att)))
-(sens.Cnigro.fst.att.MB <- sens.res(log10(res.Cnigro.param.sens.MB$fst.att)))
-(sens.Cnigro.fst.att.LB <- sens.res(log10(res.Cnigro.param.sens.LB$fst.att)))
+(sens.Cnigro.fst.att.C <- sens.res(res.Cnigro.param.sens.C$fst.att))
+(sens.Cnigro.fst.att.Q <- sens.res(res.Cnigro.param.sens.Q$fst.att))
+(sens.Cnigro.fst.att.EB <- sens.res(res.Cnigro.param.sens.EB$fst.att))
+(sens.Cnigro.fst.att.MB <- sens.res(res.Cnigro.param.sens.MB$fst.att))
+(sens.Cnigro.fst.att.LB <- sens.res(res.Cnigro.param.sens.LB$fst.att))
 
 (sens.Cnigro.recov.t.C <- sens.res(res.Cnigro.param.sens.C$recov.t))
 (sens.Cnigro.recov.t.Q <- sens.res(res.Cnigro.param.sens.Q$recov.t))
@@ -2613,10 +2810,200 @@ sens.res <- function(res.array){
 (sens.Cnigro.recov.t.MB <- sens.res(res.Cnigro.param.sens.MB$recov.t))
 (sens.Cnigro.recov.t.LB <- sens.res(res.Cnigro.param.sens.LB$recov.t))
 
-quartz(8,12)
+#Summary statistics
+library(psych)
+sens.Cnigro.fst.amp.summary <- print(describe(rbind(sens.Cnigro.fst.amp.C, 
+              sens.Cnigro.fst.amp.Q, 
+              sens.Cnigro.fst.amp.EB,
+              sens.Cnigro.fst.amp.MB,
+              sens.Cnigro.fst.amp.LB),
+              quant = c(0.25, 0.75)),3)
+
+
+write.csv(sens.Cnigro.fst.amp.summary , "sens_Cnigro_fst_amp_summary.csv")
+
+sens.Cnigro.fst.att.summary <- print(describe(rbind(sens.Cnigro.fst.att.C, 
+                                             sens.Cnigro.fst.att.Q, 
+                                             sens.Cnigro.fst.att.EB,
+                                             sens.Cnigro.fst.att.MB,
+                                             sens.Cnigro.fst.att.LB),
+                                             quant = c(0.25, 0.75)),3)
+
+write.csv(sens.Cnigro.fst.att.summary , "sens_Cnigro_fst_att_summary.csv")
+
+sens.Cnigro.recov.t.summary <- print(describe(rbind(sens.Cnigro.recov.t.C, 
+                                             sens.Cnigro.recov.t.Q, 
+                                             sens.Cnigro.recov.t.EB,
+                                             sens.Cnigro.recov.t.MB,
+                                             sens.Cnigro.recov.t.LB),
+                                             quant = c(0.25, 0.75)),3)
+
+write.csv(sens.Cnigro.recov.t.summary , "sens_Cnigro_recov_t_summary.csv")
+
+#Plots
+
+#Resilience x Perturbation magnitude
+quartz(height = 8, width = 12)
+fst.amp.Cnigro.param.sens.mean <- (res.Cnigro.param.sens.C$fst.amp+
+                                     res.Cnigro.param.sens.Q$fst.amp +
+                                     res.Cnigro.param.sens.EB$fst.amp+
+                                     res.Cnigro.param.sens.MB$fst.amp+
+                                     res.Cnigro.param.sens.LB$fst.amp)/5
+
+
+(fst.amp.Cnigro.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                             log10(apply(fst.amp.Cnigro.param.sens.mean[,,c(which(sens.Cnigro.fst.amp.summary$mean!=0))], 
+                                                         MARGIN = c(2,3), mean))))
+
+fst.amp.Cnigro.param.sens.mean <- pivot_longer(data = fst.amp.Cnigro.param.sens.mean, 
+                                              cols = `X1`:`X6`,
+                                              names_to = "parameter",
+                                              values_to = "compensation")
+quartz(height = 6, width = 8)
+ggplot(fst.amp.Cnigro.param.sens.mean,
+       aes(x = perturb, y = compensation, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Cnigro.fst.amp.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Compensation")
+
+fst.att.Cnigro.param.sens.mean <- (res.Cnigro.param.sens.C$fst.att+
+                                     res.Cnigro.param.sens.Q$fst.att +
+                                     res.Cnigro.param.sens.EB$fst.att+
+                                     res.Cnigro.param.sens.MB$fst.att+
+                                     res.Cnigro.param.sens.LB$fst.att)/5
+
+(fst.att.Cnigro.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(fst.att.Cnigro.param.sens.mean[,,c(which(sens.Cnigro.fst.att.summary$mean!=0))], 
+                                                          MARGIN = c(2,3), mean)))
+
+fst.att.Cnigro.param.sens.mean <- pivot_longer(data = fst.att.Cnigro.param.sens.mean, 
+                                               cols = `X1`:`X6`,
+                                               names_to = "parameter",
+                                               values_to = "resistance")
+quartz(height = 6, width = 8)
+ggplot(fst.att.Cnigro.param.sens.mean,
+       aes(x = perturb, y = resistance, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Cnigro.fst.att.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Resistance")
+
+recov.t.Cnigro.param.sens.mean <- (res.Cnigro.param.sens.C$recov.t+
+                                     res.Cnigro.param.sens.Q$recov.t +
+                                     res.Cnigro.param.sens.EB$recov.t+
+                                     res.Cnigro.param.sens.MB$recov.t+
+                                     res.Cnigro.param.sens.LB$recov.t)/5
+
+
+(recov.t.Cnigro.param.sens.mean <- data.frame(perturb = seq(0,0.01,0.001),
+                                              apply(recov.t.Cnigro.param.sens.mean[,,c(which(sens.Cnigro.recov.t.summary$mean!=0))], 
+                                                          MARGIN = c(2,3), mean)))
+
+recov.t.Cnigro.param.sens.mean <- pivot_longer(data = recov.t.Cnigro.param.sens.mean, 
+                                               cols = `X1`:`X6`,
+                                               names_to = "parameter",
+                                               values_to = "recov.t")
+quartz(height = 6, width = 8)
+ggplot(recov.t.Cnigro.param.sens.mean,
+       aes(x = perturb, y = recov.t, colour = parameter))+
+  geom_line(linewidth = 1.5, alpha = 0.5)+
+  scale_colour_manual(values = turbo(6),name = 'Parameter', 
+                      labels = c(expression(beta[phi]*"tmed2m"),
+                                 expression(beta[phi]*"RHmax"),
+                                 expression(beta[phi]*"sol"),
+                                 expression(beta[phi]*"tmed0cm"),
+                                 expression(beta[phi]*"tmin0cm"),
+                                 expression(beta[phi]*"precip"),
+                                 expression(beta[phi]*"perf"),
+                                 expression(beta[phi]*"ha"),
+                                 expression(beta[phi]*"fire"),
+                                 expression(beta[phi]*"TSLF"),
+                                 expression(beta[phi]*"SVL"),
+                                 expression(beta[phi]*"SVL"^2),
+                                 expression(beta["f"]*"tmed2m"),
+                                 expression(beta["f"]*"RHmax"),
+                                 expression(beta["f"]*"sol"),
+                                 expression(beta["f"]*"tmed0cm"),
+                                 expression(beta["f"]*"tmin0cm"),
+                                 expression(beta["f"]*"precip"),
+                                 expression(beta["f"]*"perf"),
+                                 expression(beta["f"]*"ha"),
+                                 expression(beta["f"]*"fire"),
+                                 expression(beta["f"]*"TSLF"),
+                                 expression(alpha["prep"]),
+                                 expression(beta["prep"]*"SVL"),
+                                 expression(beta["prep"]*"SVL"^2),
+                                 expression(alpha["nb"]),
+                                 expression(beta["nb"]*"SVL"),
+                                 expression(alpha[phi]),
+                                 expression(mu["K"]),
+                                 expression(alpha["f"]))[c(which(sens.Cnigro.recov.t.summary$mean!=0))-1])+
+  labs(x = "Perturbation magnitude", y = "Recovery time")
+
+#Barplots
+quartz(height = 8, width = 12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.amp.C[-1],las=2,ylab="Compensation",main=expression("C - "*italic("C. nigropunctatum")),
-        names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.C[,-1],las=2,ylab="Compensation",main=expression("C - "*italic("C. nigropunctatum")),
+        names = c(expression(beta[phi]*"tmed2m"),
                       expression(beta[phi]*"RHmax"),
                       expression(beta[phi]*"sol"),
                       expression(beta[phi]*"tmed0cm"),
@@ -2646,19 +3033,71 @@ x<-barplot(sens.Cnigro.fst.amp.C[-1],las=2,ylab="Compensation",main=expression("
                       expression(alpha[phi]),
                       expression(mu["K"]),
                       expression(alpha["f"])),
-        col = c(rep("yellow",12),
-                rep("blue",15),
-                rep("yellow",2),
-                "blue"),
-        border=NA)
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",12),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.amp.C[-1]+.5,labels=round(sens.Cnigro.fst.amp.C[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(height = 8, width = 12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.amp.C[,-1],las=2,
+        ylab="Compensation",main=expression("C - "*italic("C. nigropunctatum")),
+        ylim = c(0,10),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                border = c(rep("brown",12),
+                           rep("darkcyan",15),
+                           rep("brown",2),
+                           "darkcyan"),
+                           notch = T)
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.amp.Q[-1],las=2,ylab="Compensation",main=expression("Q - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.Q[,-1],las=2,
+           ylab="Compensation", 
+           main=expression("Q - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2688,19 +3127,71 @@ x<-barplot(sens.Cnigro.fst.amp.Q[-1],las=2,ylab="Compensation",main=expression("
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+           notch=T,
+           border = c(rep("brown",12),
+                      rep("darkcyan",15),
+                      rep("brown",2),
+                      "darkcyan"))
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.amp.Q[-1]+.5,labels=round(sens.Cnigro.fst.amp.Q[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.amp.EB[-1],las=2,ylab="Compensation",main=expression("EB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.Q[,-1],las=2,
+        ylab="Compensation", 
+        main=expression("Q - "*italic("C. nigropunctatum")),
+        ylim = c(0,10),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"))
+                   
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.amp.EB[,-1],las=2,
+        ylab="Compensation",main=expression("EB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2730,19 +3221,63 @@ x<-barplot(sens.Cnigro.fst.amp.EB[-1],las=2,ylab="Compensation",main=expression(
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.amp.EB[-1]+.5,labels=round(sens.Cnigro.fst.amp.EB[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.amp.MB[-1],las=2,ylab="Compensation",main=expression("MB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.EB[,-1],las=2,
+        ylab="Compensation",main=expression("EB - "*italic("C. nigropunctatum")),
+        ylim = c(0,12),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.amp.MB[,-1],las=2,ylab="Compensation",main=expression("MB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2772,19 +3307,63 @@ x<-barplot(sens.Cnigro.fst.amp.MB[-1],las=2,ylab="Compensation",main=expression(
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.amp.MB[-1]+.5,labels=round(sens.Cnigro.fst.amp.MB[-1],3),cex=.5,col="red")
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.amp.LB[-1],las=2,ylab="Compensation",main=expression("LB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.MB[,-1],las=2,
+        ylab="Compensation",main=expression("MB - "*italic("C. nigropunctatum")),
+        ylim = c(0,10),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.amp.LB[,-1],las=2,ylab="Compensation",main=expression("LB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2814,20 +3393,64 @@ x<-barplot(sens.Cnigro.fst.amp.LB[-1],las=2,ylab="Compensation",main=expression(
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.amp.LB[-1]+.5,labels=round(sens.Cnigro.fst.amp.LB[-1],3),cex=.5,col="red")
-
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.att.C[-1],las=2,ylab="Resistance",main=expression("C - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.amp.LB[,-1],las=2,ylab="Compensation",
+        main=expression("LB - "*italic("C. nigropunctatum")),
+        ylim = c(0,10),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.att.C[,-1],las=2,
+        ylab="Resistance",main=expression("C - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2857,19 +3480,63 @@ x<-barplot(sens.Cnigro.fst.att.C[-1],las=2,ylab="Resistance",main=expression("C 
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.att.C[-1]-.5,labels=round(sens.Cnigro.fst.att.C[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.att.Q[-1],las=2,ylab="Resistance",main=expression("Q - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.att.C[,-1],las=2,
+        ylab="Resistance",main=expression("C - "*italic("C. nigropunctatum")),
+        ylim = c(-1.5,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.att.Q[,-1],las=2,ylab="Resistance",main=expression("Q - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2899,19 +3566,64 @@ x<-barplot(sens.Cnigro.fst.att.Q[-1],las=2,ylab="Resistance",main=expression("Q 
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.att.Q[-1]-.5,labels=round(sens.Cnigro.fst.att.Q[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.att.EB[-1],las=2,ylab="Resistance",main=expression("EB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.att.Q[,-1],las=2,ylab="Resistance",
+        main=expression("Q - "*italic("C. nigropunctatum")),
+        ylim = c(-2,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.att.EB[,-1],las=2,ylab="Resistance",
+        main=expression("EB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2941,19 +3653,63 @@ x<-barplot(sens.Cnigro.fst.att.EB[-1],las=2,ylab="Resistance",main=expression("E
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.att.EB[-1]-.5,labels=round(sens.Cnigro.fst.att.EB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.att.MB[-1],las=2,ylab="Resistance",main=expression("MB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.att.EB[,-1],las=2,ylab="Resistance",
+        main=expression("EB - "*italic("C. nigropunctatum")),
+        ylim = c(-2,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.att.MB[,-1],las=2,ylab="Resistance",main=expression("MB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -2983,19 +3739,63 @@ x<-barplot(sens.Cnigro.fst.att.MB[-1],las=2,ylab="Resistance",main=expression("M
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.att.MB[-1]-.5,labels=round(sens.Cnigro.fst.att.MB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.fst.att.LB[-1],las=2,ylab="Resistance",main=expression("LB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.att.MB[,-1],las=2,
+        ylab="Resistance",main=expression("MB - "*italic("C. nigropunctatum")),
+        ylim = c(-1.5,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.fst.att.LB[,-1],las=2,ylab="Resistance",main=expression("LB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3025,19 +3825,63 @@ x<-barplot(sens.Cnigro.fst.att.LB[-1],las=2,ylab="Resistance",main=expression("L
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.fst.att.LB[-1]-.5,labels=round(sens.Cnigro.fst.att.LB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.recov.t.C[-1],las=2,ylab="Recovery time",main=expression("C - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.fst.att.LB[,-1],las=2,ylab="Resistance",
+        main=expression("LB - "*italic("C. nigropunctatum")),
+        ylim = c(-1.5,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.C[,-1],las=2,ylab="Recovery time",main=expression("C - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3067,19 +3911,63 @@ x<-barplot(sens.Cnigro.recov.t.C[-1],las=2,ylab="Recovery time",main=expression(
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.recov.t.C[-1]-5,labels=round(sens.Cnigro.recov.t.C[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.recov.t.Q[-1],las=2,ylab="Recovery time",main=expression("Q - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.recov.t.C[,-1],las=2,ylab="Recovery time",
+        main=expression("C - "*italic("C. nigropunctatum")),
+        ylim = c(-100,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.Q[,-1],las=2,ylab="Recovery time",main=expression("Q - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3109,19 +3997,63 @@ x<-barplot(sens.Cnigro.recov.t.Q[-1],las=2,ylab="Recovery time",main=expression(
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.recov.t.Q[-1]-5,labels=round(sens.Cnigro.recov.t.Q[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.recov.t.EB[-1],las=2,ylab="Recovery time",main=expression("EB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.recov.t.Q[,-1],las=2,ylab="Recovery time",
+        main=expression("Q - "*italic("C. nigropunctatum")),
+        ylim = c(-100, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.EB[,-1],las=2,ylab="Recovery time",main=expression("EB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3151,19 +4083,63 @@ x<-barplot(sens.Cnigro.recov.t.EB[-1],las=2,ylab="Recovery time",main=expression
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.recov.t.EB[-1]-5,labels=round(sens.Cnigro.recov.t.EB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.recov.t.MB[-1],las=2,ylab="Recovery time",main=expression("MB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.recov.t.EB[,-1],las=2,ylab="Recovery time",
+        main=expression("EB - "*italic("C. nigropunctatum")),
+        ylim = c(-120, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.MB[,-1],las=2,ylab="Recovery time",main=expression("MB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3193,19 +4169,63 @@ x<-barplot(sens.Cnigro.recov.t.MB[-1],las=2,ylab="Recovery time",main=expression
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.recov.t.MB[-1]-5,labels=round(sens.Cnigro.recov.t.MB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
 quartz(8,12)
 par(mar=c(7,4,1,.5))
-x<-barplot(sens.Cnigro.recov.t.LB[-1],las=2,ylab="Recovery time",main=expression("LB - "*italic("C. nigropunctatum")),
-           names.arg = c(expression(beta[phi]*"tmed2m"),
+boxplot(sens.Cnigro.recov.t.MB[,-1],las=2,ylab="Recovery time",
+        main=expression("MB - "*italic("C. nigropunctatum")),
+        ylim = c(-120,0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.LB[,-1],las=2,ylab="Recovery time",main=expression("LB - "*italic("C. nigropunctatum")),
+           names = c(expression(beta[phi]*"tmed2m"),
                          expression(beta[phi]*"RHmax"),
                          expression(beta[phi]*"sol"),
                          expression(beta[phi]*"tmed0cm"),
@@ -3235,12 +4255,347 @@ x<-barplot(sens.Cnigro.recov.t.LB[-1],las=2,ylab="Recovery time",main=expression
                          expression(alpha[phi]),
                          expression(mu["K"]),
                          expression(alpha["f"])),
-           col = c(rep("yellow",12),
-                   rep("blue",15),
-                   rep("yellow",2),
-                   "blue"),
-           border=NA)
+           col = c(rep("brown",12),
+                   rep("darkcyan",15),
+                   rep("brown",2),
+                   "darkcyan"),
+                   notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
 
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("yellow","blue"))
-text(x,sens.Cnigro.recov.t.LB[-1]-5,labels=round(sens.Cnigro.recov.t.LB[-1],3),cex=.5,col="red")
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
 
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(sens.Cnigro.recov.t.LB[,-1],las=2,ylab="Recovery time",
+        main=expression("LB - "*italic("C. nigropunctatum")),
+        ylim = c(-100, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+#Average among plots
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.fst.amp.C[,-1],
+              sens.Cnigro.fst.amp.Q[,-1],
+              sens.Cnigro.fst.amp.EB[,-1],
+              sens.Cnigro.fst.amp.MB[,-1],
+              sens.Cnigro.fst.amp.LB[,-1]),
+        las=2,ylab="Compensation",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.fst.amp.C[,-1],
+              sens.Cnigro.fst.amp.Q[,-1],
+              sens.Cnigro.fst.amp.EB[,-1],
+              sens.Cnigro.fst.amp.MB[,-1],
+              sens.Cnigro.fst.amp.LB[,-1]),
+        las=2,ylab="Compensation",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        ylim = c(0, 10),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.fst.att.C[,-1],
+              sens.Cnigro.fst.att.Q[,-1],
+              sens.Cnigro.fst.att.EB[,-1],
+              sens.Cnigro.fst.att.MB[,-1],
+              sens.Cnigro.fst.att.LB[,-1]),
+        las=2,ylab="Resistance",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.fst.att.C[,-1],
+              sens.Cnigro.fst.att.Q[,-1],
+              sens.Cnigro.fst.att.EB[,-1],
+              sens.Cnigro.fst.att.MB[,-1],
+              sens.Cnigro.fst.att.LB[,-1]),
+        las=2,ylab="Resistance",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        ylim = c(-1.5, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.recov.t.C[,-1],
+              sens.Cnigro.recov.t.Q[,-1],
+              sens.Cnigro.recov.t.EB[,-1],
+              sens.Cnigro.recov.t.MB[,-1],
+              sens.Cnigro.recov.t.LB[,-1]),
+        las=2,ylab="Recovery time",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
+
+quartz(8,12)
+par(mar=c(7,4,1,.5))
+boxplot(rbind(sens.Cnigro.recov.t.C[,-1],
+              sens.Cnigro.recov.t.Q[,-1],
+              sens.Cnigro.recov.t.EB[,-1],
+              sens.Cnigro.recov.t.MB[,-1],
+              sens.Cnigro.recov.t.LB[,-1]),
+        las=2,ylab="Recovery time",
+        main=expression("Average - "*italic("C. nigropunctatum")),
+        ylim = c(-100, 0),
+        names = c(expression(beta[phi]*"tmed2m"),
+                  expression(beta[phi]*"RHmax"),
+                  expression(beta[phi]*"sol"),
+                  expression(beta[phi]*"tmed0cm"),
+                  expression(beta[phi]*"tmin0cm"),
+                  expression(beta[phi]*"precip"),
+                  expression(beta[phi]*"perf"),
+                  expression(beta[phi]*"ha"),
+                  expression(beta[phi]*"fire"),
+                  expression(beta[phi]*"TSLF"),
+                  expression(beta[phi]*"SVL"),
+                  expression(beta[phi]*"SVL"^2),
+                  expression(beta["f"]*"tmed2m"),
+                  expression(beta["f"]*"RHmax"),
+                  expression(beta["f"]*"sol"),
+                  expression(beta["f"]*"tmed0cm"),
+                  expression(beta["f"]*"tmin0cm"),
+                  expression(beta["f"]*"precip"),
+                  expression(beta["f"]*"perf"),
+                  expression(beta["f"]*"ha"),
+                  expression(beta["f"]*"fire"),
+                  expression(beta["f"]*"TSLF"),
+                  expression(alpha["prep"]),
+                  expression(beta["prep"]*"SVL"),
+                  expression(beta["prep"]*"SVL"^2),
+                  expression(alpha["nb"]),
+                  expression(beta["nb"]*"SVL"),
+                  expression(alpha[phi]),
+                  expression(mu["K"]),
+                  expression(alpha["f"])),
+        col = c(rep("brown",12),
+                rep("darkcyan",15),
+                rep("brown",2),
+                "darkcyan"),
+                notch=T,
+        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
+
+legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))

@@ -1,7 +1,17 @@
-##################
-#Hierarchical IPM#
-##################
-#setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+# Hierarchical models to estimate vital rates and their relationship with the environmental variables-------------------------------------------------------------------------
+#Load packages
+library(runjags)
+library(parallel)
+library(rjags)
+library(reshape)
+library(ggplot2)
+library(missForest)
+library(lubridate)
+library(ggmcmc)
+library(MCMCvis)
+library(viridis)
+
+setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
 
 #Probability of reproducing
 #
@@ -52,46 +62,43 @@ micra.planilha <- data.frame(micra.planilha, IDENT)
 rm(IDENT)
 str(micra.planilha)
 
-
-###################
-#Usa dados mensais#
-###################
 library(jagsUI)
 library(rjags)
 library(reshape)
-# Separa as variaveis de interesse
+
+# Filter the variables of interest
 table1 <- micra.planilha[micra.planilha$recaptura!="(s)", c("IDENT", "campanha", "sexo", "crc","massa", "recaptura", "parcela")]
 str(table1)
 
 
-# Identifica capturas sem identidade
+# Identifies captures without ID
 table2 <- complete.cases(table1[, c("IDENT")])
 
-# Elimina capturas sem identidade e sem crc
+# Eliminates captures without ID and SVL (CRC)
 table3 <- table1[table2, ]
 
-# Ordena os dados por identidade e campanha (mes)
+# Ordens the data by ID and month (campanha)
 table4 <- table3[order(table3$IDENT, table3$campanha), ]
 str(table4)
 summary(table4)
 
-# Converte IDENT de fator para caracteres
+# Converts IDENT from factor to character
 table5 <- droplevels(table4)
 table5$IDENT <- as.character(table5$IDENT)
 table5$parcela <- as.character(table5$parcela)
 str(table5)
 
 
-# Calcula frequencias de recapturas
+# Calculates recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
 names(recap.table) <- c("identidade", "capturas")
 recap.table
 table(recap.table$capturas)
-650+(2*104)+(3*31)+(4*12)+(5*3)+(6*1)+(7*2) #duas capturas=1, 3 capturas=2, 4 capturas=3 ...
+650+(2*104)+(3*31)+(4*12)+(5*3)+(6*1)+(7*2) #two captures=1, 3 captures=2, 4 captures=3 ...
 
-#######################################################################
-## filtra conjunto de dados para registros a serem usados na an?lise##
-#######################################################################
+#######################################################
+## filters dataset for registers used in the analysis##
+#######################################################
 head(table5)
 
 Age<-c(rep(NA,nrow(table5)))
@@ -110,33 +117,33 @@ tail(datA)
 str(datA)
 
 
-################################################
-##Cria vari?veis para o modelo de crescimento ##
-################################################
-###  del ? o per?odo de tempo desde a primeira captura de um indiv?duo (0 na primeira captura)
+###########################################
+##Creates  variables for the growth model##
+###########################################
+###  del is the time period between first capture of an individual (0 in the first capture)
 
-del<-c()   ### anos desde a primeira captura
+del<-c()   ### months since first capture
 
 for(i in 1:nrow(datA)){
   del[i]<-datA$Year[i]-min(datA$Year[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Parcela", fun.aggregate=function(x) tail(x,1))  ###determinar o sexo de cada indiv?duo - filtra o valor na ?ltima captura
+plot<-cast(datA, TrueID~., value="Parcela", fun.aggregate=function(x) tail(x,1))  ###determinates the plot from each individual
 plot<-as.character(plot[,2])
 plot
-plot[plot=="BM"]<-4 #Numerando por severidade
-plot[plot=="BP"]<-3 #Numerando por severidade
-plot[plot=="BT"]<-5 #Numerando por severidade
-plot[plot=="C"]<-1  #Numerando por severidade
-plot[plot=="Q"]<-2 #Numerando por severidade
+plot[plot=="BM"]<-4 #Numbering by severity
+plot[plot=="BP"]<-3 #Numbering by severity
+plot[plot=="BT"]<-5 #Numbering by severity
+plot[plot=="C"]<-1  #Numbering by severity
+plot[plot=="Q"]<-2 #Numbering by severity
 plot<-as.numeric(plot)
 plot
 ind = as.numeric(factor(datA$TrueID))
 y = datA$CRC
-n = max(ind)  ### n?mero de indiv?duos
-m = nrow(datA)### n?mero de observar??es 
+n = max(ind)  ### number of individuals
+m = nrow(datA)### number of observations
 
-age<- c()  ## idade na primeira captura
+age<- c()  ## age at first capture
 for (a in 1:n){ age[a] <- datA$Age[ind==a][1]}
 
 year <- c()
@@ -146,7 +153,7 @@ head(datA)
 tail(datA)
 str(datA)
 
-##### #Cria dados de recupera??o de marca para o modelo de sobreviv?ncia## ####################################################################
+##### #Creates capture history for the survival model## ####################################################################
 known.states.cjs<-function(ch){
   state<-ch
   for (i in 1:dim(ch)[1]){
@@ -172,7 +179,7 @@ cjs.init.z<-function(ch,f){
 }
 
 eh <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(length(x) >0),value="CRC");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
+eh.all <- seq(min(datA$Year), max(datA$Year)) #fill the ignored months (months without captures)
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
@@ -193,7 +200,7 @@ mplot <- data.frame(C = as.numeric(plot==1),
 
 # Create matrix X indicating crc
 x <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(x), value="CRC",fill=NA);x <- x[,2:ncol(x)]
-x.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
+x.all <- seq(min(datA$Year), max(datA$Year)) #fill the ignored months (months without captures)
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
 colnames(col) <- missing
@@ -203,9 +210,6 @@ x <- x[,sort(colnames(x))]
 head(x)
 
 # Create matrix X indicating mean svl
-# xpop <- x
-# xpop[is.na(xpop)] <- 0
-# head(xpop)
 
 xpopC  <- matrix(0,nrow = nind, ncol = n.occasions)
 xpopQ  <- matrix(0,nrow = nind, ncol = n.occasions)
@@ -238,7 +242,7 @@ xpopBT[xpopBT==0] <- NA
 
 xpop <- c(xpopmeanC,xpopmeanQ,xpopmeanBP,xpopmeanBM,xpopmeanBT)
 
-#var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
+# var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
 var_amb <- readRDS("climate.ecophysio.month.rds")
 var_amb$canopy <- factor(var_amb$canopy,levels = c("C","Q","BP","BM","BT"))
 var_amb <- var_amb[order(var_amb$canopy),]
@@ -265,38 +269,29 @@ xpop.fire <- rbind(xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="C"] ,
                    xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="BM"],
                    xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="BT"])
 xpop.fire
-# # Create matrix X indicating mass
-# x1 <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(x), value="Massa",fill=NA);x1 <- x1[,2:ncol(x1)]
-# x.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
-# missing <- x.all[!(x.all %in% names(x1))]
-# col=matrix(NA,nrow=nrow(x1),ncol=length(missing))
-# colnames(col) <- missing
-# x1 <- cbind(x1, col)
-# x1 <- x1[,sort(colnames(x1))]
-# #x[is.na(x)] <- 0
-# head(x1)
 
-# Derivar dados para o modelo:
-# e = indice da observacao mais antiga
+
+# Derives data for the Pradel Jolly Seber (PJS) model:
+# e = oldest observation index
 get.first <- function (x) min(which (x!=0))
 e <- apply (eh, 1, get.first)
 e <- data.frame(plot=plot,e=e)
 
 
-# l = indice da ultima observacao
+# l = last observation index
 get.last <- function(x) max(which(x!=0))
 l <- apply (eh,1, get.last )
 l <- data.frame(plot=plot,l=l)
 
 
-# u = numero de animais observados pela primeira vez em i
+# u = number of observed animals for the first time i
 u1 <- data.frame(table(e$e[e$plot==1]))
 u2 <- data.frame(table(e$e[e$plot==2]))
 u3 <- data.frame(table(e$e[e$plot==3]))
 u4 <- data.frame(table(e$e[e$plot==4]))
 u5 <- data.frame(table(e$e[e$plot==5]))
 
-u.all <- seq(1, n.occasions) # Preencher todos os anos ignorados
+u.all <- seq(1, n.occasions) #fill the ignored months (months without captures)
 missing <- u.all[!(u.all %in% u1$Var1)]
 df<-data.frame(e=as.factor(missing),Freq=rep(0,length(missing)))
 names(u1) <- names(df)
@@ -344,7 +339,7 @@ u5
 
 u <- rbind(u1,u2,u3,u4,u5)
 
-# n = numero de animais observados em i
+# n = number of observed animals in i
 n1 <- colSums(eh[plot==1,])
 n2 <- colSums(eh[plot==2,])
 n3 <- colSums(eh[plot==3,])
@@ -355,14 +350,14 @@ n<- rbind(n1,n2,n3,n4,n5)
 
 colSums(n) == colSums(eh)
 
-# v = numero de animais observados pela ultima vez em i
+# v = number of observed animals for the last time in i
 v1 <- data.frame(table(l$l[l$plot==1]))
 v2 <- data.frame(table(l$l[l$plot==2]))
 v3 <- data.frame(table(l$l[l$plot==3]))
 v4 <- data.frame(table(l$l[l$plot==4]))
 v5 <- data.frame(table(l$l[l$plot==5]))
 
-v.all <- seq(1, n.occasions) # Preencher todos os anos ignorados
+v.all <- seq(1, n.occasions) # fill the ignored months (months without captures)
 missing <- v.all[!(v.all %in% v1$Var1)]
 df<-data.frame(l=as.factor(missing),Freq=rep(0,length(missing)))
 names(v1) <- names(df)
@@ -411,15 +406,15 @@ v5
 v <- rbind(v1,v2,v3,v4,v5)
 v
 
-# d = numero de animais removidos da populacao no momento i
+# d = number of removed animals in the population in time  i
 d <- rep(0,dim(eh)[2])
 d <- rbind(d,d,d,d,d)
 d
 
-# covariavel de tempo
+# time covariate
 time <- c(1:(dim(eh)[2]-1))
 
-# padronizar tempo
+# standardize tempo
 stand_time <- (time - mean(time))/sd(time)
 
 #Generate svl values for individuals
@@ -625,7 +620,7 @@ dim(amb)
 str(amb)
 
 
-# Dados do pacote
+# Data
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, amb = amb, x = as.matrix(x), xpop = xpop.fire, z = known.states.cjs(eh),
                   mu.L0 = mean(datA$CRC[datA$CRC<=30],na.rm=T), 
@@ -641,7 +636,17 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   xprep = as.numeric(Matticolus.RECOR.females$crc),
                   n.probrep = length(Matticolus.RECOR.females$ovos))
 saveRDS(bugs.data,"Matticolus.data.rds")
-# Valores iniciais
+
+bugs.data <- readRDS("Matticolus.data.rds")
+
+#Mark-recapture statistics
+table(rowSums(bugs.data$y))#Number of captures for each individual
+(sum(bugs.data$y)-bugs.data$nind)/bugs.data$nind#Mean recapture rate
+table(rowSums(bugs.data$z, na.rm = T))#time period between first and last captures
+round(mean(table(rowSums(bugs.data$z, na.rm = T))[-1]),2)#Mean time period between first and last captures
+round(sd(table(rowSums(bugs.data$z, na.rm = T))[-1]),2)#SD time period between first and last captures
+
+# Initial values
 inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10),
                            sigma.phiJS = runif(1, 1, 2),
                            sigma.f = runif(1, 0.75, 1.5),
@@ -651,7 +656,7 @@ inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10)
                            sigma.pJS = runif(1, 0.1, 0.5)
 )}
 
-# Defina os parametros a serem monitorados
+# Monitored parameters
 parameters <- c("phiJS", "alpha.phiJS","sigma.phiJS",
                 "betaphiJS","varphi",
                 "f", "alpha.f", "sigma.f",
@@ -1111,3 +1116,590 @@ saveRDS(ipm2.Matticolus, "results_imp2_Matticolus.rds")
 #summary(ipm2.Matticolus)
 #ipm2.Matticolus.df<-ipm2.Matticolus$summary
 #write.table(ipm2.Matticolus.df,"results_ipm2.Matticolus.txt",sep="\t")
+
+
+#CJS model per sex -------------------------
+
+setwd("/Volumes/Macintosh HD/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
+
+Matticolus.RECOR.imp<-readRDS("Matticolus.RECOR.imp.rds") #read data
+
+head(Matticolus.RECOR.imp)
+tail(Matticolus.RECOR.imp)
+dados.demografia <- Matticolus.RECOR.imp[Matticolus.RECOR.imp$ano < 2020, ] #remove data later than 2019
+dados.demografia <- Matticolus.RECOR.imp[Matticolus.RECOR.imp$campanha > 52, ] #remove data when sex was not registered
+tail(dados.demografia)
+str(dados.demografia)
+
+#Remove dead animals
+dados.demografia$morto[is.na(dados.demografia$morto)] <- "n"
+dados.demografia <- dados.demografia[dados.demografia$morto=="n", ]
+head(dados.demografia)
+table(dados.demografia$campanha)
+table(dados.demografia$identidade)
+
+completos <- complete.cases(dados.demografia[, c("identidade", "parcela")]) #remove NAs
+nigro.planilha <- droplevels(dados.demografia[completos, ])
+head(nigro.planilha)
+str(nigro.planilha)
+table(nigro.planilha$campanha)
+table(nigro.planilha$identidade)
+
+
+## Prepare input file and run monthly data ("campanha")
+
+
+# Create ID
+IDENT <- paste(nigro.planilha$parcela, nigro.planilha$identidade, nigro.planilha$ciclo, sep="")
+head(IDENT)
+nigro.planilha <- data.frame(nigro.planilha, IDENT)
+rm(IDENT)
+str(nigro.planilha)
+
+# Subset variables of interest
+table1 <- nigro.planilha[nigro.planilha$recaptura!="(s)", c("IDENT", "campanha", "sexo", "crc","massa", "recaptura", "parcela")]
+str(table1)
+
+# Identifies captures without IDs
+table2 <- complete.cases(table1[, c("IDENT")])
+
+# Remove captures without ID and SVL
+table3 <- table1[table2, ]
+
+# Order the data by ID and time (campanha)
+table4 <- table3[order(table3$IDENT, table3$campanha), ]
+str(table4)
+summary(table4)
+
+# Convert IDENT from factor to character
+table5 <- droplevels(table4)
+table5$IDENT <- as.character(table5$IDENT)
+table5$parcela <- as.character(table5$parcela)
+str(table5)
+
+
+# Calculate recapture frequencies
+recap.table <- data.frame(table(table5$IDENT))
+names(recap.table) <- c("identidade", "capturas")
+recap.table
+table(recap.table$capturas)
+505+(2*73)+(3*17)+(4*7)+(5*1)+(7*1) #two captures=1, 3 captures=2, 4 captures=3 ...
+
+# Filter data.frame records to use in the analysis
+
+head(table5)
+
+Age<-c(rep(NA,nrow(table5)))
+Age
+
+datA<-data.frame(table5$campanha,table5$sexo,table5$IDENT,table5$crc,table5$massa,Age,table5$parcela)
+names(datA)<-c("Year","Sex","TrueID","CRC","Massa","Age","Parcela")
+datA$Year<-datA$Year+2000
+datA$Age[datA$CRC<=40]<-0
+
+head(datA)
+tail(datA)
+str(datA)
+
+##Creates variables for the growth model -------
+
+###  del is the time period since the first capture of an individual (0 in the first capture)
+
+del<-c()   ### months since the first capture
+
+for(i in 1:nrow(datA)){
+  del[i]<-datA$Year[i]-min(datA$Year[datA$TrueID==datA$TrueID[i]])
+}
+
+plot<-cast(datA, TrueID~., value="Parcela", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-as.character(plot[,2])
+plot
+plot[plot=="BM"]<-4 # Ordering by fire severity
+plot[plot=="BP"]<-3 # Ordering by fire severity
+plot[plot=="BT"]<-5 # Ordering by fire severity
+plot[plot=="C"]<-1 # Ordering by fire severity
+plot[plot=="Q"]<-2 # Ordering by fire severity
+plot<-as.numeric(plot)
+plot
+
+sex <- cast(datA, TrueID~., value="Sex", fun.aggregate=function(x) tail(x,1))  ###determine the sex for each individual - filter the value of last capture
+sex <- factor(sex[,2], levels = c("F", "M"))
+sex
+sex <- as.integer(sex)
+sex
+sex <- sex - 1
+
+ind = as.numeric(factor(datA$TrueID)) #ID
+y = datA$CRC #SVL
+n = max(ind)  ### number of individuals
+m = nrow(datA)### number of observations
+
+age<- c()  ## age at first capture
+for (a in 1:n){ age[a] <- datA$Age[ind==a][1]}
+
+year <- c()
+for (a in 1:n){ year[a] <- datA$Year[ind==a][1]}
+
+head(datA)
+tail(datA)
+str(datA)
+
+## Create capture histories for the survival model-------
+known.states.cjs<-function(ch){
+  state<-ch
+  for (i in 1:dim(ch)[1]){
+    n1<-min(which(ch[i,]==1))
+    n2<-max(which(ch[i,]==1))
+    state[i,n1:n2]<-1
+    state[i,n1]<-NA
+  }
+  state[state==0]<-NA
+  return(state)
+}
+
+cjs.init.z<-function(ch,f){
+  for (i in 1:dim(ch)[1]){
+    if (sum(ch[i,])==1) next
+    n2<-max(which(ch[i,]==1))
+    ch[i,f[i]:n2]<-NA
+  }
+  for (i in 1:dim(ch)[1])
+  { ch[i,1:f[i]]<-NA
+  }
+  return(ch)
+}
+
+#Capture histories
+eh <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(length(x) >0),value="CRC");eh <- eh[,2:ncol(eh)]
+eh.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
+missing <- eh.all[!(eh.all %in% names(eh))]
+col=matrix(0,nrow=nrow(eh),ncol=length(missing))
+colnames(col) <- missing
+eh <- cbind(eh, col)
+eh <- eh[,sort(colnames(eh))]
+head(eh)
+(f <- apply(eh,1,function(x) which(x==1)[1]))#time since first capture
+(nind <- nrow(eh)) #Number of individuals
+(n.occasions <- ncol(eh)) #Number of occasions
+m #Number of observations
+n #Number of individuals
+
+#Create data.frame of plots
+mplot <- data.frame(C = as.numeric(plot==1),
+                    Q = as.numeric(plot==2),
+                    BP = as.numeric(plot==3),
+                    BM = as.numeric(plot==4),
+                    BT = as.numeric(plot==5))
+
+# Create matrix X indicating SVL (crc)
+x <- cast(datA,
+          TrueID ~ Year,
+          fun.aggregate = function(x) mean(x),
+          value = "CRC",
+          fill = NA)
+
+x <- x[, 2:ncol(x)]
+x.all <- seq(min(datA$Year), max(datA$Year)) #fill all the ignored months
+missing <- x.all[!(x.all %in% names(x))]
+col=matrix(NA,nrow=nrow(x),ncol=length(missing))
+colnames(col) <- missing
+x <- cbind(x, col)
+x <- x[,sort(colnames(x))]
+#x[is.na(x)] <- 0
+head(x)
+
+bugs.data.sex <- list(first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
+                      y = eh, x = as.matrix(x), z = known.states.cjs(eh),
+                      mu.L0 = mean(datA$CRC[datA$CRC<=30],na.rm=T),
+                      tau.L0 = var(datA$CRC[datA$CRC<=30],na.rm=T),
+                      # mu.LI = max(datA$CRC,na.rm=T),
+                      AFC = as.numeric(age),
+                      #mplot = mplot,
+                      sex = sex,
+                      plot = plot)
+
+# Initial values
+inits <- function (){}
+
+# Define the parameters to monitour
+parameters <- c("alpha.phi","beta.phi", "beta2.phi","alpha.p","beta.p", "beta2.p",
+                "p.AFC","r.AFC","var.AFC","mn.AFC",
+                "mu.K","mu.LI"
+)
+
+
+# Specify model in BUGS language
+sink("cjs-sex-Matticolus-crc.jags")
+cat("
+
+model {
+
+  #########################
+  ## SURVIVAL/GROWTH MODEL#
+  #########################
+
+  
+   for(i in 1:nind){
+    AFC[i] ~ dnegbin(p.AFC[sex[i]+1], r.AFC[sex[i]+1])T(0,50)  ###Change trucationfor different species. AFC is age of first capture - known in many cases (for newborns) and estimated when not known
+    sex[i] ~ dbern(psi)   ### allows for sex to be predicted if unknown for an individual
+    L0[i] ~ dnorm(mu.L0, tau.L0)  ### draw values for intial size
+    LI[i] ~ dnorm(mu.LI[sex[i]+1],tau.LI)T(0,) ### asymptotic size - taubeta allows for individual variation, while mean size is sex dependent
+    newLI[i] ~ dnorm(mu.LI[sex[i]+1],tau.LI)T(0,)
+    LLoldLI[i] <-logdensity.norm(LI[i],mu.LI[sex[i]+1],tau.LI)
+    LLnewLI[i] <-logdensity.norm(newLI[i],mu.LI[sex[i]+1],tau.LI)
+    logit(K[i]) <- K.L[i]  ## mean growth rate is sex dependent with variation defined by xi*theta
+    K.L[i] ~ dnorm(mu.K[sex[i]+1],tau.K)
+  }
+  
+  ### Priors for the growth model
+  for(i in 1:2){
+    mu.K1[i] ~ dunif(0.5,1)
+    mu.K[i] <- log(mu.K1[i]) - log(1-mu.K1[i])
+  r.AFC[i] ~ dgamma(0.01,0.01) T(0.0001,)
+  p.AFC[i] <- r.AFC[i]/(r.AFC[i]+mn.AFC[i])
+  mn.AFC[i] ~ dgamma(0.01,0.01) T(0.0001,50)
+  var.AFC[i] <- r.AFC[i]*(1-p.AFC[i])/(p.AFC[i]*p.AFC[i])
+  mu.LI[i] ~ dnorm(45,5) #Change for different species
+  }
+  
+  sd.sample ~ dt(0,0.0004,3)T(0,) ### t priors as in Schofield et al. 2013
+  sd.LI ~ dt(0,0.0004,3)T(0,)
+  sd.K ~ dt(0,0.0004,3)T(0,)
+  tau.sample <- 1/(sd.sample^2)
+  tau.LI <- 1/(sd.LI^2)
+  tau.K <- 1/(sd.K^2)    
+  psi ~ dbeta(1,1)
+  
+# Priors and constraints
+for (i in 1:nind){
+  for (t in first[i]:(n.occasions-1)){
+    logit(phi[i,t]) <- alpha.phi[sex[i]+1] + beta.phi[sex[i]+1]*x[i,t] + beta2.phi[sex[i]+1]*pow(x[i,t],2)
+    logit(p[i,t]) <-  alpha.p[sex[i]+1] + beta.p[sex[i]+1]*x[i,t] + beta2.p[sex[i]+1]*pow(x[i,t],2)
+                      # Growth
+  } #t
+} #i
+
+#### PRIORS
+for(i in 1:2){
+alpha.phi[i] ~ dnorm(0, 0.01)
+beta.phi[i] ~ dnorm(0, 0.01)           # Prior for slope parameter
+beta2.phi[i] ~ dnorm(0, 0.01)           # Prior for slope parameter
+
+alpha.p[i] ~ dnorm(0, 0.01)
+beta.p[i] ~ dnorm(0, 0.01)           # Prior for slope parameter
+beta2.p[i] ~ dnorm(0, 0.01)           # Prior for slope parameter
+
+}
+
+
+# Likelihood 
+for (i in 1:nind){
+   # Define latent state at first capture
+   z[i,first[i]] <- 1
+   for (t in (first[i]+1):n.occasions){
+      # State process
+      z[i,t] ~ dbern(mu1[i,t])
+      mu1[i,t] <- phi[i,t-1] * z[i,t-1]
+      # Observation process
+      y[i,t] ~ dbern(mu2[i,t])
+      mu2[i,t] <- p[i,t-1] * z[i,t]
+      x[i,t-1] ~ dnorm(L[i,t-1],tau.sample)T(0,)
+      L[i,t-1] <- (L0[i] + (LI[i]-L0[i])*(1-K[i]^(AFC[i]+(t-1)-first[i]))) 
+      } #t
+   } #i
+   
+
+
+}
+",fill = TRUE)
+sink()
+
+# MCMC settings
+ni <- 100000
+nt <- 1
+nb <- 200000
+nc <- 4
+na <- 50000
+
+#Call JAGS from R
+bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
+bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
+
+runjags.options(jagspath = "/usr/local/bin/jags")
+
+cjs.Matticolus.sex <- run.jags(data=bugs.data.sex, inits=inits, monitor=parameters, model="cjs-sex-Matticolus-crc.jags",
+                           n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
+                           method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
+                           summarise = TRUE,
+                           modules = c("glm"))
+
+results.cjs.Matticolus.sex <- results.jags(cjs.Matticolus.sex)#folder runjagsfiles4
+# results.cjs.Matticolus <- add.summary(results.cjs.Matticolus)
+
+results.cjs.Matticolus.df <- summary(results.cjs.Matticolus.sex)
+View(results.cjs.Matticolus.df)
+
+ni = 400000
+
+cjs.Matticolus.extend.sex <- extend.jags(results.cjs.Matticolus.sex,
+                                     adapt = na,thin = nt, sample = ni, 
+                                     method = "bgparallel", jags.refresh = 30,
+                                     keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
+
+results.cjs.Matticolus.sex <- results.jags(cjs.Matticolus.extend.sex,  combine = T)#runjagsfiles_5
+# results.cjs.Matticolus <- add.summary(results.cjs.Matticolus)
+
+results.cjs.Matticolus.df <- summary(results.cjs.Matticolus.sex)
+View(results.cjs.Matticolus.df)
+
+ni = 300000
+cjs.Matticolus.extend.sex2 <- extend.jags(results.cjs.Matticolus.sex,
+                                      adapt = na,thin = nt, sample = ni, 
+                                      method = "bgparallel", jags.refresh = 30,
+                                      keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
+
+results.cjs.Matticolus.sex <- results.jags(cjs.Matticolus.extend.sex2,  combine = T)#runjagsfiles_6
+# results.cjs.Matticolus <- add.summary(results.cjs.Matticolus)
+
+results.cjs.Matticolus.df <- summary(results.cjs.Matticolus.sex)
+View(results.cjs.Matticolus.df)
+
+ni = 200000
+
+cjs.Matticolus.extend.sex3 <- extend.jags(results.cjs.Matticolus.sex,
+                                      adapt = na,thin = nt, sample = ni, 
+                                      method = "bgparallel", jags.refresh = 30,
+                                      keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
+
+results.cjs.Matticolus.sex <- results.jags(cjs.Matticolus.extend.sex3,  combine = T)#runjagsfiles_4
+# results.cjs.Matticolus <- add.summary(results.cjs.Matticolus)
+
+results.cjs.Matticolus.df <- summary(results.cjs.Matticolus.sex)
+View(results.cjs.Matticolus.df)
+
+#Diagnostic plots
+S <- ggs(results.cjs.Matticolus.sex$mcmc)
+
+quartz(8,12)
+ggs_density(S,family="alpha.phi")
+ggs_density(S,family="alpha.p")
+
+ggs_density(S,family="beta.p")
+ggs_density(S,family="beta2.p")
+
+ggs_density(S,family="mu.K")
+
+ggs_traceplot(S,family="beta2.phi")
+ggs_traceplot(S,family="beta.phi")
+ggs_traceplot(S,family="beta.p")
+ggs_traceplot(S,family="beta2.p")
+ggs_traceplot(S,family="mu.K")
+
+saveRDS(results.cjs.Matticolus.df,"results_cjs_Matticolus_sex_df.rds")
+saveRDS(results.cjs.Matticolus.sex, "results_cjs_Matticolus_sex.rds")
+
+write.csv(results.cjs.Matticolus.df,"results_cjs_Matticolus_sex_df.csv")
+
+#Function plots 
+results.cjs.Matticolus.sex.df <- read.csv("results_cjs_Matticolus_sex_df.csv")
+results.cjs.Matticolus.df <- read.csv("results.ipm2.Matticolus.df_100000iters.csv")
+
+#Function to estimate size from age
+age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-plogis(K)^x)
+
+#Function to estimate age from size
+size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/log(inv_logit(K))
+
+#Function to estimate size in t1 from size in t0
+sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
+
+#Growth parameters
+(mu.L0 <- bugs.data.sex$mu.L0)
+(mu.LI <- results.cjs.Matticolus.sex.df$Mean[grep(pattern = "mu.LI", 
+                                              x = results.cjs.Matticolus.sex.df$X)])
+
+(K <- results.cjs.Matticolus.sex.df$Mean[grep(pattern = "mu.K", 
+                                          x = results.cjs.Matticolus.sex.df$X)])
+
+(K.lw <- results.cjs.Matticolus.sex.df$Lower95[grep(pattern = "mu.K", 
+                                                x = results.cjs.Matticolus.sex.df$X)])
+
+(K.up <- results.cjs.Matticolus.sex.df$Upper95[grep(pattern = "mu.K", 
+                                                x = results.cjs.Matticolus.sex.df$X)])
+
+xx <- 0:24 #time in months
+
+#Create data frame
+growth.df <- data.frame(sex = as.factor(rep(c("F", "M"), each = length(xx))),
+                        mean = c(age_to_size(xx, mu.L0, mu.LI, K[1]),
+                                 age_to_size(xx, mu.L0, mu.LI, K[2])),
+                        lower = c(age_to_size(xx, mu.L0, mu.LI, K.lw[1]),
+                                  age_to_size(xx, mu.L0, mu.LI, K.lw[2])),
+                        upper = c(age_to_size(xx, mu.L0, mu.LI, K.up[1]),
+                                  age_to_size(xx, mu.L0, mu.LI, K.up[2])),
+                        time = rep(xx, 2),
+                        class = "sex"
+)
+
+#Plot
+quartz(width = 10, height = 8)
+
+ggplot(data = growth.df, aes(x = time, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Time (months)", y = "Snout-vent length (mm)") +
+  scale_colour_manual(values = turbo(2), name = "Sex") +
+  scale_fill_manual(values = turbo(2), name = "Sex")
+
+#Results ignoring sex
+(mu.LI.mn <- results.cjs.Matticolus.df$mean[grep(pattern = "mu.LI", 
+                                             x = results.cjs.Matticolus.df$X)])
+
+(K.mn <- mean(results.cjs.Matticolus.df$mean[grep(pattern = "mu.K", 
+                                              x = results.cjs.Matticolus.df$X)]))
+
+(K.lw.mn <- mean(results.cjs.Matticolus.df$X2.5.[grep(pattern = "mu.K", 
+                                                    x = results.cjs.Matticolus.df$X)]))
+
+(K.up.mn <- mean(results.cjs.Matticolus.df$X97.5.[grep(pattern = "mu.K", 
+                                                    x = results.cjs.Matticolus.df$X)]))
+
+#Create data frame
+growth.nosex.df <- data.frame(sex = as.factor("Both"),
+                              mean = c(age_to_size(xx, mu.L0, mu.LI.mn, K.mn[1])),
+                              lower = c(age_to_size(xx, mu.L0, mu.LI.mn, K.lw.mn[1])),
+                              upper = c(age_to_size(xx, mu.L0, mu.LI.mn, K.up.mn[1])),
+                              time = rep(xx),
+                              class = "nosex"
+)
+
+#Plot
+quartz(width = 10, height = 8)
+
+ggplot(data = growth.nosex.df, aes(x = time, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Time (months)", y = "Snout-vent length (mm)") +
+  scale_colour_manual(values = turbo(2), name = "Sex") +
+  scale_fill_manual(values = turbo(2), name = "Sex")
+
+quartz(width = 12, height = 6)
+
+ggplot(data = rbind(growth.df,growth.nosex.df), aes(x = time, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Time (months)", y = "Snout-vent length (mm)") +
+  scale_colour_manual(values = turbo(3), name = "Sex") +
+  scale_fill_manual(values = turbo(3), name = "Sex") +
+  facet_wrap("class")
+
+#Survival parameters
+(alpha.phi <- results.cjs.Matticolus.sex.df$Mean[grep(pattern = "alpha.phi", 
+                                                  x = results.cjs.Matticolus.sex.df$X)])
+
+(alpha.phi.lw <- alpha.phi - results.cjs.Matticolus.sex.df$SD[grep(pattern = "alpha.phi", 
+                                                               x = results.cjs.Matticolus.sex.df$X)])
+
+(alpha.phi.up <- alpha.phi + results.cjs.Matticolus.sex.df$SD[grep(pattern = "alpha.phi", 
+                                                               x = results.cjs.Matticolus.sex.df$X)])
+
+(beta.phi <- results.cjs.Matticolus.sex.df$Mean[grep(pattern = "beta.phi", 
+                                                 x = results.cjs.Matticolus.sex.df$X)])
+
+(beta.phi.lw <- beta.phi - results.cjs.Matticolus.sex.df$SD[grep(pattern = "beta.phi", 
+                                                             x = results.cjs.Matticolus.sex.df$X)])
+
+(beta.phi.up <- beta.phi + results.cjs.Matticolus.sex.df$SD[grep(pattern = "beta.phi", 
+                                                             x = results.cjs.Matticolus.sex.df$X)])
+
+(beta2.phi <- results.cjs.Matticolus.sex.df$Mean[grep(pattern = "beta2.phi", 
+                                                  x = results.cjs.Matticolus.sex.df$X)])
+
+(beta2.phi.lw <- beta2.phi - results.cjs.Matticolus.sex.df$SD[grep(pattern = "beta2.phi", 
+                                                               x = results.cjs.Matticolus.sex.df$X)])
+
+(beta2.phi.up <- beta2.phi + results.cjs.Matticolus.sex.df$SD[grep(pattern = "beta2.phi", 
+                                                               x = results.cjs.Matticolus.sex.df$X)])
+svl.xx <- seq(mu.L0, max(mu.LI), by = 0.1)
+
+#Create data frame
+surv.df <- data.frame(sex = as.factor(rep(c("F", "M"), each = length(svl.xx))),
+                      mean = c(plogis(alpha.phi[1] + beta.phi[1]*svl.xx + beta2.phi[1]*svl.xx^2),
+                               plogis(alpha.phi[2] + beta.phi[2]*svl.xx + beta2.phi[2]*svl.xx^2)),
+                      lower = c(plogis(alpha.phi.up[1] + beta.phi.lw[1]*svl.xx + beta2.phi.lw[1]*svl.xx^2),
+                                plogis(alpha.phi.up[2] + beta.phi.lw[2]*svl.xx + beta2.phi.lw[2]*svl.xx^2)),
+                      upper = c(plogis(alpha.phi.lw[1] + beta.phi.up[1]*svl.xx + beta2.phi.up[1]*svl.xx^2),
+                                plogis(alpha.phi.lw[2] + beta.phi.up[2]*svl.xx + beta2.phi.up[2]*svl.xx^2)),
+                      svl = rep(svl.xx, 2),
+                      class = "sex"
+)
+
+#Plot
+quartz(width = 10, height = 8)
+
+ggplot(data = surv.df, aes(x = svl, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Snout-vent length (mm)", y = "Survival") +
+  scale_colour_manual(values = turbo(2), name = "Sex") +
+  scale_fill_manual(values = turbo(2), name = "Sex")
+
+#Results ignoring sex (more data available)
+#Survival parameters
+(alpha.phi.mn <- mean(results.cjs.Matticolus.df$mean[grep(pattern = "alpha.phi", 
+                                                 x = results.cjs.Matticolus.df$X)]))
+
+(alpha.phi.lw.mn <- alpha.phi.mn - mean(results.cjs.Matticolus.df$sd[grep(pattern = "alpha.phi", 
+                                                                 x = results.cjs.Matticolus.df$X)]))
+
+(alpha.phi.up.mn <- alpha.phi.mn + mean(results.cjs.Matticolus.df$sd[grep(pattern = "alpha.phi", 
+                                                                 x = results.cjs.Matticolus.df$X)]))
+
+(beta.phi.mn <- results.cjs.Matticolus.df$mean[grep(pattern = "beta.phi", 
+                                                x = results.cjs.Matticolus.df$X)])
+
+(beta.phi.lw.mn <- beta.phi.mn - results.cjs.Matticolus.df$sd[grep(pattern = "beta.phi", 
+                                                               x = results.cjs.Matticolus.df$X)])
+
+(beta.phi.up.mn <- beta.phi.mn + results.cjs.Matticolus.df$sd[grep(pattern = "beta.phi", 
+                                                               x = results.cjs.Matticolus.df$X)])
+
+# (beta2.phi.mn <- results.cjs.Matticolus.df$Mean[grep(pattern = "beta2.phi", 
+#                                                  x = results.cjs.Matticolus.df$X)])
+# 
+# (beta2.phi.lw.mn <- beta2.phi.mn - results.cjs.Matticolus.df$SD[grep(pattern = "beta2.phi", 
+#                                                                  x = results.cjs.Matticolus.df$X)])
+# 
+# (beta2.phi.up.mn <- beta2.phi.mn + results.cjs.Matticolus.df$SD[grep(pattern = "beta2.phi", 
+#                                                                  x = results.cjs.Matticolus.df$X)])
+svl.xx <- seq(mu.L0, max(mu.LI), by = 0.1)
+
+#Create data frame
+surv.nosex.df <- data.frame(sex = as.factor("Both"),
+                            mean = c(plogis(alpha.phi.mn[1] + beta.phi.mn[1]*svl.xx)),
+                            lower = c(plogis(alpha.phi.up.mn[1] + beta.phi.lw.mn[1]*svl.xx)),
+                            upper = c(plogis(alpha.phi.lw.mn[1] + beta.phi.up.mn[1]*svl.xx)),
+                            svl = rep(svl.xx, 1),
+                            class = "nosex"
+)
+
+#Plot
+quartz(width = 10, height = 8)
+
+ggplot(data = surv.nosex.df, aes(x = svl, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Snout-vent length (mm)", y = "Survival") +
+  scale_colour_manual(values = turbo(1), name = "Sex") +
+  scale_fill_manual(values = turbo(1), name = "Sex")
+
+quartz(width = 12, height = 6)
+
+ggplot(data = rbind(surv.df,surv.nosex.df), aes(x = svl, y = mean, colour = sex))+
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = sex), alpha = 0.2, colour = NA) +
+  labs(x = "Snout-vent length (mm)", y = "Survival") +
+  scale_colour_manual(values = turbo(3), name = "Sex") +
+  scale_fill_manual(values = turbo(3), name = "Sex")+
+  facet_wrap("class")
+
