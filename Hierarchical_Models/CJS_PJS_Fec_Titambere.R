@@ -66,7 +66,7 @@ str(itambere.dataset)
 library(rjags)
 library(reshape)
 # Separa as variaveis de interesse
-table1 <- itambere.dataset[itambere.dataset$recaptura!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recaptura", "plot")]
+table1 <- itambere.dataset[itambere.dataset$recapture!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
 str(table1)
 
 
@@ -88,7 +88,7 @@ table5$plot <- as.character(table5$plot)
 str(table5)
 
 
-# Calcula frequencias de recapturas
+# Calcula frequencias de recaptures
 recap.table <- data.frame(table(table5$IDENT))
 names(recap.table) <- c("identity", "captures")
 recap.table
@@ -175,7 +175,7 @@ cjs.init.z<-function(ch,f){
 }
 
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
+eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
@@ -188,12 +188,6 @@ head(eh)
 m
 n
 
-mplot <- data.frame(C = as.numeric(plot==1),
-                    Q = as.numeric(plot==2),
-                    EB = as.numeric(plot==3),
-                    MB = as.numeric(plot==4),
-                    LB = as.numeric(plot==5))
-
 # Create matrix X indicating svl
 x <- cast(datA,
           TrueID ~ Camp,
@@ -201,7 +195,7 @@ x <- cast(datA,
           value = "SVL",
           fill = NA)
 x <- x[,2:ncol(x)]
-x.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
+x.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
 colnames(col) <- missing
@@ -210,79 +204,10 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-# Create matrix X indicating mean svl
-# xpop <- x
-# xpop[is.na(xpop)] <- 0
-# head(xpop)
-
-xpopC  <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopQ  <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopEB <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopMB <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopLB <- matrix(0,nrow = nind, ncol = n.occasions)
-
-for(i in 1:nind){
-  for (t in 1:(n.occasions)){
-    xpopC[i,t]  <- x[i,t] * mplot[i,1]
-    xpopQ[i,t]  <- x[i,t] * mplot[i,2]
-    xpopEB[i,t] <- x[i,t] * mplot[i,3]
-    xpopMB[i,t] <- x[i,t] * mplot[i,4]
-    xpopLB[i,t] <- x[i,t] * mplot[i,5]
-  }
-}
-
-xpopC[xpopC==0] <- NA
-xpopQ[xpopQ==0] <- NA
-xpopEB[xpopEB==0] <- NA
-xpopMB[xpopMB==0] <- NA
-xpopLB[xpopLB==0] <- NA
-
-
-(xpopmeanC <- colMeans(xpopC,na.rm=T))
-(xpopmeanQ <- colMeans(xpopQ,na.rm=T))
-(xpopmeanEB <- colMeans(xpopEB,na.rm=T))
-(xpopmeanMB <- colMeans(xpopMB,na.rm=T))
-(xpopmeanLB <- colMeans(xpopLB,na.rm=T))
-
-xpop <- c(xpopmeanC,xpopmeanQ,xpopmeanEB,xpopmeanMB,xpopmeanLB)
-
-var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
-var_amb <- readRDS("climate.ecophysio.month.rds")
-var_amb$canopy <- factor(var_amb$canopy,levels = c("C","Q","EB","MB","LB"))
-var_amb <- var_amb[order(var_amb$canopy),]
-var_amb$canopy
-var_amb$xpop <- xpop
-
-# library(Amelia)
-# missmap(var_amb)
-
-library(missForest)
-xpop.imp <- missForest::missForest(as.data.frame(var_amb,
-                                                 verbose = T,
-                                                 variablewise = T,
-                                                 maxiter = 100,
-                                                 ntree = 1000,
-                                                 parallelize = "variables"))
-
-names(xpop.imp)
-xpop.imp$OOBerror
-
-xpop.fire <- rbind(xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="C"] ,
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="Q"] ,
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="EB"],
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="MB"],
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="LB"])
-xpop.fire
-# # Create matrix X indicating mass
-# x1 <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(x), value="Mass",fill=NA);x1 <- x1[,2:ncol(x1)]
-# x.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
-# missing <- x.all[!(x.all %in% names(x1))]
-# col=matrix(NA,nrow=nrow(x1),ncol=length(missing))
-# colnames(col) <- missing
-# x1 <- cbind(x1, col)
-# x1 <- x1[,sort(colnames(x1))]
-# #x[is.na(x)] <- 0
-# head(x1)
+var_env <- readRDS("climate.ecophysio.month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
 # Derivar dados para o modelo:
 # e = indice da observacao mais antiga
@@ -578,46 +503,46 @@ nrow(fire.time.df)
 (sd.TSLF <- as.numeric(sd(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_EB,
                                 fire.time.df$TSLF_MB,fire.time.df$TSLF_LB)))) 
 
-amb <- array(c(rbind((var_amb$tmed2m[var_amb$canopy=="C"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="Q"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="EB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="MB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="LB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m)),
-                rbind((var_amb$RHmax[var_amb$canopy=="C"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                      (var_amb$RHmax[var_amb$canopy=="Q"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                      (var_amb$RHmax[var_amb$canopy=="EB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                      (var_amb$RHmax[var_amb$canopy=="MB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                      (var_amb$RHmax[var_amb$canopy=="LB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax)),
-               rbind((var_amb$sol[var_amb$canopy=="C"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="Q"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="EB"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="MB"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="LB"]-mean(var_amb$sol))/sd(var_amb$sol)),
-               rbind((var_amb$tmed0cm[var_amb$canopy=="C"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="Q"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="EB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="MB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="LB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm)),
-               rbind((var_amb$tmin0cm[var_amb$canopy=="C"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="Q"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="EB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="MB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="LB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm)),
-               rbind((var_amb$precip[var_amb$canopy=="C"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="Q"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="EB"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="MB"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="LB"]-mean(var_amb$precip))/sd(var_amb$precip)),
-               rbind((var_amb$Titambere_perf[var_amb$canopy=="C"]-mean(var_amb$Titambere_perf))/sd(var_amb$Titambere_perf),
-                     (var_amb$Titambere_perf[var_amb$canopy=="Q"]-mean(var_amb$Titambere_perf))/sd(var_amb$Titambere_perf),
-                     (var_amb$Titambere_perf[var_amb$canopy=="EB"]-mean(var_amb$Titambere_perf))/sd(var_amb$Titambere_perf),
-                     (var_amb$Titambere_perf[var_amb$canopy=="MB"]-mean(var_amb$Titambere_perf))/sd(var_amb$Titambere_perf),
-                     (var_amb$Titambere_perf[var_amb$canopy=="LB"]-mean(var_amb$Titambere_perf))/sd(var_amb$Titambere_perf)),
-               rbind((var_amb$Titambere_ha90[var_amb$canopy=="C"]-mean(var_amb$Titambere_ha90))/sd(var_amb$Titambere_ha90),
-                     (var_amb$Titambere_ha90[var_amb$canopy=="Q"]-mean(var_amb$Titambere_ha90))/sd(var_amb$Titambere_ha90),
-                     (var_amb$Titambere_ha90[var_amb$canopy=="EB"]-mean(var_amb$Titambere_ha90))/sd(var_amb$Titambere_ha90),
-                     (var_amb$Titambere_ha90[var_amb$canopy=="MB"]-mean(var_amb$Titambere_ha90))/sd(var_amb$Titambere_ha90),
-                     (var_amb$Titambere_ha90[var_amb$canopy=="LB"]-mean(var_amb$Titambere_ha90))/sd(var_amb$Titambere_ha90)),
+env <- array(c(rbind((var_env$tmed2m[var_env$canopy=="C"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="Q"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="EB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="MB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="LB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m)),
+                rbind((var_env$RHmax[var_env$canopy=="C"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                      (var_env$RHmax[var_env$canopy=="Q"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                      (var_env$RHmax[var_env$canopy=="EB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                      (var_env$RHmax[var_env$canopy=="MB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                      (var_env$RHmax[var_env$canopy=="LB"]-mean(var_env$RHmax))/sd(var_env$RHmax)),
+               rbind((var_env$sol[var_env$canopy=="C"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="Q"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="EB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="MB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="LB"]-mean(var_env$sol))/sd(var_env$sol)),
+               rbind((var_env$tmed0cm[var_env$canopy=="C"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="Q"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="EB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="MB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="LB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm)),
+               rbind((var_env$tmin0cm[var_env$canopy=="C"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="Q"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="EB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="MB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="LB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm)),
+               rbind((var_env$precip[var_env$canopy=="C"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="Q"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="EB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="MB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="LB"]-mean(var_env$precip))/sd(var_env$precip)),
+               rbind((var_env$Titambere_perf[var_env$canopy=="C"]-mean(var_env$Titambere_perf))/sd(var_env$Titambere_perf),
+                     (var_env$Titambere_perf[var_env$canopy=="Q"]-mean(var_env$Titambere_perf))/sd(var_env$Titambere_perf),
+                     (var_env$Titambere_perf[var_env$canopy=="EB"]-mean(var_env$Titambere_perf))/sd(var_env$Titambere_perf),
+                     (var_env$Titambere_perf[var_env$canopy=="MB"]-mean(var_env$Titambere_perf))/sd(var_env$Titambere_perf),
+                     (var_env$Titambere_perf[var_env$canopy=="LB"]-mean(var_env$Titambere_perf))/sd(var_env$Titambere_perf)),
+               rbind((var_env$Titambere_ha90[var_env$canopy=="C"]-mean(var_env$Titambere_ha90))/sd(var_env$Titambere_ha90),
+                     (var_env$Titambere_ha90[var_env$canopy=="Q"]-mean(var_env$Titambere_ha90))/sd(var_env$Titambere_ha90),
+                     (var_env$Titambere_ha90[var_env$canopy=="EB"]-mean(var_env$Titambere_ha90))/sd(var_env$Titambere_ha90),
+                     (var_env$Titambere_ha90[var_env$canopy=="MB"]-mean(var_env$Titambere_ha90))/sd(var_env$Titambere_ha90),
+                     (var_env$Titambere_ha90[var_env$canopy=="LB"]-mean(var_env$Titambere_ha90))/sd(var_env$Titambere_ha90)),
              rbind(fire.time.df$C,
                    fire.time.df$Q ,
                    fire.time.df$EB,
@@ -629,13 +554,13 @@ amb <- array(c(rbind((var_amb$tmed2m[var_amb$canopy=="C"]-mean(var_amb$tmed2m))/
                    (fire.time.df$TSLF_MB - mean.TSLF)/sd.TSLF,
                    (fire.time.df$TSLF_LB - mean.TSLF)/sd.TSLF)),
              dim = c(5,170,10))
-dim(amb)
-str(amb)
+dim(env)
+str(env)
 
 
 # Dados do pacote
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
-                  y = eh, amb = amb, x = as.matrix(x), xpop = xpop.fire, z = known.states.cjs(eh),
+                  y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=35],na.rm=T), 
                   tau.L0 = var(datA$SVL[datA$SVL<=35],na.rm=T),
                   AFC = as.numeric(age),
@@ -789,27 +714,6 @@ for (i in 1:n.probrep){
    logit(probrep[i]) <- alpha.prep + beta1.prep * xprep[i]  # 3. Linear predictor
    } #i
 
-
-##############################
-#Probability of establishment#
-##############################
-# for(j in 1:5){
-# for (t in 1:(n.occasions-1)){
-# fecundity.pop[j,t] <- exp(log.f[j,t] + alpha.fec + beta1.fec * xpop[j,t] + beta2.fec * pow(xpop[j,t],2))
-# #fec.pop[j,t] ~ dpois(fecundity.pop[j,t])
-# prob.rep[j,t] <- 1/(1+exp(-(alpha.prep + beta1.prep*xpop[j, t])))
-# fec.pop[j,t] <- prob.rep[j,t] * fecundity.pop[j,t]
-# pest[j,t] <- f[j,t]/fec.pop[j,t]
-# 
-# }
-# }
-
-# for(t in 2:(n.occasions -1)){
-# for(j in 1:5){
-# pest[j,t-1] ~ dbern(pest.mean[j,t-1])
-# pest.mean[j,t-1] <-  f[j,t]/fec.pop[j,t-1]
-# }
-#}
    
    #################
    #Pradel JS model#
@@ -834,7 +738,7 @@ alpha.phiJS[j] ~ dnorm(0,0.01)
 mean.phiJS[j] <- 1/(1+exp(-alpha.phiJS[j]))#alpha.phiJS on prob scale
 for(t in 1:(n.occasions-1)){
 phiJS[j, t] <- 1/(1+exp(-logit.phiJS[j, t]))
-logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(amb[j,t,],betaphiJS)
+logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(env[j,t,],betaphiJS)
 eps.phiJS[j,t] ~ dnorm(0,tau.phiJS)
 }
 }
@@ -855,7 +759,7 @@ alpha.f[j] ~ dnorm(-0.5,0.01)
 mean.f[j] <- exp(alpha.f[j])#alpha.f on prob scale
 for(t in 1:(n.occasions-1)){
 f[j,t] <- exp(log.f[j,t])
-log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(amb[j,t,],betaf)
+log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(env[j,t,],betaf)
 eps.f[j,t] ~ dnorm(0,tau.f)
 }
 }
@@ -875,7 +779,7 @@ mean.pJS[j] <- 1/(1+exp(-alpha.pJS[j])) #alpha.pJS on prob scale
 for(t in 1:n.occasions){
 #logit constraint for detectability (p)
 pJS[j,t] <- 1/(1+exp(-logit.pJS[j,t]))
-logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(amb[j,t,],betapJS)
+logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(env[j,t,],betapJS)
 eps.pJS[j,t] ~ dnorm(0,tau.pJS)
 }}
 
@@ -1201,7 +1105,7 @@ alpha.phiJS[j] ~ dnorm(0,0.01)
 mean.phiJS[j] <- 1/(1+exp(-alpha.phiJS[j]))#alpha.phiJS on prob scale
 for(t in 1:(n.occasions-1)){
 phiJS[j, t] <- 1/(1+exp(-logit.phiJS[j, t]))
-logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(amb[j,t,],betaphiJS)
+logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(env[j,t,],betaphiJS)
 eps.phiJS[j,t] ~ dnorm(0,tau.phiJS)
 }
 }
@@ -1222,7 +1126,7 @@ alpha.f[j] ~ dnorm(-4,0.01)
 mean.f[j] <- exp(alpha.f[j])#alpha.f on prob scale
 for(t in 1:(n.occasions-1)){
 f[j,t] <- exp(log.f[j,t])
-log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(amb[j,t,],betaf)
+log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(env[j,t,],betaf)
 eps.f[j,t] ~ dnorm(0,tau.f)
 }
 }
@@ -1256,7 +1160,7 @@ mean.pJS[j] <- 1/(1+exp(-alpha.pJS[j])) #alpha.pJS on prob scale
 for(t in 1:n.occasions){
 #logit constraint for detectability (p)
 pJS[j,t] <- 1/(1+exp(-logit.pJS[j,t]))
-logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(amb[j,t,],betapJS)
+logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(env[j,t,],betapJS)
 eps.pJS[j,t] ~ dnorm(0,tau.pJS)
 }}
 
@@ -1674,7 +1578,7 @@ rm(IDENT)
 str(Titambere.dataset)
 
 # Subset variables of interest
-table1 <- Titambere.dataset[Titambere.dataset$recaptura!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recaptura", "plot")]
+table1 <- Titambere.dataset[Titambere.dataset$recapture!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -1788,7 +1692,7 @@ cjs.init.z<-function(ch,f){
 
 #Capture histories
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
+eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
@@ -1800,13 +1704,6 @@ head(eh)
 (n.occasions <- ncol(eh)) #Number of occasions
 m #Number of observations
 n #Number of individuals
-
-#Create data.frame of plots
-mplot <- data.frame(C = as.numeric(plot==1),
-                    Q = as.numeric(plot==2),
-                    EB = as.numeric(plot==3),
-                    MB = as.numeric(plot==4),
-                    LB = as.numeric(plot==5))
 
 # Create matrix X indicating SVL (svl)
 x <- cast(datA,
@@ -1829,9 +1726,7 @@ bugs.data.sex <- list(first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                       y = eh, x = as.matrix(x), z = known.states.cjs(eh),
                       mu.L0 = mean(datA$SVL[datA$SVL<=35],na.rm=T),
                       tau.L0 = var(datA$SVL[datA$SVL<=35],na.rm=T),
-                      # mu.LI = max(datA$SVL,na.rm=T),
                       AFC = as.numeric(age),
-                      #mplot = mplot,
                       sex = sex,
                       plot = plot)
 
