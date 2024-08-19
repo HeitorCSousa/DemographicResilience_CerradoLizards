@@ -27,18 +27,18 @@ summary(fecundity.Cn)
 #Probability of reproduction
 
 Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #Read data
-Cnigropunctatum.RECOR.females<-subset(Cnigropunctatum.RECOR.imp,sexo=="F")# subset only females
-summary(as.factor(Cnigropunctatum.RECOR.females$ovos))
+Cnigropunctatum.RECOR.females<-subset(Cnigropunctatum.RECOR.imp,sex=="F")# subset only females
+summary(as.factor(Cnigropunctatum.RECOR.females$eggs))
 
 #We only recorded females bearing eggs/embryos. To become binary, we need to determine the females without eggs/embryos
-Cnigropunctatum.RECOR.females$ovos[is.na(Cnigropunctatum.RECOR.females$ovos)]<-"n" 
-table(Cnigropunctatum.RECOR.females$ovos) #number of observations (females with eggs/embryos)
+Cnigropunctatum.RECOR.females$eggs[is.na(Cnigropunctatum.RECOR.females$eggs)]<-"n" 
+table(Cnigropunctatum.RECOR.females$eggs) #number of observations (females with eggs/embryos)
 head(Cnigropunctatum.RECOR.females)
-Cnigropunctatum.RECOR.females$ovos <- as.numeric(as.factor(Cnigropunctatum.RECOR.females$ovos))-1
+Cnigropunctatum.RECOR.females$eggs <- as.numeric(as.factor(Cnigropunctatum.RECOR.females$eggs))-1
 
-Cnigropunctatum.RECOR.females <- Cnigropunctatum.RECOR.females[,c("campanha","mes","ano","massa","crc","ovos")]#subset only columns of interest
+Cnigropunctatum.RECOR.females <- Cnigropunctatum.RECOR.females[,c("camp","month","year","mass","svl","eggs")]#subset only columns of interest
 Cnigropunctatum.RECOR.females <- na.omit(Cnigropunctatum.RECOR.females) #remove other lines than females
-Cnigropunctatum.RECOR.females <- Cnigropunctatum.RECOR.females[Cnigropunctatum.RECOR.females$ano < 2020,] #Subset time frame
+Cnigropunctatum.RECOR.females <- Cnigropunctatum.RECOR.females[Cnigropunctatum.RECOR.females$year < 2020,] #Subset time frame
 summary(Cnigropunctatum.RECOR.females)
 
 ## Clean demographic data ----------
@@ -46,37 +46,37 @@ Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
 head(Cnigropunctatum.RECOR.imp)
 tail(Cnigropunctatum.RECOR.imp)
-dados.demografia <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$ano < 2020, ] #remove data later than 2019
-tail(dados.demografia)
-str(dados.demografia)
+data.demography <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$year < 2020, ] #remove data later than 2019
+tail(data.demography)
+str(data.demography)
 
 #Remove dead animals
-dados.demografia$morto[is.na(dados.demografia$morto)] <- "n"
-dados.demografia <- dados.demografia[dados.demografia$morto=="n", ]
-head(dados.demografia)
-table(dados.demografia$campanha)
-table(dados.demografia$identidade)
+data.demography$dead[is.na(data.demography$dead)] <- "n"
+data.demography <- data.demography[data.demography$dead=="n", ]
+head(data.demography)
+table(data.demography$camp)
+table(data.demography$identity)
 
-completos <- complete.cases(dados.demografia[, c("identidade", "parcela")]) #remove NAs
-nigro.planilha <- droplevels(dados.demografia[completos, ])
-head(nigro.planilha)
-str(nigro.planilha)
-table(nigro.planilha$campanha)
-table(nigro.planilha$identidade)
+complete <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
+nigro.dataset <- droplevels(data.demography[complete, ])
+head(nigro.dataset)
+str(nigro.dataset)
+table(nigro.dataset$camp)
+table(nigro.dataset$identity)
 
 
-## Prepare input file and run monthly data ("campanha")
+## Prepare input file and run monthly data ("camp")
 
 
 # Create ID
-IDENT <- paste(nigro.planilha$parcela, nigro.planilha$identidade, nigro.planilha$ciclo, sep="")
+IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
 head(IDENT)
-nigro.planilha <- data.frame(nigro.planilha, IDENT)
+nigro.dataset <- data.frame(nigro.dataset, IDENT)
 rm(IDENT)
-str(nigro.planilha)
+str(nigro.dataset)
 
 # Subset variables of interest
-table1 <- nigro.planilha[nigro.planilha$recaptura!="(s)", c("IDENT", "campanha", "sexo", "crc","massa", "recaptura", "parcela")]
+table1 <- nigro.dataset[nigro.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -85,23 +85,23 @@ table2 <- complete.cases(table1[, c("IDENT")])
 # Remove captures without ID and SVL
 table3 <- table1[table2, ]
 
-# Order the data by ID and time (campanha)
-table4 <- table3[order(table3$IDENT, table3$campanha), ]
+# Order the data by ID and time (camp)
+table4 <- table3[order(table3$IDENT, table3$camp), ]
 str(table4)
 summary(table4)
 
 # Convert IDENT from factor to character
 table5 <- droplevels(table4)
 table5$IDENT <- as.character(table5$IDENT)
-table5$parcela <- as.character(table5$parcela)
+table5$plot <- as.character(table5$plot)
 str(table5)
 
 
 # Calculate recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
-names(recap.table) <- c("identidade", "capturas")
+names(recap.table) <- c("identity", "captures")
 recap.table
-table(recap.table$capturas)
+table(recap.table$captures)
 943+(2*182)+(3*64)+(4*15)+(5*2)+(6*1) #two captures=1, 3 captures=2, 4 captures=3 ...
 
 # Filter data.frame records to use in the analysis
@@ -111,10 +111,10 @@ head(table5)
 Age<-c(rep(NA,nrow(table5)))
 Age
 
-datA<-data.frame(table5$campanha,table5$sexo,table5$IDENT,table5$crc,table5$massa,Age,table5$parcela)
-names(datA)<-c("Year","Sex","TrueID","CRC","Massa","Age","Parcela")
-datA$Year<-datA$Year+2000
-datA$Age[datA$CRC<=40]<-0
+datA<-data.frame(table5$camp,table5$sex,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
+names(datA)<-c("Camp","Sex","TrueID","SVL","Mass","Age","Plot")
+datA$Camp<-datA$Camp+2000
+datA$Age[datA$SVL<=40]<-0
 
 head(datA)
 tail(datA)
@@ -127,15 +127,15 @@ str(datA)
 del<-c()   ### months since the first capture
 
 for(i in 1:nrow(datA)){
-  del[i]<-datA$Year[i]-min(datA$Year[datA$TrueID==datA$TrueID[i]])
+  del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Parcela", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
 plot<-as.character(plot[,2])
 plot
-plot[plot=="BM"]<-4 # Ordering by fire severity
-plot[plot=="BP"]<-3 # Ordering by fire severity
-plot[plot=="BT"]<-5 # Ordering by fire severity
+plot[plot=="MB"]<-4 # Ordering by fire severity
+plot[plot=="EB"]<-3 # Ordering by fire severity
+plot[plot=="LB"]<-5 # Ordering by fire severity
 plot[plot=="C"]<-1 # Ordering by fire severity
 plot[plot=="Q"]<-2 # Ordering by fire severity
 plot<-as.numeric(plot)
@@ -149,7 +149,7 @@ sex
 sex <- sex - 1
 
 ind = as.numeric(factor(datA$TrueID)) #ID
-y = datA$CRC #SVL
+y = datA$SVL #SVL
 n = max(ind)  ### number of individuals
 m = nrow(datA)### number of observations
 
@@ -157,7 +157,7 @@ age<- c()  ## age at first capture
 for (a in 1:n){ age[a] <- datA$Age[ind==a][1]}
 
 year <- c()
-for (a in 1:n){ year[a] <- datA$Year[ind==a][1]}
+for (a in 1:n){ year[a] <- datA$Camp[ind==a][1]}
 
 head(datA)
 tail(datA)
@@ -189,8 +189,8 @@ cjs.init.z<-function(ch,f){
 }
 
 #Capture histories
-eh <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(length(x) >0),value="CRC");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
+eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
+eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the months ignored
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
@@ -203,22 +203,15 @@ head(eh)
 m #Number of observations
 n #Number of individuals
 
-#Create data.frame of plots
-mplot <- data.frame(C = as.numeric(plot==1),
-                    Q = as.numeric(plot==2),
-                    BP = as.numeric(plot==3),
-                    BM = as.numeric(plot==4),
-                    BT = as.numeric(plot==5))
-
-# Create matrix X indicating SVL (crc)
+# Create matrix X indicating SVL (svl)
 x <- cast(datA,
-          TrueID ~ Year,
+          TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
-          value = "CRC",
+          value = "SVL",
           fill = NA)
 
 x <- x[, 2:ncol(x)]
-x.all <- seq(min(datA$Year), max(datA$Year)) #fill all the ignored months
+x.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
 colnames(col) <- missing
@@ -227,70 +220,15 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-# Create matrix X indicating mean svl
-# xpop <- x
-# xpop[is.na(xpop)] <- 0
-# head(xpop)
-
-xpopC  <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopQ  <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopBP <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopBM <- matrix(0,nrow = nind, ncol = n.occasions)
-xpopBT <- matrix(0,nrow = nind, ncol = n.occasions)
-
-for(i in 1:nind){
-  for (t in 1:(n.occasions)){
-    xpopC[i,t]  <- x[i,t] * mplot[i,1]
-    xpopQ[i,t]  <- x[i,t] * mplot[i,2]
-    xpopBP[i,t] <- x[i,t] * mplot[i,3]
-    xpopBM[i,t] <- x[i,t] * mplot[i,4]
-    xpopBT[i,t] <- x[i,t] * mplot[i,5]
-  }
-}
-
-xpopC[xpopC==0] <- NA
-xpopQ[xpopQ==0] <- NA
-xpopBP[xpopBP==0] <- NA
-xpopBM[xpopBM==0] <- NA
-xpopBT[xpopBT==0] <- NA
-
-
-(xpopmeanC <- colMeans(xpopC,na.rm=T))
-(xpopmeanQ <- colMeans(xpopQ,na.rm=T))
-(xpopmeanBP <- colMeans(xpopBP,na.rm=T))
-(xpopmeanBM <- colMeans(xpopBM,na.rm=T))
-(xpopmeanBT <- colMeans(xpopBT,na.rm=T))
-
-xpop <- c(xpopmeanC,xpopmeanQ,xpopmeanBP,xpopmeanBM,xpopmeanBT)
-
-
 # Environmental variables -------------------------------------------------
 
 #Read data
-# var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
-var_amb <- readRDS("climate_ecophysio_month.rds")
-var_amb$canopy <- factor(var_amb$canopy,levels = c("C","Q","BP","BM","BT"))
-var_amb <- var_amb[order(var_amb$canopy),]
-var_amb$canopy
-var_amb$xpop <- xpop
+# var_env <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
+var_env <- readRDS("climate_ecophysio_month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
-#Impute missing data
-xpop.imp <- missForest::missForest(as.data.frame(var_amb,
-                                                 verbose = T,
-                                                 variablewise = T,
-                                                 maxiter = 100,
-                                                 ntree = 1000,
-                                                 parallelize = "variables"))
-
-names(xpop.imp)
-xpop.imp$OOBerror
-
-xpop.fire <- rbind(xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="C"] ,
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="Q"] ,
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="BP"],
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="BM"],
-                   xpop.imp$ximp$xpop[xpop.imp$ximp$canopy=="BT"])
-xpop.fire
 
 # Derive data for the Pradel-Jolly-Seber (PJS) Model
 # e = index of oldest observation
@@ -440,7 +378,7 @@ stand_time <- (time - mean(time))/sd(time)
 
 #Calculate Time since last fire (TSLF)
 
-BP<-c(rep(0,5),1,
+EB<-c(rep(0,5),1,
       rep(0,23),1,
       rep(0,23),1,
       rep(0,23),1,
@@ -450,9 +388,9 @@ BP<-c(rep(0,5),1,
       rep(0,23),1,
       rep(0,23),1,
       rep(0,138))
-BP
-length(BP)
-BM<-c(rep(0,7),1,
+EB
+length(EB)
+MB<-c(rep(0,7),1,
       rep(0,23),1,
       rep(0,23),1,
       rep(0,23),1,
@@ -462,9 +400,9 @@ BM<-c(rep(0,7),1,
       rep(0,23),1,
       rep(0,23),1,
       rep(0,136))
-length(BM)
+length(MB)
 
-BT<-c(rep(0,8),1,
+LB<-c(rep(0,8),1,
       rep(0,23),1,
       rep(0,23),1,
       rep(0,23),1,
@@ -475,7 +413,7 @@ BT<-c(rep(0,8),1,
       rep(0,23),1,
       rep(0,35),1,
       rep(0,99))
-length(BT)
+length(LB)
 
 C<-c(rep(0,236),1,rep(0,99))
 length(C)
@@ -492,15 +430,15 @@ fire.time <- seq.Date(as.Date("1992/01/01"),as.Date("2019/12/31"), by="month")
 fire.time.df <- data.frame(time = fire.time,
                            C = C,
                            Q = Q,
-                           BP = BP,
-                           BM = BM,
-                           BT = BT)
+                           EB = EB,
+                           MB = MB,
+                           LB = LB)
 last.fire <- data.frame(time = as.Date("1971/12/31"),
                         C = 1,
                         Q = 1,
-                        BP = 1,
-                        BM = 1,
-                        BT = 1)
+                        EB = 1,
+                        MB = 1,
+                        LB = 1)
 
 fire.time.df <- rbind(last.fire, fire.time.df)
 
@@ -531,130 +469,130 @@ TSLF_Q <- c(as.Date(NA), fire.time.df[which(fire.time.df$Q==1), "time"])[last_ev
 fire.time.df$TSLF_Q <- (fire.time.df$time - TSLF_Q)/30
 
 # make an index of the latest events
-last_event_index_BP <- cumsum(fire.time.df$BP) + 1
+last_event_index_EB <- cumsum(fire.time.df$EB) + 1
 
 # shift it by one to the right
-last_event_index_BP <- c(1, last_event_index_BP[1:length(last_event_index_BP) - 1])
+last_event_index_EB <- c(1, last_event_index_EB[1:length(last_event_index_EB) - 1])
 
 # get the dates of the events and index the vector with the last_event_index,
 # added an NA as the first date because there was no event
-TSLF_BP <- c(as.Date(NA), fire.time.df[which(fire.time.df$BP==1), "time"])[last_event_index_BP]
+TSLF_EB <- c(as.Date(NA), fire.time.df[which(fire.time.df$EB==1), "time"])[last_event_index_EB]
 
 # substract the event's date with the date of the last event
-fire.time.df$TSLF_BP <- (fire.time.df$time - TSLF_BP)/30
+fire.time.df$TSLF_EB <- (fire.time.df$time - TSLF_EB)/30
 
 # make an index of the latest events
-last_event_index_BM <- cumsum(fire.time.df$BM) + 1
+last_event_index_MB <- cumsum(fire.time.df$MB) + 1
 
 # shift it by one to the right
-last_event_index_BM <- c(1, last_event_index_BM[1:length(last_event_index_BM) - 1])
+last_event_index_MB <- c(1, last_event_index_MB[1:length(last_event_index_MB) - 1])
 
 # get the dates of the events and index the vector with the last_event_index,
 # added an NA as the first date because there was no event
-TSLF_BM <- c(as.Date(NA), fire.time.df[which(fire.time.df$BM==1), "time"])[last_event_index_BM]
+TSLF_MB <- c(as.Date(NA), fire.time.df[which(fire.time.df$MB==1), "time"])[last_event_index_MB]
 
 # substract the event's date with the date of the last event
-fire.time.df$TSLF_BM <- (fire.time.df$time - TSLF_BM)/30
+fire.time.df$TSLF_MB <- (fire.time.df$time - TSLF_MB)/30
 
 # make an index of the latest events
-last_event_index_BT <- cumsum(fire.time.df$BT) + 1
+last_event_index_LB <- cumsum(fire.time.df$LB) + 1
 
 # shift it by one to the right
-last_event_index_BT <- c(1, last_event_index_BT[1:length(last_event_index_BT) - 1])
+last_event_index_LB <- c(1, last_event_index_LB[1:length(last_event_index_LB) - 1])
 
 # get the dates of the events and index the vector with the last_event_index,
 # added an NA as the first date because there was no event
-TSLF_BT <- c(as.Date(NA), fire.time.df[which(fire.time.df$BT==1), "time"])[last_event_index_BT]
+TSLF_LB <- c(as.Date(NA), fire.time.df[which(fire.time.df$LB==1), "time"])[last_event_index_LB]
 
 # substract the event's date with the date of the last event
-fire.time.df$TSLF_BT <- (fire.time.df$time - TSLF_BT)/30
+fire.time.df$TSLF_LB <- (fire.time.df$time - TSLF_LB)/30
 
 fire.time.df <- fire.time.df[fire.time.df$time >= "2005-11-01",]
 nrow(fire.time.df)
 
 #Standardize variables and create array
-(mean.fire <- mean(c(fire.time.df$C,fire.time.df$Q,fire.time.df$BP,
-                     fire.time.df$BM,fire.time.df$BT)))
+(mean.fire <- mean(c(fire.time.df$C,fire.time.df$Q,fire.time.df$EB,
+                     fire.time.df$MB,fire.time.df$LB)))
 
-(sd.fire <- sd(c(fire.time.df$C,fire.time.df$Q,fire.time.df$BP,
-                 fire.time.df$BM,fire.time.df$BT)))
+(sd.fire <- sd(c(fire.time.df$C,fire.time.df$Q,fire.time.df$EB,
+                 fire.time.df$MB,fire.time.df$LB)))
 
-(mean.TSLF <- as.numeric(mean(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_BP,
-                                fire.time.df$TSLF_BM,fire.time.df$TSLF_BT))))
-(sd.TSLF <- as.numeric(sd(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_BP,
-                            fire.time.df$TSLF_BM,fire.time.df$TSLF_BT))))
+(mean.TSLF <- as.numeric(mean(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_EB,
+                                fire.time.df$TSLF_MB,fire.time.df$TSLF_LB))))
+(sd.TSLF <- as.numeric(sd(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_EB,
+                            fire.time.df$TSLF_MB,fire.time.df$TSLF_LB))))
 
-amb <- array(c(rbind((var_amb$tmed2m[var_amb$canopy=="C"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="Q"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="BP"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="BM"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="BT"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m)),
-               rbind((var_amb$RHmax[var_amb$canopy=="C"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="Q"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="BP"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="BM"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="BT"]-mean(var_amb$RHmax))/sd(var_amb$RHmax)),
-               rbind((var_amb$sol[var_amb$canopy=="C"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="Q"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="BP"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="BM"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="BT"]-mean(var_amb$sol))/sd(var_amb$sol)),
-               rbind((var_amb$tmed0cm[var_amb$canopy=="C"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="Q"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="BP"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="BM"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="BT"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm)),
-               rbind((var_amb$tmin0cm[var_amb$canopy=="C"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="Q"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="BP"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="BM"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="BT"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm)),
-               rbind((var_amb$precip[var_amb$canopy=="C"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="Q"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="BP"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="BM"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="BT"]-mean(var_amb$precip))/sd(var_amb$precip)),
-               rbind((var_amb$Cnigro_perf[var_amb$canopy=="C"]-mean(var_amb$Cnigro_perf))/sd(var_amb$Cnigro_perf),
-                     (var_amb$Cnigro_perf[var_amb$canopy=="Q"]-mean(var_amb$Cnigro_perf))/sd(var_amb$Cnigro_perf),
-                     (var_amb$Cnigro_perf[var_amb$canopy=="BP"]-mean(var_amb$Cnigro_perf))/sd(var_amb$Cnigro_perf),
-                     (var_amb$Cnigro_perf[var_amb$canopy=="BM"]-mean(var_amb$Cnigro_perf))/sd(var_amb$Cnigro_perf),
-                     (var_amb$Cnigro_perf[var_amb$canopy=="BT"]-mean(var_amb$Cnigro_perf))/sd(var_amb$Cnigro_perf)),
-               rbind((var_amb$Cnigro_ha90[var_amb$canopy=="C"]-mean(var_amb$Cnigro_ha90))/sd(var_amb$Cnigro_ha90),
-                     (var_amb$Cnigro_ha90[var_amb$canopy=="Q"]-mean(var_amb$Cnigro_ha90))/sd(var_amb$Cnigro_ha90),
-                     (var_amb$Cnigro_ha90[var_amb$canopy=="BP"]-mean(var_amb$Cnigro_ha90))/sd(var_amb$Cnigro_ha90),
-                     (var_amb$Cnigro_ha90[var_amb$canopy=="BM"]-mean(var_amb$Cnigro_ha90))/sd(var_amb$Cnigro_ha90),
-                     (var_amb$Cnigro_ha90[var_amb$canopy=="BT"]-mean(var_amb$Cnigro_ha90))/sd(var_amb$Cnigro_ha90)),
+env <- array(c(rbind((var_env$tmed2m[var_env$canopy=="C"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="Q"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="EB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="MB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="LB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m)),
+               rbind((var_env$RHmax[var_env$canopy=="C"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="Q"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="EB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="MB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="LB"]-mean(var_env$RHmax))/sd(var_env$RHmax)),
+               rbind((var_env$sol[var_env$canopy=="C"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="Q"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="EB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="MB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="LB"]-mean(var_env$sol))/sd(var_env$sol)),
+               rbind((var_env$tmed0cm[var_env$canopy=="C"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="Q"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="EB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="MB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="LB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm)),
+               rbind((var_env$tmin0cm[var_env$canopy=="C"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="Q"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="EB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="MB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="LB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm)),
+               rbind((var_env$precip[var_env$canopy=="C"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="Q"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="EB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="MB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="LB"]-mean(var_env$precip))/sd(var_env$precip)),
+               rbind((var_env$Cnigro_perf[var_env$canopy=="C"]-mean(var_env$Cnigro_perf))/sd(var_env$Cnigro_perf),
+                     (var_env$Cnigro_perf[var_env$canopy=="Q"]-mean(var_env$Cnigro_perf))/sd(var_env$Cnigro_perf),
+                     (var_env$Cnigro_perf[var_env$canopy=="EB"]-mean(var_env$Cnigro_perf))/sd(var_env$Cnigro_perf),
+                     (var_env$Cnigro_perf[var_env$canopy=="MB"]-mean(var_env$Cnigro_perf))/sd(var_env$Cnigro_perf),
+                     (var_env$Cnigro_perf[var_env$canopy=="LB"]-mean(var_env$Cnigro_perf))/sd(var_env$Cnigro_perf)),
+               rbind((var_env$Cnigro_ha90[var_env$canopy=="C"]-mean(var_env$Cnigro_ha90))/sd(var_env$Cnigro_ha90),
+                     (var_env$Cnigro_ha90[var_env$canopy=="Q"]-mean(var_env$Cnigro_ha90))/sd(var_env$Cnigro_ha90),
+                     (var_env$Cnigro_ha90[var_env$canopy=="EB"]-mean(var_env$Cnigro_ha90))/sd(var_env$Cnigro_ha90),
+                     (var_env$Cnigro_ha90[var_env$canopy=="MB"]-mean(var_env$Cnigro_ha90))/sd(var_env$Cnigro_ha90),
+                     (var_env$Cnigro_ha90[var_env$canopy=="LB"]-mean(var_env$Cnigro_ha90))/sd(var_env$Cnigro_ha90)),
                rbind(fire.time.df$C,
                      fire.time.df$Q ,
-                     fire.time.df$BP,
-                     fire.time.df$BM,
-                     fire.time.df$BT),
+                     fire.time.df$EB,
+                     fire.time.df$MB,
+                     fire.time.df$LB),
                rbind((fire.time.df$TSLF_C - mean.TSLF)/sd.TSLF,
                      (fire.time.df$TSLF_Q - mean.TSLF)/sd.TSLF,
-                     (fire.time.df$TSLF_BP - mean.TSLF)/sd.TSLF,
-                     (fire.time.df$TSLF_BM - mean.TSLF)/sd.TSLF,
-                     (fire.time.df$TSLF_BT - mean.TSLF)/sd.TSLF)),
+                     (fire.time.df$TSLF_EB - mean.TSLF)/sd.TSLF,
+                     (fire.time.df$TSLF_MB - mean.TSLF)/sd.TSLF,
+                     (fire.time.df$TSLF_LB - mean.TSLF)/sd.TSLF)),
              dim = c(5,170,10))
-dim(amb)
-str(amb)
+dim(env)
+str(env)
 
 
 # Data list for JAGS
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
-                  y = eh, amb = amb, x = as.matrix(x), xpop = xpop.fire, z = known.states.cjs(eh),
-                  mu.L0 = mean(datA$CRC[datA$CRC<=40],na.rm=T),
-                  tau.L0 = var(datA$CRC[datA$CRC<=40],na.rm=T),
-                  # mu.LI = max(datA$CRC,na.rm=T),
+                  y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
+                  mu.L0 = mean(datA$SVL[datA$SVL<=40],na.rm=T),
+                  tau.L0 = var(datA$SVL[datA$SVL<=40],na.rm=T),
+                  # mu.LI = max(datA$SVL,na.rm=T),
                   AFC = as.numeric(age),
                   #mplot = mplot,
                   sex = sex,
                   plot = plot,
                   neggs = fecundity.Cn$Nembr,
-                  xfec = fecundity.Cn$CRC,
-                  n.fec = length(fecundity.Cn$CRC),
-                  eggs = Cnigropunctatum.RECOR.females$ovos,
-                  xprep = as.numeric(Cnigropunctatum.RECOR.females$crc),
-                  n.probrep = length(Cnigropunctatum.RECOR.females$ovos))
+                  xfec = fecundity.Cn$SVL,
+                  n.fec = length(fecundity.Cn$SVL),
+                  eggs = Cnigropunctatum.RECOR.females$eggs,
+                  xprep = as.numeric(Cnigropunctatum.RECOR.females$svl),
+                  n.probrep = length(Cnigropunctatum.RECOR.females$eggs))
 
 saveRDS(bugs.data, "Cnigropunctatum.data.rds")
 
@@ -695,7 +633,7 @@ parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
 
 
 # Specify model in BUGS language
-sink("vitalrates-nigro-crc.jags")
+sink("vitalrates-nigro-svl.jags")
 cat("
 
 data{
@@ -820,7 +758,7 @@ alpha.phiJS[j] ~ dnorm(0.5,0.01)
 mean.phiJS[j] <- 1/(1+exp(-alpha.phiJS[j]))#alpha.phiJS on prob scale
 for(t in 1:(n.occasions-1)){
 phiJS[j, t] <- 1/(1+exp(-logit.phiJS[j, t]))
-logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(amb[j,t,],betaphiJS)
+logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(env[j,t,],betaphiJS)
 eps.phiJS[j,t] ~ dnorm(0,tau.phiJS)
 }
 }
@@ -841,7 +779,7 @@ alpha.f[j] ~ dnorm(-0.5,0.01)
 mean.f[j] <- exp(alpha.f[j])#alpha.f on prob scale
 for(t in 1:(n.occasions-1)){
 f[j,t] <- exp(log.f[j,t])
-log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(amb[j,t,],betaf)
+log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(env[j,t,],betaf)
 eps.f[j,t] ~ dnorm(0,tau.f)
 }
 }
@@ -861,7 +799,7 @@ mean.pJS[j] <- 1/(1+exp(-alpha.pJS[j])) #alpha.pJS on prob scale
 for(t in 1:n.occasions){
 #logit constraint for detectability (p)
 pJS[j,t] <- 1/(1+exp(-logit.pJS[j,t]))
-logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(amb[j,t,],betap)
+logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(env[j,t,],betap)
 eps.pJS[j,t] ~ dnorm(0,tau.pJS)
 }}
 
@@ -1117,7 +1055,7 @@ na <- 50000
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
-vitalrates.Cnigro <- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-nigro-crc.jags",
+vitalrates.Cnigro <- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-nigro-svl.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
                        summarise = FALSE,
@@ -1168,7 +1106,7 @@ parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
 
 
 # Specify model in BUGS language
-sink("pradel-nigro-crc.jags")
+sink("pradel-nigro-svl.jags")
 cat("
 
 data{
@@ -1201,7 +1139,7 @@ alpha.phiJS[j] ~ dnorm(0.5,0.01)
 mean.phiJS[j] <- 1/(1+exp(-alpha.phiJS[j]))#alpha.phiJS on prob scale
 for(t in 1:(n.occasions-1)){
 phiJS[j, t] <- 1/(1+exp(-logit.phiJS[j, t]))
-logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(amb[j,t,],betaphiJS)
+logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(env[j,t,],betaphiJS)
 eps.phiJS[j,t] ~ dnorm(0,tau.phiJS)
 }
 }
@@ -1222,7 +1160,7 @@ alpha.f[j] ~ dnorm(-0.5,0.01)
 mean.f[j] <- exp(alpha.f[j])#alpha.f on prob scale
 for(t in 1:(n.occasions-1)){
 f[j,t] <- exp(log.f[j,t])
-log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(amb[j,t,],betaf)
+log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(env[j,t,],betaf)
 eps.f[j,t] ~ dnorm(0,tau.f)
 }
 }
@@ -1242,7 +1180,7 @@ mean.pJS[j] <- 1/(1+exp(-alpha.pJS[j])) #alpha.pJS on prob scale
 for(t in 1:n.occasions){
 #logit constraint for detectability (p)
 pJS[j,t] <- 1/(1+exp(-logit.pJS[j,t]))
-logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(amb[j,t,],betap)
+logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(env[j,t,],betap)
 eps.pJS[j,t] ~ dnorm(0,tau.pJS)
 }}
 
@@ -1498,7 +1436,7 @@ na <- 50000
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
-pradel.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="pradel-nigro-crc.jags",
+pradel.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="pradel-nigro-svl.jags",
                        n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                        method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
                        summarise = FALSE,
@@ -1527,7 +1465,7 @@ parameters <- c("alpha.phi","beta.phi", "beta2.phi","alpha.p","beta.p", "beta2.p
 
 
 # Specify model in BUGS language
-sink("cjs-nigro-crc.jags")
+sink("cjs-nigro-svl.jags")
 cat("
 
 model {
@@ -1641,7 +1579,7 @@ bugs.data$phiJS <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
 bugs.data$pJS <- matrix(p.pradel$mean,nrow = 5, ncol = 170)
 runjags.options(jagspath = "/usr/local/bin/jags")
 
-cjs.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="cjs-nigro-crc.jags",
+cjs.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="cjs-nigro-svl.jags",
                        n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                        method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
                        summarise = TRUE,
@@ -1737,38 +1675,38 @@ Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
 head(Cnigropunctatum.RECOR.imp)
 tail(Cnigropunctatum.RECOR.imp)
-dados.demografia <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$ano < 2020, ] #remove data later than 2019
-dados.demografia <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$campanha > 52, ] #remove data when sex was not registered
-tail(dados.demografia)
-str(dados.demografia)
+data.demography <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$year < 2020, ] #remove data later than 2019
+data.demography <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$camp > 52, ] #remove data when sex was not registered
+tail(data.demography)
+str(data.demography)
 
 #Remove dead animals
-dados.demografia$morto[is.na(dados.demografia$morto)] <- "n"
-dados.demografia <- dados.demografia[dados.demografia$morto=="n", ]
-head(dados.demografia)
-table(dados.demografia$campanha)
-table(dados.demografia$identidade)
+data.demography$dead[is.na(data.demography$dead)] <- "n"
+data.demography <- data.demography[data.demography$dead=="n", ]
+head(data.demography)
+table(data.demography$camp)
+table(data.demography$identity)
 
-completos <- complete.cases(dados.demografia[, c("identidade", "parcela")]) #remove NAs
-nigro.planilha <- droplevels(dados.demografia[completos, ])
-head(nigro.planilha)
-str(nigro.planilha)
-table(nigro.planilha$campanha)
-table(nigro.planilha$identidade)
+complete <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
+nigro.dataset <- droplevels(data.demography[complete, ])
+head(nigro.dataset)
+str(nigro.dataset)
+table(nigro.dataset$camp)
+table(nigro.dataset$identity)
 
 
-## Prepare input file and run monthly data ("campanha")
+## Prepare input file and run monthly data ("camp")
 
 
 # Create ID
-IDENT <- paste(nigro.planilha$parcela, nigro.planilha$identidade, nigro.planilha$ciclo, sep="")
+IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
 head(IDENT)
-nigro.planilha <- data.frame(nigro.planilha, IDENT)
+nigro.dataset <- data.frame(nigro.dataset, IDENT)
 rm(IDENT)
-str(nigro.planilha)
+str(nigro.dataset)
 
 # Subset variables of interest
-table1 <- nigro.planilha[nigro.planilha$recaptura!="(s)", c("IDENT", "campanha", "sexo", "crc","massa", "recaptura", "parcela")]
+table1 <- nigro.dataset[nigro.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -1777,23 +1715,23 @@ table2 <- complete.cases(table1[, c("IDENT")])
 # Remove captures without ID and SVL
 table3 <- table1[table2, ]
 
-# Order the data by ID and time (campanha)
-table4 <- table3[order(table3$IDENT, table3$campanha), ]
+# Order the data by ID and time (camp)
+table4 <- table3[order(table3$IDENT, table3$camp), ]
 str(table4)
 summary(table4)
 
 # Convert IDENT from factor to character
 table5 <- droplevels(table4)
 table5$IDENT <- as.character(table5$IDENT)
-table5$parcela <- as.character(table5$parcela)
+table5$plot <- as.character(table5$plot)
 str(table5)
 
 
 # Calculate recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
-names(recap.table) <- c("identidade", "capturas")
+names(recap.table) <- c("identity", "captures")
 recap.table
-table(recap.table$capturas)
+table(recap.table$captures)
 872+(2*169)+(3*52)+(4*10)+(5*3)+(6*1)+(7*1) #two captures=1, 3 captures=2, 4 captures=3 ...
 
 # Filter data.frame records to use in the analysis
@@ -1803,10 +1741,10 @@ head(table5)
 Age<-c(rep(NA,nrow(table5)))
 Age
 
-datA<-data.frame(table5$campanha,table5$sexo,table5$IDENT,table5$crc,table5$massa,Age,table5$parcela)
-names(datA)<-c("Year","Sex","TrueID","CRC","Massa","Age","Parcela")
-datA$Year<-datA$Year+2000
-datA$Age[datA$CRC<=40]<-0
+datA<-data.frame(table5$camp,table5$sex,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
+names(datA)<-c("Camp","Sex","TrueID","SVL","Mass","Age","Plot")
+datA$Camp<-datA$Camp+2000
+datA$Age[datA$SVL<=40]<-0
 
 head(datA)
 tail(datA)
@@ -1819,15 +1757,15 @@ str(datA)
 del<-c()   ### months since the first capture
 
 for(i in 1:nrow(datA)){
-  del[i]<-datA$Year[i]-min(datA$Year[datA$TrueID==datA$TrueID[i]])
+  del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Parcela", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
 plot<-as.character(plot[,2])
 plot
-plot[plot=="BM"]<-4 # Ordering by fire severity
-plot[plot=="BP"]<-3 # Ordering by fire severity
-plot[plot=="BT"]<-5 # Ordering by fire severity
+plot[plot=="MB"]<-4 # Ordering by fire severity
+plot[plot=="EB"]<-3 # Ordering by fire severity
+plot[plot=="LB"]<-5 # Ordering by fire severity
 plot[plot=="C"]<-1 # Ordering by fire severity
 plot[plot=="Q"]<-2 # Ordering by fire severity
 plot<-as.numeric(plot)
@@ -1841,7 +1779,7 @@ sex
 sex <- sex - 1
 
 ind = as.numeric(factor(datA$TrueID)) #ID
-y = datA$CRC #SVL
+y = datA$SVL #SVL
 n = max(ind)  ### number of individuals
 m = nrow(datA)### number of observations
 
@@ -1849,7 +1787,7 @@ age<- c()  ## age at first capture
 for (a in 1:n){ age[a] <- datA$Age[ind==a][1]}
 
 year <- c()
-for (a in 1:n){ year[a] <- datA$Year[ind==a][1]}
+for (a in 1:n){ year[a] <- datA$Camp[ind==a][1]}
 
 head(datA)
 tail(datA)
@@ -1881,8 +1819,8 @@ cjs.init.z<-function(ch,f){
 }
 
 #Capture histories
-eh <- cast(datA,TrueID ~ Year, fun.aggregate = function(x) as.numeric(length(x) >0),value="CRC");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Year), max(datA$Year)) #preencher todos os anos ignorados
+eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
+eh.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
@@ -1895,22 +1833,15 @@ head(eh)
 m #Number of observations
 n #Number of individuals
 
-#Create data.frame of plots
-mplot <- data.frame(C = as.numeric(plot==1),
-                    Q = as.numeric(plot==2),
-                    BP = as.numeric(plot==3),
-                    BM = as.numeric(plot==4),
-                    BT = as.numeric(plot==5))
-
-# Create matrix X indicating SVL (crc)
+# Create matrix X indicating SVL (svl)
 x <- cast(datA,
-          TrueID ~ Year,
+          TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
-          value = "CRC",
+          value = "SVL",
           fill = NA)
 
 x <- x[, 2:ncol(x)]
-x.all <- seq(min(datA$Year), max(datA$Year)) #fill all the ignored months
+x.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
 colnames(col) <- missing
@@ -1921,11 +1852,10 @@ head(x)
 
 bugs.data.sex <- list(first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, x = as.matrix(x), z = known.states.cjs(eh),
-                  mu.L0 = mean(datA$CRC[datA$CRC<=40],na.rm=T),
-                  tau.L0 = var(datA$CRC[datA$CRC<=40],na.rm=T),
-                  # mu.LI = max(datA$CRC,na.rm=T),
+                  mu.L0 = mean(datA$SVL[datA$SVL<=40],na.rm=T),
+                  tau.L0 = var(datA$SVL[datA$SVL<=40],na.rm=T),
+                  # mu.LI = max(datA$SVL,na.rm=T),
                   AFC = as.numeric(age),
-                  #mplot = mplot,
                   sex = sex,
                   plot = plot)
 
@@ -1940,7 +1870,7 @@ parameters <- c("alpha.phi","beta.phi", "beta2.phi","alpha.p","beta.p", "beta2.p
 
 
 # Specify model in BUGS language
-sink("cjs-sex-nigro-crc.jags")
+sink("cjs-sex-nigro-svl.jags")
 cat("
 
 model {
@@ -2038,7 +1968,7 @@ bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
 runjags.options(jagspath = "/usr/local/bin/jags")
 
-cjs.Cnigro.sex <- run.jags(data=bugs.data.sex, inits=inits, monitor=parameters, model="cjs-sex-nigro-crc.jags",
+cjs.Cnigro.sex <- run.jags(data=bugs.data.sex, inits=inits, monitor=parameters, model="cjs-sex-nigro-svl.jags",
                       n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                       method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
                       summarise = TRUE,
