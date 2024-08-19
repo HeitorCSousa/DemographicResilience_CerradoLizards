@@ -15,7 +15,7 @@ library(ggmcmc)
 library(MCMCvis)
 library(viridis)
 
-
+#Set working directory
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 ### Read data -----------------------------
