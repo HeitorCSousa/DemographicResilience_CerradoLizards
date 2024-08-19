@@ -57,7 +57,7 @@ table(micra.dataset$identity)
 ## ****************************************************
 
 # Create ID
-IDENT <- paste(micra.dataset$plot, micra.dataset$identity, micra.dataset$ciclo, sep="")
+IDENT <- paste(micra.dataset$plot, micra.dataset$identity, micra.dataset$cycle, sep="")
 head(IDENT)
 micra.dataset <- data.frame(micra.dataset, IDENT)
 rm(IDENT)
@@ -109,10 +109,7 @@ datA<-data.frame(table5$camp,table5$sex,table5$IDENT,table5$svl,table5$mass,Age,
 names(datA)<-c("Camp","Sex","TrueID","SVL","Mass","Age","Plot")
 datA$Camp<-datA$Camp+2000
 datA$Age[datA$SVL<=30]<-0
-#datA<-datA[datA$TrueID!="MB10A2",]
-# datA<-datA[datA$TrueID!="EB1191",]
-# datA<-datA[datA$TrueID!="EB2101",]
-# datA<-datA[datA$TrueID!="EB3511",]
+
 head(datA)
 tail(datA)
 str(datA)
@@ -204,11 +201,11 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-# var_amb <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
-var_amb <- readRDS("climate.ecophysio.month.rds")
-var_amb$canopy <- factor(var_amb$canopy,levels = c("C","Q","EB","MB","LB"))
-var_amb <- var_amb[order(var_amb$canopy),]
-var_amb$canopy
+# var_env <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
+var_env <- readRDS("climate.ecophysio.month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
 # Derives data for the Pradel Jolly Seber (PJS) model:
 # e = oldest observation index
@@ -504,46 +501,46 @@ nrow(fire.time.df)
 (sd.TSLF <- as.numeric(sd(c(fire.time.df$TSLF_C,fire.time.df$TSLF_Q,fire.time.df$TSLF_EB,
                             fire.time.df$TSLF_MB,fire.time.df$TSLF_LB)))) 
 
-amb <- array(c(rbind((var_amb$tmed2m[var_amb$canopy=="C"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="Q"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="EB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="MB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m),
-                     (var_amb$tmed2m[var_amb$canopy=="LB"]-mean(var_amb$tmed2m))/sd(var_amb$tmed2m)),
-               rbind((var_amb$RHmax[var_amb$canopy=="C"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="Q"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="EB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="MB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax),
-                     (var_amb$RHmax[var_amb$canopy=="LB"]-mean(var_amb$RHmax))/sd(var_amb$RHmax)),
-               rbind((var_amb$sol[var_amb$canopy=="C"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="Q"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="EB"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="MB"]-mean(var_amb$sol))/sd(var_amb$sol),
-                     (var_amb$sol[var_amb$canopy=="LB"]-mean(var_amb$sol))/sd(var_amb$sol)),
-               rbind((var_amb$tmed0cm[var_amb$canopy=="C"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="Q"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="EB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="MB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm),
-                     (var_amb$tmed0cm[var_amb$canopy=="LB"]-mean(var_amb$tmed0cm))/sd(var_amb$tmed0cm)),
-               rbind((var_amb$tmin0cm[var_amb$canopy=="C"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="Q"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="EB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="MB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm),
-                     (var_amb$tmin0cm[var_amb$canopy=="LB"]-mean(var_amb$tmin0cm))/sd(var_amb$tmin0cm)),
-               rbind((var_amb$precip[var_amb$canopy=="C"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="Q"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="EB"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="MB"]-mean(var_amb$precip))/sd(var_amb$precip),
-                     (var_amb$precip[var_amb$canopy=="LB"]-mean(var_amb$precip))/sd(var_amb$precip)),
-               rbind((var_amb$Matticolus_perf[var_amb$canopy=="C"]-mean(var_amb$Matticolus_perf))/sd(var_amb$Matticolus_perf),
-                     (var_amb$Matticolus_perf[var_amb$canopy=="Q"]-mean(var_amb$Matticolus_perf))/sd(var_amb$Matticolus_perf),
-                     (var_amb$Matticolus_perf[var_amb$canopy=="EB"]-mean(var_amb$Matticolus_perf))/sd(var_amb$Matticolus_perf),
-                     (var_amb$Matticolus_perf[var_amb$canopy=="MB"]-mean(var_amb$Matticolus_perf))/sd(var_amb$Matticolus_perf),
-                     (var_amb$Matticolus_perf[var_amb$canopy=="LB"]-mean(var_amb$Matticolus_perf))/sd(var_amb$Matticolus_perf)),
-               rbind((var_amb$Matticolus_ha90[var_amb$canopy=="C"]-mean(var_amb$Matticolus_ha90))/sd(var_amb$Matticolus_ha90),
-                     (var_amb$Matticolus_ha90[var_amb$canopy=="Q"]-mean(var_amb$Matticolus_ha90))/sd(var_amb$Matticolus_ha90),
-                     (var_amb$Matticolus_ha90[var_amb$canopy=="EB"]-mean(var_amb$Matticolus_ha90))/sd(var_amb$Matticolus_ha90),
-                     (var_amb$Matticolus_ha90[var_amb$canopy=="MB"]-mean(var_amb$Matticolus_ha90))/sd(var_amb$Matticolus_ha90),
-                     (var_amb$Matticolus_ha90[var_amb$canopy=="LB"]-mean(var_amb$Matticolus_ha90))/sd(var_amb$Matticolus_ha90)),
+env <- array(c(rbind((var_env$tmed2m[var_env$canopy=="C"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="Q"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="EB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="MB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m),
+                     (var_env$tmed2m[var_env$canopy=="LB"]-mean(var_env$tmed2m))/sd(var_env$tmed2m)),
+               rbind((var_env$RHmax[var_env$canopy=="C"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="Q"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="EB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="MB"]-mean(var_env$RHmax))/sd(var_env$RHmax),
+                     (var_env$RHmax[var_env$canopy=="LB"]-mean(var_env$RHmax))/sd(var_env$RHmax)),
+               rbind((var_env$sol[var_env$canopy=="C"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="Q"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="EB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="MB"]-mean(var_env$sol))/sd(var_env$sol),
+                     (var_env$sol[var_env$canopy=="LB"]-mean(var_env$sol))/sd(var_env$sol)),
+               rbind((var_env$tmed0cm[var_env$canopy=="C"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="Q"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="EB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="MB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm),
+                     (var_env$tmed0cm[var_env$canopy=="LB"]-mean(var_env$tmed0cm))/sd(var_env$tmed0cm)),
+               rbind((var_env$tmin0cm[var_env$canopy=="C"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="Q"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="EB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="MB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm),
+                     (var_env$tmin0cm[var_env$canopy=="LB"]-mean(var_env$tmin0cm))/sd(var_env$tmin0cm)),
+               rbind((var_env$precip[var_env$canopy=="C"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="Q"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="EB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="MB"]-mean(var_env$precip))/sd(var_env$precip),
+                     (var_env$precip[var_env$canopy=="LB"]-mean(var_env$precip))/sd(var_env$precip)),
+               rbind((var_env$Matticolus_perf[var_env$canopy=="C"]-mean(var_env$Matticolus_perf))/sd(var_env$Matticolus_perf),
+                     (var_env$Matticolus_perf[var_env$canopy=="Q"]-mean(var_env$Matticolus_perf))/sd(var_env$Matticolus_perf),
+                     (var_env$Matticolus_perf[var_env$canopy=="EB"]-mean(var_env$Matticolus_perf))/sd(var_env$Matticolus_perf),
+                     (var_env$Matticolus_perf[var_env$canopy=="MB"]-mean(var_env$Matticolus_perf))/sd(var_env$Matticolus_perf),
+                     (var_env$Matticolus_perf[var_env$canopy=="LB"]-mean(var_env$Matticolus_perf))/sd(var_env$Matticolus_perf)),
+               rbind((var_env$Matticolus_ha90[var_env$canopy=="C"]-mean(var_env$Matticolus_ha90))/sd(var_env$Matticolus_ha90),
+                     (var_env$Matticolus_ha90[var_env$canopy=="Q"]-mean(var_env$Matticolus_ha90))/sd(var_env$Matticolus_ha90),
+                     (var_env$Matticolus_ha90[var_env$canopy=="EB"]-mean(var_env$Matticolus_ha90))/sd(var_env$Matticolus_ha90),
+                     (var_env$Matticolus_ha90[var_env$canopy=="MB"]-mean(var_env$Matticolus_ha90))/sd(var_env$Matticolus_ha90),
+                     (var_env$Matticolus_ha90[var_env$canopy=="LB"]-mean(var_env$Matticolus_ha90))/sd(var_env$Matticolus_ha90)),
                rbind(fire.time.df$C,
                      fire.time.df$Q ,
                      fire.time.df$EB,
@@ -555,13 +552,13 @@ amb <- array(c(rbind((var_amb$tmed2m[var_amb$canopy=="C"]-mean(var_amb$tmed2m))/
                      (fire.time.df$TSLF_MB - mean.TSLF)/sd.TSLF,
                      (fire.time.df$TSLF_LB - mean.TSLF)/sd.TSLF)),
              dim = c(5,170,10))
-dim(amb)
-str(amb)
+dim(env)
+str(env)
 
 
 # Data
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
-                  y = eh, amb = amb, x = as.matrix(x), z = known.states.cjs(eh),
+                  y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=30],na.rm=T), 
                   tau.L0 = var(datA$SVL[datA$SVL<=30],na.rm=T),
                   AFC = as.numeric(age),
@@ -720,7 +717,7 @@ alpha.phiJS[j] ~ dnorm(0,0.01)
 mean.phiJS[j] <- 1/(1+exp(-alpha.phiJS[j]))#alpha.phiJS on prob scale
 for(t in 1:(n.occasions-1)){
 phiJS[j, t] <- 1/(1+exp(-logit.phiJS[j, t]))
-logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(amb[j,t,],betaphiJS)
+logit.phiJS[j, t] <- alpha.phiJS[j] + eps.phiJS[j,t] + inprod(env[j,t,],betaphiJS)
 eps.phiJS[j,t] ~ dnorm(0,tau.phiJS)
 }
 }
@@ -741,7 +738,7 @@ alpha.f[j] ~ dnorm(-0.5,0.01)
 mean.f[j] <- exp(alpha.f[j])#alpha.f on prob scale
 for(t in 1:(n.occasions-1)){
 f[j,t] <- exp(log.f[j,t])
-log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(amb[j,t,],betaf)
+log.f[j,t]<- alpha.f[j] + eps.f[j,t]+ inprod(env[j,t,],betaf)
 eps.f[j,t] ~ dnorm(0,tau.f)
 }
 }
@@ -761,7 +758,7 @@ mean.pJS[j] <- 1/(1+exp(-alpha.pJS[j])) #alpha.pJS on prob scale
 for(t in 1:n.occasions){
 #logit constraint for detectability (p)
 pJS[j,t] <- 1/(1+exp(-logit.pJS[j,t]))
-logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(amb[j,t,],betapJS)
+logit.pJS[j,t] <- alpha.pJS[j] + eps.pJS[j,t] + inprod(env[j,t,],betapJS)
 eps.pJS[j,t] ~ dnorm(0,tau.pJS)
 }}
 
@@ -1057,7 +1054,7 @@ table(nigro.dataset$identity)
 
 
 # Create ID
-IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$ciclo, sep="")
+IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
 head(IDENT)
 nigro.dataset <- data.frame(nigro.dataset, IDENT)
 rm(IDENT)
