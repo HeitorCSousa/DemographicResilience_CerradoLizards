@@ -201,7 +201,6 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-# var_env <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
 var_env <- readRDS("climate.ecophysio.month.rds")
 var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
 var_env <- var_env[order(var_env$canopy),]
@@ -350,7 +349,7 @@ d
 # time covariate
 time <- c(1:(dim(eh)[2]-1))
 
-# standardize tempo
+# standardize time
 stand_time <- (time - mean(time))/sd(time)
 
 #Generate svl values for individuals
@@ -1115,7 +1114,7 @@ for(i in 1:nrow(datA)){
   del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plot for each individual
 plot<-as.character(plot[,2])
 plot
 plot[plot=="MB"]<-4 # Ordering by fire severity

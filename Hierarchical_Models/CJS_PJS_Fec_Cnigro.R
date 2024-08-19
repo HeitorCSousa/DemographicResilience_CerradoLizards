@@ -130,7 +130,7 @@ for(i in 1:nrow(datA)){
   del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plot for each individual
 plot<-as.character(plot[,2])
 plot
 plot[plot=="MB"]<-4 # Ordering by fire severity
