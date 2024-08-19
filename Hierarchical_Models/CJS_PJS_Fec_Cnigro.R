@@ -582,9 +582,7 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=40],na.rm=T),
                   tau.L0 = var(datA$SVL[datA$SVL<=40],na.rm=T),
-                  # mu.LI = max(datA$SVL,na.rm=T),
                   AFC = as.numeric(age),
-                  #mplot = mplot,
                   sex = sex,
                   plot = plot,
                   neggs = fecundity.Cn$Nembr,
@@ -1585,7 +1583,7 @@ cjs.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="cj
                        summarise = TRUE,
                        modules = c("glm"))
 
-results.cjs.Cnigro <- results.jags("runjagsfiles_4")#runjagsfiles_4
+results.cjs.Cnigro <- results.jags(cjs.Cnigro)#runjagsfiles_4
 # results.cjs.Cnigro <- add.summary(results.cjs.Cnigro)
 
 results.cjs.Cnigro.df <- summary(results.cjs.Cnigro)
@@ -1820,7 +1818,7 @@ cjs.init.z<-function(ch,f){
 
 #Capture histories
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
-eh.all <- seq(min(datA$Camp), max(datA$Camp)) #preencher todos os anos ignorados
+eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the months ignored
 missing <- eh.all[!(eh.all %in% names(eh))]
 col=matrix(0,nrow=nrow(eh),ncol=length(missing))
 colnames(col) <- missing
