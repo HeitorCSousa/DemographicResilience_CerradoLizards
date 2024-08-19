@@ -611,7 +611,7 @@ parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
 
 
 # Specify model in BUGS language
-sink("ipm2-itambere-svl.jags")
+sink("vitalrates-itambere-svl.jags")
 cat("
 
 data {
@@ -1036,7 +1036,7 @@ bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 cl <- makeCluster(4)
 runjags.options(jagspath = "/usr/local/bin/jags")
-ipm2.itambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="ipm2-itambere-svl.jags",
+vitalrates.itambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-itambere-svl.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "parallel", jags.refresh = 30,keep.jags.files = TRUE,jags = "/usr/local/bin/jags",
                          summarise = FALSE,
@@ -1901,7 +1901,7 @@ write.csv(results.cjs.Titambere.df,"results_cjs_Titambere_sex_df.csv")
 
 #Function plots 
 results.cjs.Titambere.sex.df <- read.csv("results_cjs_Titambere_sex_df.csv")
-results.cjs.Titambere.df <- read.csv("results.ipm2.Titambere.df_100000iters.csv")
+results.cjs.Titambere.df <- read.csv("results.vitalrates.Titambere.df_100000iters.csv")
 
 #Function to estimate size from age
 age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-plogis(K)^x)
