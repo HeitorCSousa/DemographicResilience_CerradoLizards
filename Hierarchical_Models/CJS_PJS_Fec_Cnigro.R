@@ -21,8 +21,8 @@ setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Mode
 ### Read data -----------------------------
 
 #Read fecundity data
-fecundidade.Cn <- read.csv("fecundidade_Cn.csv", h=T)
-summary(fecundidade.Cn)
+fecundity.Cn <- read.csv("fecundity_Cn.csv", h=T)
+summary(fecundity.Cn)
 
 #Probability of reproduction
 
@@ -649,9 +649,9 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   #mplot = mplot,
                   sex = sex,
                   plot = plot,
-                  neggs = fecundidade.Cn$Nembr,
-                  xfec = fecundidade.Cn$CRC,
-                  n.fec = length(fecundidade.Cn$CRC),
+                  neggs = fecundity.Cn$Nembr,
+                  xfec = fecundity.Cn$CRC,
+                  n.fec = length(fecundity.Cn$CRC),
                   eggs = Cnigropunctatum.RECOR.females$ovos,
                   xprep = as.numeric(Cnigropunctatum.RECOR.females$crc),
                   n.probrep = length(Cnigropunctatum.RECOR.females$ovos))
