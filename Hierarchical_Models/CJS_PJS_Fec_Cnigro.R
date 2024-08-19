@@ -16,7 +16,7 @@ library(MCMCvis)
 library(viridis)
 
 
-setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 ### Read data -----------------------------
 
