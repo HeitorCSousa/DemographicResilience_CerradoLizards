@@ -587,8 +587,8 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   n.probrep = length(Titambere.RECOR.females$eggs))
 
 
-saveRDS(bugs.data, "Titambere.data.rds")
-bugs.data <- readRDS("Titambere.data.rds")
+saveRDS(bugs.data, "Titambere_data.rds")
+bugs.data <- readRDS("Titambere_data.rds")
 
 #Mark-recapture statistics
 table(rowSums(bugs.data$y))#Number of captures for each individual
@@ -1059,7 +1059,7 @@ vitalrates.itambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, 
 
 # PJS model ------------------------------------------------------------
 
-bugs.data <- readRDS("Titambere.data.rds")
+bugs.data <- readRDS("Titambere_data.rds")
 
 # Initial values
 inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10),

@@ -1049,7 +1049,6 @@ table(nigro.dataset$identity)
 
 ## Prepare input file and run monthly data ("camp")
 
-
 # Create ID
 IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
 head(IDENT)
