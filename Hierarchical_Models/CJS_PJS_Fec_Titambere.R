@@ -80,7 +80,7 @@ rm(IDENT)
 str(itambere.dataset)
 
 # Subset variables of interest
-table1 <- itambere.dataset[itambere.dataset$recapture!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
+table1 <- itambere.dataset[itambere.dataset$recapture!="(y)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -1592,7 +1592,7 @@ rm(IDENT)
 str(Titambere.dataset)
 
 # Subset variables of interest
-table1 <- Titambere.dataset[Titambere.dataset$recapture!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
+table1 <- Titambere.dataset[Titambere.dataset$recapture!="(y)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs

@@ -74,7 +74,7 @@ rm(IDENT)
 str(micra.dataset)
 
 # Filter the variables of interest
-table1 <- micra.dataset[micra.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
+table1 <- micra.dataset[micra.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without ID
@@ -195,7 +195,12 @@ m #Number of observations
 n #Number of individuals
 
 ## Create matrix X indicating SVL ------------------------------------
-x <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(x), value="SVL",fill=NA);x <- x[,2:ncol(x)]
+x <- cast(datA,
+          TrueID ~ Camp,
+          fun.aggregate = function(x) mean(x),
+          value = "SVL",
+          fill = NA)
+x <- x[,2:ncol(x)]
 x.all <- seq(min(datA$Camp), max(datA$Camp)) #fill the ignored months (months without captures)
 missing <- x.all[!(x.all %in% names(x))]
 col=matrix(NA,nrow=nrow(x),ncol=length(missing))
@@ -1061,7 +1066,7 @@ rm(IDENT)
 str(nigro.dataset)
 
 # Subset variables of interest
-table1 <- nigro.dataset[nigro.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
+table1 <- nigro.dataset[nigro.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs

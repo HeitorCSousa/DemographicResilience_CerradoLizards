@@ -78,7 +78,7 @@ rm(IDENT)
 str(nigro.dataset)
 
 # Subset variables of interest
-table1 <- nigro.dataset[nigro.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
+table1 <- nigro.dataset[nigro.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -1683,7 +1683,7 @@ rm(IDENT)
 str(nigro.dataset)
 
 # Subset variables of interest
-table1 <- nigro.dataset[nigro.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
+table1 <- nigro.dataset[nigro.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
