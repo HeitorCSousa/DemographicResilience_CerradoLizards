@@ -1,6 +1,8 @@
 
 # Hierarchical models to estimate vital rates and their relationship with the environmental variables-------------------------------------------------------------------------
 
+rm(list = ls())
+
 ## Copeoglossum nigropunctatum ----
 
 #Load packages
@@ -1045,6 +1047,8 @@ nc <- 4
 na <- 50000
 
 #Call JAGS from R (This run may take a while - days. The results can be loaded instead)
+#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags") #set path for JAGS
@@ -1425,6 +1429,8 @@ nc <- 4
 na <- 50000
 
 #Call JAGS from R (This run may take a while - days. The results can be loaded instead)
+#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
@@ -1544,6 +1550,8 @@ nc <- 4
 na <- 50000
 
 #Call JAGS from R (This run may take a while - days. The results can be loaded instead)
+#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
@@ -1938,6 +1946,8 @@ nc <- 4
 na <- 50000
 
 #Call JAGS from R (This run may take a while - days. The results can be loaded instead)
+#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
