@@ -36,12 +36,9 @@ View(pradel.Cnigro.df)
 
 #Use the param option with predefined environments
 
-
 # Simple deterministic IPM constructed from discretely varying parameter estimates-------------------------------------------------------------------------
 
-
 ## Define parameters -------------------------------------------------------
-
 
 # Define some fixed parameters
 
@@ -714,8 +711,6 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
 Q_ipm <- Q_ipm %>%
   define_env_state(env_params = sample_env(env.states, site=site,
                                            iteration = t), # "t" indexes the current model iteration
-                   
-                   
                    data_list = list(
                      env.states = env.states,
                      sample_env = sample_env,
@@ -2067,6 +2062,7 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
+## PJS parameters ----------------------------------------------------------
 f.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "f", 
                                                 x = row.names(pradel.Cnigro.df))[1:850],])
 tail(f.pradel)
@@ -2147,7 +2143,8 @@ dr.stoch <- function(K, n){
   return(dr.K.stoch.list)
 }
 
-#Function to perform parameter perturbation
+
+## Function to perform parameter perturbation ------------------------------
 
 res_param_perturb <- function(plot, nkernel){
   add.s <- seq(0.0,0.01,0.001)
@@ -2424,6 +2421,9 @@ res_param_perturb <- function(plot, nkernel){
   return(res.sens)
 }
 
+
+## Run perturbation analyses and save results ------------------------------
+
 res.Cnigro.param.sens.C <- res_param_perturb(1, 100)
 res.Cnigro.param.sens.Q <- res_param_perturb(2, 100)
 res.Cnigro.param.sens.EB <- res_param_perturb(3, 100)
@@ -2436,14 +2436,18 @@ saveRDS(res.Cnigro.param.sens.EB,"res_Cnigro_param_sens_EB.rds")
 saveRDS(res.Cnigro.param.sens.MB,"res_Cnigro_param_sens_MB.rds")
 saveRDS(res.Cnigro.param.sens.LB,"res_Cnigro_param_sens_LB.rds")
 
-#Load parameter perturbation results
+
+##Load parameter perturbation results ------------------------------------------
+
 res.Cnigro.param.sens.C  <- readRDS("res_Cnigro_param_sens_C.rds")
 res.Cnigro.param.sens.Q  <- readRDS("res_Cnigro_param_sens_Q.rds")
 res.Cnigro.param.sens.EB <- readRDS("res_Cnigro_param_sens_EB.rds")
 res.Cnigro.param.sens.MB <- readRDS("res_Cnigro_param_sens_MB.rds")
 res.Cnigro.param.sens.LB <- readRDS("res_Cnigro_param_sens_LB.rds")
 
-#Function to calculate parameter sensitivities
+
+##Calculate parameter sensitivities --------------------------------
+
 sens.res <- function(res.array){
   add.s <- seq(0,0.01,0.001)
   res.sens <- array(NA, dim = c(169,10,31))
@@ -2489,7 +2493,7 @@ sens.res <- function(res.array){
          )
 }
 
-
+#Calculation
 (sens.Cnigro.fst.amp.C <- sens.res(log10(res.Cnigro.param.sens.C$fst.amp)))
 (sens.Cnigro.fst.amp.Q <- sens.res(log10(res.Cnigro.param.sens.Q$fst.amp)))
 (sens.Cnigro.fst.amp.EB <- sens.res(log10(res.Cnigro.param.sens.EB$fst.amp)))
