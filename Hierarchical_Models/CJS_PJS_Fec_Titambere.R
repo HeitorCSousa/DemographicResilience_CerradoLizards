@@ -1541,7 +1541,7 @@ write.csv(results.fecund.itambere.df, "results_fecund_itambere_df.csv")
 
 #CJS model per sex -------------------------
 
-setwd("/Volumes/Macintosh HD/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds") #read data
 

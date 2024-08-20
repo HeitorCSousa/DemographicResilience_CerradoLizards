@@ -1667,7 +1667,7 @@ ggs_traceplot(S,family="alpha.p")
 
 #CJS model per sex -------------------------
 
-setwd("/Volumes/Macintosh HD/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
