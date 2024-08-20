@@ -1,8 +1,12 @@
 # Hierarchical models to estimate vital rates and their relationship with the environmental variables-------------------------------------------------------------------------
+
+## Micrablepharus atticolus ----
+
 #Load packages
 library(runjags)
 library(parallel)
 library(rjags)
+library(jagsUI)
 library(reshape)
 library(ggplot2)
 library(missForest)
@@ -14,24 +18,27 @@ library(viridis)
 #Set working directory
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
-#Probability of reproducing
+### Read data -----------------------------
+
+#Probability of reproduction (prep)
 #
 Matticolus.RECOR.imp<-readRDS("Matticolus_RECOR_imp.rds")
 Matticolus.RECOR.females<-subset(Matticolus.RECOR.imp,sex=="F")
 summary(as.factor(Matticolus.RECOR.females$eggs))
+
+#We only recorded females bearing eggs/embryos. To become binary, we need to determine the females without eggs/embryos
 Matticolus.RECOR.females$eggs[is.na(Matticolus.RECOR.females$eggs)]<-"n"
 table(Matticolus.RECOR.females$eggs)
 head(Matticolus.RECOR.females)
 Matticolus.RECOR.females$eggs <- as.numeric(as.factor(Matticolus.RECOR.females$eggs))-1
 
-Matticolus.RECOR.females <- Matticolus.RECOR.females[,c("camp","month","year","mass","svl","eggs")]
-Matticolus.RECOR.females <- na.omit(Matticolus.RECOR.females)
-Matticolus.RECOR.females <- Matticolus.RECOR.females[Matticolus.RECOR.females$year < 2020,]
+Matticolus.RECOR.females <- Matticolus.RECOR.females[,c("camp","month","year","mass","svl","eggs")]#subset only columns of interest
+Matticolus.RECOR.females <- na.omit(Matticolus.RECOR.females)#remove other lines than females
+Matticolus.RECOR.females <- Matticolus.RECOR.females[Matticolus.RECOR.females$year < 2020,]#Subset time frame
 summary(Matticolus.RECOR.females)
 
-## Clean data
-## **********
-Matticolus.RECOR.imp<-readRDS("Matticolus_RECOR_imp.rds")
+## Clean demographic data ----------
+Matticolus.RECOR.imp<-readRDS("Matticolus_RECOR_imp.rds")#read data
 
 head(Matticolus.RECOR.imp)
 tail(Matticolus.RECOR.imp)
@@ -39,12 +46,14 @@ data.demography <- Matticolus.RECOR.imp[Matticolus.RECOR.imp$year < 2020, ] #rem
 tail(data.demography)
 str(data.demography)
 
+#Remove dead animals
 data.demography$dead[is.na(data.demography$dead)] <- "n"
-data.demography <- data.demography[data.demography$dead=="n", ] #remove dead animals
+data.demography <- data.demography[data.demography$dead=="n", ] 
 head(data.demography)
 table(data.demography$camp)
 table(data.demography$identity)
 
+#Remove NAs
 complete <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
 micra.dataset <- droplevels(data.demography[complete, ])
 head(micra.dataset)
@@ -54,7 +63,6 @@ table(micra.dataset$identity)
 
 
 ## Prepare input file and run monthly data ("camp")
-## ****************************************************
 
 # Create ID
 IDENT <- paste(micra.dataset$plot, micra.dataset$identity, micra.dataset$cycle, sep="")
@@ -63,14 +71,9 @@ micra.dataset <- data.frame(micra.dataset, IDENT)
 rm(IDENT)
 str(micra.dataset)
 
-library(jagsUI)
-library(rjags)
-library(reshape)
-
 # Filter the variables of interest
 table1 <- micra.dataset[micra.dataset$recapture!="(s)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
-
 
 # Identifies captures without ID
 table2 <- complete.cases(table1[, c("IDENT")])
@@ -78,7 +81,7 @@ table2 <- complete.cases(table1[, c("IDENT")])
 # Eliminates captures without ID and SVL (SVL)
 table3 <- table1[table2, ]
 
-# Ordens the data by ID and month (camp)
+# Orders the data by ID and month (camp)
 table4 <- table3[order(table3$IDENT, table3$camp), ]
 str(table4)
 summary(table4)
@@ -89,7 +92,6 @@ table5$IDENT <- as.character(table5$IDENT)
 table5$plot <- as.character(table5$plot)
 str(table5)
 
-
 # Calculates recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
 names(recap.table) <- c("identity", "captures")
@@ -97,9 +99,7 @@ recap.table
 table(recap.table$captures)
 650+(2*104)+(3*31)+(4*12)+(5*3)+(6*1)+(7*2) #two captures=1, 3 captures=2, 4 captures=3 ...
 
-#######################################################
-## filters dataset for registers used in the analysis##
-#######################################################
+# Filter data.frame records to use in the analysis
 head(table5)
 
 Age<-c(rep(NA,nrow(table5)))
@@ -115,9 +115,8 @@ tail(datA)
 str(datA)
 
 
-###########################################
-##Creates  variables for the growth model##
-###########################################
+##Creates variables for the growth model -------
+
 ###  del is the time period between first capture of an individual (0 in the first capture)
 
 del<-c()   ### months since first capture
@@ -151,7 +150,8 @@ head(datA)
 tail(datA)
 str(datA)
 
-##### #Creates capture history for the survival model## ####################################################################
+## Create capture histories for the survival model-------
+
 known.states.cjs<-function(ch){
   state<-ch
   for (i in 1:dim(ch)[1]){
@@ -176,6 +176,7 @@ cjs.init.z<-function(ch,f){
   return(ch)
 }
 
+#Capture (encounter) histories
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
 eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill the ignored months (months without captures)
 missing <- eh.all[!(eh.all %in% names(eh))]
@@ -184,13 +185,14 @@ colnames(col) <- missing
 eh <- cbind(eh, col)
 eh <- eh[,sort(colnames(eh))]
 head(eh)
-(f <- apply(eh,1,function(x) which(x==1)[1]))
-(nind <- nrow(eh))
-(n.occasions <- ncol(eh))
-m
-n
 
-# Create matrix X indicating svl
+(f <- apply(eh,1,function(x) which(x==1)[1])) #time since first capture
+(nind <- nrow(eh)) #Number of individuals
+(n.occasions <- ncol(eh)) #Number of occasions
+m #Number of observations
+n #Number of individuals
+
+## Create matrix X indicating SVL ------------------------------------
 x <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(x), value="SVL",fill=NA);x <- x[,2:ncol(x)]
 x.all <- seq(min(datA$Camp), max(datA$Camp)) #fill the ignored months (months without captures)
 missing <- x.all[!(x.all %in% names(x))]
@@ -201,12 +203,7 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-var_env <- readRDS("climate.ecophysio.month.rds")
-var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
-var_env <- var_env[order(var_env$canopy),]
-var_env$canopy
-
-# Derives data for the Pradel Jolly Seber (PJS) model:
+# Derive data for the Pradel-Jolly-Seber (PJS) Model ----------------------
 # e = oldest observation index
 get.first <- function (x) min(which (x!=0))
 e <- apply (eh, 1, get.first)
@@ -346,16 +343,14 @@ d <- rep(0,dim(eh)[2])
 d <- rbind(d,d,d,d,d)
 d
 
-# time covariate
-time <- c(1:(dim(eh)[2]-1))
+# Environmental variables -------------------------------------------------
 
-# standardize time
-stand_time <- (time - mean(time))/sd(time)
+var_env <- readRDS("climate.ecophysio.month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
-#Generate svl values for individuals
-
-
-#Time since last fire
+#Calculate Time Since Last Fire (TSLF)
 
 EB<-c(rep(0,5),1,
       rep(0,23),1,
@@ -405,7 +400,6 @@ Q<-c(rep(0,19),1,
      rep(0,148))
 length(Q)
 
-library(lubridate)
 fire.time <- seq.Date(as.Date("1992/01/01"),as.Date("2019/12/31"), by="month")
 fire.time.df <- data.frame(time = fire.time,
                            C = C,
@@ -489,6 +483,8 @@ fire.time.df$TSLF_LB <- (fire.time.df$time - TSLF_LB)/30
 fire.time.df <- fire.time.df[fire.time.df$time >= "2005-11-01",]
 nrow(fire.time.df)
 
+#Standardize variables and create array
+
 (mean.fire <- mean(c(fire.time.df$C,fire.time.df$Q,fire.time.df$EB,
                      fire.time.df$MB,fire.time.df$LB)))
 
@@ -554,8 +550,10 @@ env <- array(c(rbind((var_env$tmed2m[var_env$canopy=="C"]-mean(var_env$tmed2m))/
 dim(env)
 str(env)
 
+# Run integrated model (CJS-growth, PJS, and reproduction GLMs - prep and nb) in JAGS ------------------------------------------------------
 
-# Data
+#Data list for JAGS
+
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=30],na.rm=T), 
@@ -565,9 +563,9 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   eggs = Matticolus.RECOR.females$eggs,
                   xprep = as.numeric(Matticolus.RECOR.females$svl),
                   n.probrep = length(Matticolus.RECOR.females$eggs))
-saveRDS(bugs.data,"Matticolus.data.rds")
+saveRDS(bugs.data,"Matticolus_data.rds")
 
-bugs.data <- readRDS("Matticolus.data.rds")
+bugs.data <- readRDS("Matticolus_data.rds")
 
 #Mark-recapture statistics
 table(rowSums(bugs.data$y))#Number of captures for each individual
@@ -1009,13 +1007,13 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-# Call JAGS from R (BRT 3 min)
+# Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 vitalrates.Matticolus<- jags(bugs.data, inits, parameters, "vitalrates-micra-svl.jags", 
                    n.chains = nc, n.thin = nt, n.adapt = na,n.iter = ni, n.burnin = nb, 
                    parallel = T, codaOnly = parameters)
 
 #print(vitalrates.Matticolus, digits = 3)
-saveRDS(vitalrates.Matticolus, "results_imp2_Matticolus.rds")
+saveRDS(vitalrates.Matticolus, "results_vitalrates_Matticolus.rds")
 #summary(vitalrates.Matticolus)
 #vitalrates.Matticolus.df<-vitalrates.Matticolus$summary
 #write.table(vitalrates.Matticolus.df,"results_vitalrates.Matticolus.txt",sep="\t")
@@ -1315,7 +1313,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
@@ -1445,7 +1443,7 @@ ggplot(data = growth.df, aes(x = time, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex
+#Results averaging sex
 (mu.LI.mn <- results.cjs.Matticolus.df$mean[grep(pattern = "mu.LI", 
                                              x = results.cjs.Matticolus.df$X)])
 
@@ -1538,7 +1536,7 @@ ggplot(data = surv.df, aes(x = svl, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex (more data available)
+#Results averaging sex (more data available)
 #Survival parameters
 (alpha.phi.mn <- mean(results.cjs.Matticolus.df$mean[grep(pattern = "alpha.phi", 
                                                  x = results.cjs.Matticolus.df$X)]))

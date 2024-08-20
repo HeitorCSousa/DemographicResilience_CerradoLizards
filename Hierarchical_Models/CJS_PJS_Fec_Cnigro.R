@@ -24,7 +24,7 @@ setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Mode
 fecundity.Cn <- read.csv("fecundity_Cn.csv", h=T)
 summary(fecundity.Cn)
 
-#Probability of reproduction
+#Probability of reproduction (prep)
 
 Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #Read data
 Cnigropunctatum.RECOR.females<-subset(Cnigropunctatum.RECOR.imp,sex=="F")# subset only females
@@ -57,7 +57,8 @@ head(data.demography)
 table(data.demography$camp)
 table(data.demography$identity)
 
-complete <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
+#Remove NAs
+complete <- complete.cases(data.demography[, c("identity", "plot")]) 
 nigro.dataset <- droplevels(data.demography[complete, ])
 head(nigro.dataset)
 str(nigro.dataset)
@@ -66,7 +67,6 @@ table(nigro.dataset$identity)
 
 
 ## Prepare input file and run monthly data ("camp")
-
 
 # Create ID
 IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
@@ -188,7 +188,7 @@ cjs.init.z<-function(ch,f){
   return(ch)
 }
 
-#Capture histories
+#Capture (encounter) histories
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
 eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the months ignored
 missing <- eh.all[!(eh.all %in% names(eh))]
@@ -197,13 +197,14 @@ colnames(col) <- missing
 eh <- cbind(eh, col)
 eh <- eh[,sort(colnames(eh))]
 head(eh)
+
 (f <- apply(eh,1,function(x) which(x==1)[1]))#time since first capture
 (nind <- nrow(eh)) #Number of individuals
 (n.occasions <- ncol(eh)) #Number of occasions
 m #Number of observations
 n #Number of individuals
 
-# Create matrix X indicating SVL (svl)
+## Create matrix X indicating SVL ------------------------------------
 x <- cast(datA,
           TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
@@ -220,28 +221,17 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-# Environmental variables -------------------------------------------------
+# Derive data for the Pradel-Jolly-Seber (PJS) Model ----------------------
 
-#Read data
-# var_env <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
-var_env <- readRDS("climate_ecophysio_month.rds")
-var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
-var_env <- var_env[order(var_env$canopy),]
-var_env$canopy
-
-
-# Derive data for the Pradel-Jolly-Seber (PJS) Model
 # e = index of oldest observation
 get.first <- function (x) min(which (x!=0))
 e <- apply (eh, 1, get.first)
 e <- data.frame(plot=plot,e=e)
 
-
 # l = index of last observation
 get.last <- function(x) max(which(x!=0))
 l <- apply (eh,1, get.last )
 l <- data.frame(plot=plot,l=l)
-
 
 # u = number of observed animals for the first time in i
 u1 <- data.frame(table(e$e[e$plot==1]))
@@ -370,13 +360,15 @@ d <- rep(0,dim(eh)[2])
 d <- rbind(d,d,d,d,d)
 d
 
-# Time covariable
-time <- c(1:(dim(eh)[2]-1))
+# Environmental variables -------------------------------------------------
 
-# standardize time
-stand_time <- (time - mean(time))/sd(time)
+#Read data
+var_env <- readRDS("climate_ecophysio_month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
-#Calculate Time since last fire (TSLF)
+#Calculate Time Since Last Fire (TSLF)
 
 EB<-c(rep(0,5),1,
       rep(0,23),1,
@@ -390,6 +382,7 @@ EB<-c(rep(0,5),1,
       rep(0,138))
 EB
 length(EB)
+
 MB<-c(rep(0,7),1,
       rep(0,23),1,
       rep(0,23),1,
@@ -577,7 +570,9 @@ dim(env)
 str(env)
 
 
-# Data list for JAGS
+# Run integrated model (CJS-growth, PJS, and reproduction GLMs - prep and nb) in JAGS ------------------------------------------------------
+
+#Data list for JAGS
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=40],na.rm=T),
@@ -592,9 +587,9 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   xprep = as.numeric(Cnigropunctatum.RECOR.females$svl),
                   n.probrep = length(Cnigropunctatum.RECOR.females$eggs))
 
-saveRDS(bugs.data, "Cnigropunctatum.data.rds")
+saveRDS(bugs.data, "Cnigropunctatum_data.rds")
 
-bugs.data <- readRDS("Cnigropunctatum.data.rds")
+bugs.data <- readRDS("Cnigropunctatum_data.rds")
 
 #Mark-recapture statistics
 table(rowSums(bugs.data$y))#Number of captures for each individual
@@ -1049,10 +1044,10 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
-runjags.options(jagspath = "/usr/local/bin/jags")
+runjags.options(jagspath = "/usr/local/bin/jags") #set path for JAGS
 vitalrates.Cnigro <- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-nigro-svl.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
@@ -1078,10 +1073,9 @@ ggs_density(S,family="beta2.phi")
 ggs_traceplot(S,family="beta.phi")
 ggs_traceplot(S,family="beta2.phi")
 
-#Some parameters have not converged. Next, we run each model separately
+#Some parameters have not converged. Next, we run each model (PJS, CJS, and fecundity GLM) separately
 
 #PJS model-----------------------------------------------
-
 
 # Initial values
 inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10),
@@ -1430,10 +1424,11 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 runjags.options(jagspath = "/usr/local/bin/jags")
+
 pradel.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="pradel-nigro-svl.jags",
                        n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                        method = "bgparallel", jags.refresh = 30,keep.jags.files = TRUE,
@@ -1450,7 +1445,7 @@ write.csv(results.pradel.Cnigro.df, "results_pradel_Cnigro_df.csv")
 saveRDS(results.pradel.Cnigro, "results_pradel_Cnigro.rds")
 
 
-#CJS model--------------------------------------
+#CJS-growth model--------------------------------------
 
 # Initial values
 inits <- function (){}
@@ -1548,33 +1543,9 @@ nb <- 100000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
-
-pradel.Cnigro.df <- read.csv("results_pradel_Cnigro_df.csv")
-
-p.pradel <- pradel.Cnigro.df[grep(pattern = "f", x = pradel.Cnigro.df$X)[1:850],]
-
-phi.pradel <- pradel.Cnigro.df[grep(pattern = "phi", x = pradel.Cnigro.df$X)[1:850],]
-
-
-p.pradel$plot <- rep(1:5,170)
-p.pradel$time <- rep(1:170, each = 5)
-
-phi.pradel$plot <- rep(1:5,170)
-phi.pradel$time <- rep(1:170, each = 5)
-
-
-phi.pradel$plot <- as.factor(phi.pradel$plot)
-
-ggplot(phi.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
-  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
-  ylim(c(0.75,1))+
-  scale_color_manual(values=turbo(5))
-
-bugs.data$phiJS <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
-bugs.data$pJS <- matrix(p.pradel$mean,nrow = 5, ncol = 170)
 runjags.options(jagspath = "/usr/local/bin/jags")
 
 cjs.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="cjs-nigro-svl.jags",
@@ -1654,6 +1625,7 @@ saveRDS(results.cjs.Cnigro, "results_cjs_Cnigro.rds")
 
 write.csv(results.cjs.Cnigro.df,"results_cjs_Cnigro_df.csv")
 
+#Diagnostics (change the parameter - family argument)
 S <- ggs(results.cjs.Cnigro2$mcmc)
 
 quartz(8,12)
@@ -1665,12 +1637,13 @@ ggs_traceplot(S,family="beta.p")
 ggs_traceplot(S,family="beta2.p")
 ggs_traceplot(S,family="alpha.p")
 
-#CJS model per sex -------------------------
+#CJS-growth model per sex -------------------------
 
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 Cnigropunctatum.RECOR.imp<-readRDS("Cnigropunctatum_RECOR_imp.rds") #read data
 
+## Clean demographic data ----------
 head(Cnigropunctatum.RECOR.imp)
 tail(Cnigropunctatum.RECOR.imp)
 data.demography <- Cnigropunctatum.RECOR.imp[Cnigropunctatum.RECOR.imp$year < 2020, ] #remove data later than 2019
@@ -1694,8 +1667,6 @@ table(nigro.dataset$identity)
 
 
 ## Prepare input file and run monthly data ("camp")
-
-
 # Create ID
 IDENT <- paste(nigro.dataset$plot, nigro.dataset$identity, nigro.dataset$cycle, sep="")
 head(IDENT)
@@ -1758,7 +1729,7 @@ for(i in 1:nrow(datA)){
   del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plot for each individual
 plot<-as.character(plot[,2])
 plot
 plot[plot=="MB"]<-4 # Ordering by fire severity
@@ -1831,7 +1802,9 @@ head(eh)
 m #Number of observations
 n #Number of individuals
 
-# Create matrix X indicating SVL (svl)
+
+## Create matrix X indicating SVL ------------------------------------
+
 x <- cast(datA,
           TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
@@ -1848,6 +1821,10 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
+
+## Run CJS-growth model per sex --------------------------------------------
+
+#Data list for JAGS
 bugs.data.sex <- list(first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=40],na.rm=T),
@@ -1960,7 +1937,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
@@ -2088,7 +2065,7 @@ ggplot(data = growth.df, aes(x = time, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex
+#Results averaging sex
 (mu.LI.mn <- results.cjs.Cnigro.df$Mean[grep(pattern = "mu.LI", 
                                               x = results.cjs.Cnigro.df$X)])
 
@@ -2181,7 +2158,7 @@ ggplot(data = surv.df, aes(x = svl, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex (more data available)
+#Results averaging sex (more data available)
 #Survival parameters
 (alpha.phi.mn <- results.cjs.Cnigro.df$Mean[grep(pattern = "alpha.phi", 
                                                   x = results.cjs.Cnigro.df$X)])

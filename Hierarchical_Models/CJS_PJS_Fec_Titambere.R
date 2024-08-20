@@ -1,6 +1,22 @@
 # Hierarchical models to estimate vital rates and their relationship with the environmental variables-------------------------------------------------------------------------
+
+## Tropidurus itambere ----
+
 #Set working directory
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
+
+#Load packages
+library(runjags)
+library(parallel)
+library(rjags)
+library(reshape)
+library(ggplot2)
+library(lubridate)
+library(ggmcmc)
+library(MCMCvis)
+library(viridis)
+
+### Read data -----------------------------
 
 #Read fecundity data
 fecundity.Ti <- read.table("fecundity_Ti.txt", h=T)
@@ -9,24 +25,25 @@ fecundity.Ti <- na.omit(fecundity.Ti)
 
 summary(fecundity.Ti)
 
-#Probability of reproducing
-#
-Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds")
-Titambere.RECOR.females<-subset(Titambere.RECOR.imp,sexo=="F")
+#Probability of reproduction (prep)
+
+Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds") #Read data
+Titambere.RECOR.females<-subset(Titambere.RECOR.imp,sexo=="F")# subset only females
 summary(as.factor(Titambere.RECOR.females$eggs))
+
+#We only recorded females bearing eggs/embryos. To become binary, we need to determine the females without eggs/embryos
 Titambere.RECOR.females$eggs[is.na(Titambere.RECOR.females$eggs)]<-"n"
-table(Titambere.RECOR.females$eggs)
+table(Titambere.RECOR.females$eggs)#number of observations (females with eggs/embryos)
 head(Titambere.RECOR.females)
 Titambere.RECOR.females$eggs <- as.numeric(as.factor(Titambere.RECOR.females$eggs))-1
 
-Titambere.RECOR.females <- Titambere.RECOR.females[,c("camp","month","year","mass","svl","eggs")]
-Titambere.RECOR.females <- na.omit(Titambere.RECOR.females)
-Titambere.RECOR.females <- Titambere.RECOR.females[Titambere.RECOR.females$year < 2020,]
+Titambere.RECOR.females <- Titambere.RECOR.females[,c("camp","month","year","mass","svl","eggs")]#subset only columns of interest
+Titambere.RECOR.females <- na.omit(Titambere.RECOR.females)#remove other lines than females
+Titambere.RECOR.females <- Titambere.RECOR.females[Titambere.RECOR.females$year < 2020,]#Subset time frame
 summary(Titambere.RECOR.females)
 
-## Clean data
-## **********
-Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds")
+## Clean demographic data ----------
+Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds")#read data
 
 head(Titambere.RECOR.imp)
 tail(Titambere.RECOR.imp)
@@ -34,24 +51,24 @@ data.demography <- Titambere.RECOR.imp[Titambere.RECOR.imp$year < 2020, ] #remov
 tail(data.demography)
 str(data.demography)
 
+#Remove dead animals
 data.demography$dead[is.na(data.demography$dead)] <- "n"
-data.demography <- data.demography[data.demography$dead=="n", ] #remove dead animals
+data.demography <- data.demography[data.demography$dead=="n", ] 
 head(data.demography)
 table(data.demography$camp)
 table(data.demography$month)
 table(data.demography$identity)
 
-completos <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
-itambere.dataset <- droplevels(data.demography[completos, ])
+#Remove NAs
+complete <- complete.cases(data.demography[, c("identity", "plot")]) 
+itambere.dataset <- droplevels(data.demography[complete, ])
 head(itambere.dataset)
 str(itambere.dataset)
 table(itambere.dataset$camp)
 table(itambere.dataset$month)
 table(itambere.dataset$identity)
 
-
 ## Prepare input file and run monthly data ("camp")
-## ****************************************************
 
 # Create ID
 IDENT <- paste(itambere.dataset$plot, itambere.dataset$identity, itambere.dataset$cycle, sep="")
@@ -60,44 +77,36 @@ itambere.dataset <- data.frame(itambere.dataset, IDENT)
 rm(IDENT)
 str(itambere.dataset)
 
-
-#Use monthly data
-#################
-library(rjags)
-library(reshape)
-# Separa as variaveis de interesse
+# Subset variables of interest
 table1 <- itambere.dataset[itambere.dataset$recapture!="(s)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
 str(table1)
 
-
-# Identifica captures sem identity
+# Identifies captures without IDs
 table2 <- complete.cases(table1[, c("IDENT")])
 
-# Elimina captures sem identity e sem svl
+# Remove captures without ID and SVL
 table3 <- table1[table2, ]
 
-# Ordena os dados por identity e camp (camp)
+# Order the data by ID and time (camp)
 table4 <- table3[order(table3$IDENT, table3$camp), ]
 str(table4)
 summary(table4)
 
-# Converte IDENT de fator para caracteres
+# Convert IDENT from factor to character
 table5 <- droplevels(table4)
 table5$IDENT <- as.character(table5$IDENT)
 table5$plot <- as.character(table5$plot)
 str(table5)
 
-
-# Calcula frequencias de recaptures
+# Calculate recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
 names(recap.table) <- c("identity", "captures")
 recap.table
 table(recap.table$captures)
-1205+(2*242)+(3*60)+(4*16)+(5*2)+(6*2) +(7*1) #duas captures=1, 3 captures=2, 4 captures=3 ...
+1205+(2*242)+(3*60)+(4*16)+(5*2)+(6*2) +(7*1) #two captures=1, 3 captures=2, 4 captures=3 ...
 
-#######################################################################
-## filtra conjunto de dados para registros a serem usados na an?lise##
-#######################################################################
+# Filter data.frame records to use in the analysis
+
 head(table5)
 
 Age<-c(rep(NA,nrow(table5)))
@@ -113,33 +122,40 @@ tail(datA)
 str(datA)
 
 
-################################################
-##Cria vari?veis para o modelo de crescimento ##
-################################################
-###  del ? o per?odo de tempo desde a primeira captura de um indiv?duo (0 na primeira captura)
+##Creates variables for the growth model -------
 
-del<-c()   ### anos desde a primeira captura
+###  del is the time period since the first capture of an individual (0 in the first capture)
+
+del<-c()  ### months since the first capture
 
 for(i in 1:nrow(datA)){
   del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determinar o sexo de cada indiv?duo - filtra o valor na ?ltima captura
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plot for each individual
 plot<-as.character(plot[,2])
 plot
-plot[plot=="MB"]<-4 #Numerando por severidade
-plot[plot=="EB"]<-3 #Numerando por severidade
-plot[plot=="LB"]<-5 #Numerando por severidade
-plot[plot=="C"]<-1  #Numerando por severidade
-plot[plot=="Q"]<-2 #Numerando por severidade
+plot[plot=="MB"]<-4 # Ordering by fire severity
+plot[plot=="EB"]<-3 # Ordering by fire severity
+plot[plot=="LB"]<-5 # Ordering by fire severity
+plot[plot=="C"]<-1  # Ordering by fire severity
+plot[plot=="Q"]<-2  # Ordering by fire severity
 plot<-as.numeric(plot)
 plot
-ind = as.numeric(factor(datA$TrueID))
-y = datA$SVL
-n = max(ind)  ### n?mero de indiv?duos
-m = nrow(datA)### n?mero de observar??es 
 
-age<- c()  ## idade na primeira captura
+sex <- cast(datA, TrueID~., value="Sex", fun.aggregate=function(x) tail(x,1))  ###determine the sex for each individual - filter the value of last capture
+sex <- factor(sex[,2], levels = c("F", "M"))
+sex
+sex <- as.integer(sex)
+sex
+sex <- sex - 1
+
+ind = as.numeric(factor(datA$TrueID)) #ID
+y = datA$SVL #SVL
+n = max(ind) ### number of individuals
+m = nrow(datA)### number of observations
+
+age<- c()   ## age at first capture
 for (a in 1:n){ age[a] <- datA$Age[ind==a][1]}
 
 year <- c()
@@ -149,7 +165,7 @@ head(datA)
 tail(datA)
 str(datA)
 
-##### #Cria dados de recupera??o de marca para o modelo de sobreviv?ncia## ####################################################################
+## Create capture histories for the survival model-------
 known.states.cjs<-function(ch){
   state<-ch
   for (i in 1:dim(ch)[1]){
@@ -174,6 +190,7 @@ cjs.init.z<-function(ch,f){
   return(ch)
 }
 
+#Capture (encounter) histories
 eh <- cast(datA,TrueID ~ Camp, fun.aggregate = function(x) as.numeric(length(x) >0),value="SVL");eh <- eh[,2:ncol(eh)]
 eh.all <- seq(min(datA$Camp), max(datA$Camp)) #fill all the ignored months
 missing <- eh.all[!(eh.all %in% names(eh))]
@@ -182,13 +199,15 @@ colnames(col) <- missing
 eh <- cbind(eh, col)
 eh <- eh[,sort(colnames(eh))]
 head(eh)
-(f <- apply(eh,1,function(x) which(x==1)[1]))
-(nind <- nrow(eh))
-(n.occasions <- ncol(eh))
-m
-n
 
-# Create matrix X indicating svl
+(f <- apply(eh,1,function(x) which(x==1)[1])) #time since first capture
+(nind <- nrow(eh)) #Number of individuals
+(n.occasions <- ncol(eh)) #Number of occasions
+m #Number of observations
+n #Number of individuals
+
+## Create matrix X indicating SVL ------------------------------------
+
 x <- cast(datA,
           TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
@@ -204,32 +223,26 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
-var_env <- readRDS("climate.ecophysio.month.rds")
-var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
-var_env <- var_env[order(var_env$canopy),]
-var_env$canopy
-
-# Derivar dados para o modelo:
-# e = indice da observacao mais antiga
+# Derive data for the Pradel-Jolly-Seber (PJS) Model ----------------------
+# e = index of oldest observation
 get.first <- function (x) min(which (x!=0))
 e <- apply (eh, 1, get.first)
 e <- data.frame(plot=plot,e=e)
 
 
-# l = indice da ultima observacao
+# l = index of last observation
 get.last <- function(x) max(which(x!=0))
 l <- apply (eh,1, get.last )
 l <- data.frame(plot=plot,l=l)
 
-
-# u = numero de animais observados pela primeira vez em i
+# u = number of observed animals for the first time in i
 u1 <- data.frame(table(e$e[e$plot==1]))
 u2 <- data.frame(table(e$e[e$plot==2]))
 u3 <- data.frame(table(e$e[e$plot==3]))
 u4 <- data.frame(table(e$e[e$plot==4]))
 u5 <- data.frame(table(e$e[e$plot==5]))
 
-u.all <- seq(1, n.occasions) # Preencher todos os anos ignorados
+u.all <- seq(1, n.occasions) # Fill the ignored months
 missing <- u.all[!(u.all %in% u1$Var1)]
 df<-data.frame(e=as.factor(missing),Freq=rep(0,length(missing)))
 names(u1) <- names(df)
@@ -277,7 +290,7 @@ u5
 
 u <- rbind(u1,u2,u3,u4,u5)
 
-# n = numero de animais observados em i
+# n = number of observed animals in i
 n1 <- colSums(eh[plot==1,])
 n2 <- colSums(eh[plot==2,])
 n3 <- colSums(eh[plot==3,])
@@ -288,14 +301,14 @@ n<- rbind(n1,n2,n3,n4,n5)
 
 colSums(n) == colSums(eh)
 
-# v = numero de animais observados pela ultima vez em i
+# v = number of observed animals for the last time in i
 v1 <- data.frame(table(l$l[l$plot==1]))
 v2 <- data.frame(table(l$l[l$plot==2]))
 v3 <- data.frame(table(l$l[l$plot==3]))
 v4 <- data.frame(table(l$l[l$plot==4]))
 v5 <- data.frame(table(l$l[l$plot==5]))
 
-v.all <- seq(1, n.occasions) # Preencher todos os anos ignorados
+v.all <- seq(1, n.occasions) # Fill the ignored months
 missing <- v.all[!(v.all %in% v1$Var1)]
 df<-data.frame(l=as.factor(missing),Freq=rep(0,length(missing)))
 names(v1) <- names(df)
@@ -344,21 +357,20 @@ v5
 v <- rbind(v1,v2,v3,v4,v5)
 v
 
-# d = numero de animais removidos da populacao no momento i
+# d = number of removed animals from the population at moment i (in our case, only zeroes)
 d <- rep(0,dim(eh)[2])
 d <- rbind(d,d,d,d,d)
 d
 
-# covariavel de tempo
-time <- c(1:(dim(eh)[2]-1))
+# Environmental variables -------------------------------------------------
 
-# padronizar tempo
-stand_time <- (time - mean(time))/sd(time)
+#Read data
+var_env <- readRDS("climate.ecophysio.month.rds")
+var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
+var_env <- var_env[order(var_env$canopy),]
+var_env$canopy
 
-#Generate svl values for individuals
-
-
-#Time since last fire
+#Calculate Time Since Last Fire (TSLF)
 
 EB<-c(rep(0,5),1,
       rep(0,23),1,
@@ -408,7 +420,6 @@ Q<-c(rep(0,19),1,
      rep(0,148))
 length(Q)
 
-library(lubridate)
 fire.time <- seq.Date(as.Date("1992/01/01"),as.Date("2019/12/31"), by="month")
 fire.time.df <- data.frame(time = fire.time,
                            C = C,
@@ -424,6 +435,7 @@ last.fire <- data.frame(time = as.Date("1971/12/31"),
                         LB = 1)
 
 fire.time.df <- rbind(last.fire, fire.time.df)
+
 # make an index of the latest events
 last_event_index_C <- cumsum(fire.time.df$C) + 1
 
@@ -492,6 +504,7 @@ fire.time.df$TSLF_LB <- (fire.time.df$time - TSLF_LB)/30
 fire.time.df <- fire.time.df[fire.time.df$time >= "2005-11-01",]
 nrow(fire.time.df)
 
+#Standardize variables and create array
 (mean.fire <- mean(c(fire.time.df$C,fire.time.df$Q,fire.time.df$EB,
                     fire.time.df$MB,fire.time.df$LB)))
 
@@ -557,8 +570,9 @@ env <- array(c(rbind((var_env$tmed2m[var_env$canopy=="C"]-mean(var_env$tmed2m))/
 dim(env)
 str(env)
 
+# Run integrated model (CJS-growth, PJS, and reproduction GLMs - prep and nb) in JAGS ------------------------------------------------------
 
-# Dados do pacote
+#Data list for JAGS
 bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                   y = eh, env = env, x = as.matrix(x), z = known.states.cjs(eh),
                   mu.L0 = mean(datA$SVL[datA$SVL<=35],na.rm=T), 
@@ -572,8 +586,7 @@ bugs.data <- list(u = u, n = n, v = v, d = d, first = f, nind = dim(eh)[1], n.oc
                   xprep = as.numeric(Titambere.RECOR.females$svl),
                   n.probrep = length(Titambere.RECOR.females$eggs))
 
-library(runjags)
-library(parallel)
+
 saveRDS(bugs.data, "Titambere.data.rds")
 bugs.data <- readRDS("Titambere.data.rds")
 
@@ -584,7 +597,7 @@ table(rowSums(bugs.data$z, na.rm = T))#time period between first and last captur
 round(mean(table(rowSums(bugs.data$z, na.rm = T))[-1]),2)#Mean time period between first and last captures
 round(sd(table(rowSums(bugs.data$z, na.rm = T))[-1]),2)#SD time period between first and last captures
 
-# Valores iniciais
+# Initial values
 inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10),
                            sigma.phiJS = runif(1, 1, 2),
                            sigma.f = runif(1, 0.75, 1.5),
@@ -594,7 +607,7 @@ inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10)
                            sigma.pJS = runif(1, 0.1, 0.5)
 )}
 
-# Defina os parametros a serem monitorados
+# Define parameters to monitour
 parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
                 "betaphiJS","varphi",
                 "f", "alpha.f", "sigma.f",
@@ -1031,38 +1044,38 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (BRT 3 min)
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 cl <- makeCluster(4)
-runjags.options(jagspath = "/usr/local/bin/jags")
+runjags.options(jagspath = "/usr/local/bin/jags") #set path for JAGS
 vitalrates.itambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-itambere-svl.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "parallel", jags.refresh = 30,keep.jags.files = TRUE,jags = "/usr/local/bin/jags",
                          summarise = FALSE,
                          modules = c("glm"))
-#Pradel parameters did not converge. Run separately and compare results
 
-# Pradel model ------------------------------------------------------------
+#Pradel parameters did not converge. Next, we run each model (PJS, CJS, and fecundity GLM) separately
+
+# PJS model ------------------------------------------------------------
 
 bugs.data <- readRDS("Titambere.data.rds")
 
-# Valores iniciais
+# Initial values
 inits <- function (){ list(tauphib = 1, betaTphi = rep(0,10), varphi = rep(0,10),
                            sigma.phiJS = runif(1, 1, 2),
                            sigma.f = runif(1, 0.75, 1.5),
                            alpha.f = runif(5,-5, -3),
-                            betaTf = rep(0,10), #varf = rep(0,10),taufb = 1, pvarf = 0.5,
-                           #alpha.pJS = runif(1, -0.5, 0.5),
+                            betaTf = rep(0,10),
                            taupb = 1,  betaTp = rep(0,10), varp = rep(0,10),
                            sigma.pJS = runif(1, 0.1, 0.5)
 )}
 
-# Defina os parametros a serem monitorados
+# Define the parameters to monitour
 parameters <- c("phiJS", "alpha.phiJS", "sigma.phiJS",
                 "betaphiJS","varphi",
                 "f", "alpha.f", "sigma.f",
-                "betaf",#"varf","pvarf",
+                "betaf",
                 "pJS", "alpha.pJS","sigma.pJS",
                 "betapJS","varp",
                 "rho"
@@ -1412,7 +1425,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (BRT 3 min)
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 
@@ -1430,14 +1443,6 @@ results.pradel.itambere <- add.summary(results.pradel.itambere)
 results.pradel.itambere.df <- summary(results.pradel.itambere)
 View(results.pradel.itambere.df)
 
-# library(coda)
-# library(MCMCvis)
-# mcmc.object <- as.mcmc.list(results.pradel.itambere)
-# niter(mcmc.object)
-# windowed.object <- window(mcmc.object, start=300001)
-# results.pradel.itambere.df <- MCMCsummary(windowed.object)
-# View(results.pradel.itambere.df)
-
 
 pradel.itambere.extend3 <- extend.jags(results.pradel.itambere,
                                        adapt = na,thin = nt, sample = ni, 
@@ -1453,7 +1458,6 @@ write.csv(results.pradel.itambere.df, "results.pradel.itambere.df_400000_noecoph
 
 saveRDS(results.pradel.itambere, "results_pradel_itambere_400000_noecophys.rds")
 
-library(ggmcmc)
 
 S <- ggs(results.pradel.itambere$mcmc[,1722:1748])
 
@@ -1482,8 +1486,9 @@ ggs_caterpillar(S,family="alpha.f")
 ggs_caterpillar(S,family="betaf")
 
 
-#Fecundity model#
-#################
+# Fecundity GLM (number of newborns) --------------------------------------
+
+# Define the parameters to monitour
 
 parameters <- c("alpha.fec", "beta1.fec", "beta2.fec")
 
@@ -1518,7 +1523,7 @@ nb <- 1800000
 nc <- 4
 na <- 100000
 
-#Call JAGS from R (BRT 3 min)
+#Call JAGS from R (This run may take a while. The results can be loaded instead)
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 
@@ -1530,7 +1535,7 @@ fecund.itambere <- run.jags(data=bugs.data, inits=inits, monitor=parameters, mod
                             summarise = T,
                             modules = c("glm"))
 
-results.fecund.itambere <- results.jags(fecund.itambere)#"/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado/runjagsfiles_fec"
+results.fecund.itambere <- results.jags(fecund.itambere)
 
 #results.pradel.itambere <- add.summary(results.pradel.itambere)
 summary(results.fecund.itambere)
@@ -1539,11 +1544,13 @@ results.fecund.itambere.df <- summary(results.fecund.itambere)
 
 write.csv(results.fecund.itambere.df, "results_fecund_itambere_df.csv")
 
-#CJS model per sex -------------------------
+#CJS-growth model per sex -------------------------
 
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Hierarchical_Models")
 
 Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds") #read data
+
+## Clean demographic data ----------
 
 head(Titambere.RECOR.imp)
 tail(Titambere.RECOR.imp)
@@ -1559,8 +1566,8 @@ head(data.demography)
 table(data.demography$camp)
 table(data.demography$identity)
 
-completos <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
-Titambere.dataset <- droplevels(data.demography[completos, ])
+complete <- complete.cases(data.demography[, c("identity", "plot")]) #remove NAs
+Titambere.dataset <- droplevels(data.demography[complete, ])
 head(Titambere.dataset)
 str(Titambere.dataset)
 table(Titambere.dataset$camp)
@@ -1568,7 +1575,6 @@ table(Titambere.dataset$identity)
 
 
 ## Prepare input file and run monthly data ("camp")
-
 
 # Create ID
 IDENT <- paste(Titambere.dataset$plot, Titambere.dataset$identity, Titambere.dataset$cycle, sep="")
@@ -1597,7 +1603,6 @@ table5 <- droplevels(table4)
 table5$IDENT <- as.character(table5$IDENT)
 table5$plot <- as.character(table5$plot)
 str(table5)
-
 
 # Calculate recapture frequencies
 recap.table <- data.frame(table(table5$IDENT))
@@ -1632,7 +1637,7 @@ for(i in 1:nrow(datA)){
   del[i]<-datA$Camp[i]-min(datA$Camp[datA$TrueID==datA$TrueID[i]])
 }
 
-plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plor for each individual
+plot<-cast(datA, TrueID~., value="Plot", fun.aggregate=function(x) tail(x,1))  ###determine the plot for each individual
 plot<-as.character(plot[,2])
 plot
 plot[plot=="MB"]<-4 # Ordering by fire severity
@@ -1705,7 +1710,8 @@ head(eh)
 m #Number of observations
 n #Number of individuals
 
-# Create matrix X indicating SVL (svl)
+## Create matrix X indicating SVL ------------------------------------
+
 x <- cast(datA,
           TrueID ~ Camp,
           fun.aggregate = function(x) mean(x),
@@ -1722,6 +1728,9 @@ x <- x[,sort(colnames(x))]
 #x[is.na(x)] <- 0
 head(x)
 
+## Run CJS-growth model per sex --------------------------------------------
+
+#Data list for JAGS
 bugs.data.sex <- list(first = f, nind = dim(eh)[1], n.occasions = dim (eh)[2],
                       y = eh, x = as.matrix(x), z = known.states.cjs(eh),
                       mu.L0 = mean(datA$SVL[datA$SVL<=35],na.rm=T),
@@ -1833,7 +1842,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
@@ -1950,7 +1959,7 @@ ggplot(data = growth.df, aes(x = time, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex
+#Results averaging sex
 (mu.LI.mn <- results.cjs.Titambere.df$mean[grep(pattern = "mu.LI", 
                                              x = results.cjs.Titambere.df$X)])
 
@@ -2043,7 +2052,7 @@ ggplot(data = surv.df, aes(x = svl, y = mean, colour = sex))+
   scale_colour_manual(values = turbo(2), name = "Sex") +
   scale_fill_manual(values = turbo(2), name = "Sex")
 
-#Results ignoring sex (more data available)
+#Results averaging sex (more data available)
 #Survival parameters
 (alpha.phi.mn <- mean(results.cjs.Titambere.df$mean[grep(pattern = "alpha.phi", 
                                                  x = results.cjs.Titambere.df$X)]))
