@@ -352,7 +352,7 @@ d
 
 # Environmental variables -------------------------------------------------
 
-var_env <- readRDS("climate.ecophysio.month.rds")
+var_env <- readRDS("climate_ecophysio_month.rds")
 var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
 var_env <- var_env[order(var_env$canopy),]
 var_env$canopy
