@@ -30,7 +30,7 @@ summary(fecundity.Ti)
 #Probability of reproduction (prep)
 
 Titambere.RECOR.imp<-readRDS("Titambere_RECOR_imp.rds") #Read data
-Titambere.RECOR.females<-subset(Titambere.RECOR.imp,sexo=="F")# subset only females
+Titambere.RECOR.females<-subset(Titambere.RECOR.imp,sex=="F")# subset only females
 summary(as.factor(Titambere.RECOR.females$eggs))
 
 #We only recorded females bearing eggs/embryos. To become binary, we need to determine the females without eggs/embryos
@@ -80,7 +80,7 @@ rm(IDENT)
 str(itambere.dataset)
 
 # Subset variables of interest
-table1 <- itambere.dataset[itambere.dataset$recapture!="(y)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
+table1 <- itambere.dataset[itambere.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -114,7 +114,7 @@ head(table5)
 Age<-c(rep(NA,nrow(table5)))
 Age
 
-datA<-data.frame(table5$camp,table5$sexo,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
+datA<-data.frame(table5$camp,table5$sex,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
 names(datA)<-c("Camp","Sex","TrueID","SVL","Mass","Age","Plot")
 datA$Camp<-datA$Camp+2000
 datA$Age[datA$SVL<=35]<-0
@@ -367,7 +367,7 @@ d
 # Environmental variables -------------------------------------------------
 
 #Read data
-var_env <- readRDS("climate.ecophysio.month.rds")
+var_env <- readRDS("climate_ecophysio_month.rds")
 var_env$canopy <- factor(var_env$canopy,levels = c("C","Q","EB","MB","LB"))
 var_env <- var_env[order(var_env$canopy),]
 var_env$canopy
@@ -1592,7 +1592,7 @@ rm(IDENT)
 str(Titambere.dataset)
 
 # Subset variables of interest
-table1 <- Titambere.dataset[Titambere.dataset$recapture!="(y)", c("IDENT", "camp", "sexo", "svl","mass", "recapture", "plot")]
+table1 <- Titambere.dataset[Titambere.dataset$recapture!="(y)", c("IDENT", "camp", "sex", "svl","mass", "recapture", "plot")]
 str(table1)
 
 # Identifies captures without IDs
@@ -1626,7 +1626,7 @@ head(table5)
 Age<-c(rep(NA,nrow(table5)))
 Age
 
-datA<-data.frame(table5$camp,table5$sexo,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
+datA<-data.frame(table5$camp,table5$sex,table5$IDENT,table5$svl,table5$mass,Age,table5$plot)
 names(datA)<-c("Camp","Sex","TrueID","SVL","Mass","Age","Plot")
 datA$Camp<-datA$Camp+2000
 datA$Age[datA$SVL<=40]<-0
