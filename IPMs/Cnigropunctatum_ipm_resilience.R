@@ -1,6 +1,9 @@
 rm(list = ls())
 
-# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+#Set working directory
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/IPMs")
+
+#Load packages
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -12,23 +15,21 @@ library(MCMCvis)
 library(viridis)
 library(ggplot2)
 
+#Read results and data to build IPMs
+
 Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
 cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
 
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
 
-
-# print(ipm2.Cnigro)
 rm(cjs.Cnigro)
 gc()
-# ipm2.Cnigro.df <- MCMCsummary(ipm2.Cnigro.samples)
 
-# write.csv(ipm2.Cnigro.df, "results.ipm2.Cnigro.df.csv")
-ipm2.Cnigro.df <- readRDS("results_ipm2_Cnigro_df.rds")
+vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
 cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
 pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")
 
-View(ipm2.Cnigro.df)
+View(vitalrates.Cnigro.df)
 View(cjs.Cnigro.df)
 View(pradel.Cnigro.df)
 
@@ -102,22 +103,22 @@ fixed_list <- list(
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','Mean'],
-  r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','Mean'],  
-  r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','Mean'], 
+  r_r_mu_int   = vitalrates.Cnigro.df['alpha.prep','Mean'],
+  r_r_mu_slope = vitalrates.Cnigro.df['beta1.prep','Mean'],  
+  r_r_mu_slope2 = vitalrates.Cnigro.df['beta2.prep','Mean'], 
   
-  r_r_sd_int   = ipm2.Cnigro.df['alpha.prep','SD'],
-  r_r_sd_slope = ipm2.Cnigro.df['beta1.prep','SD'],  
-  r_r_sd_slope2 = ipm2.Cnigro.df['beta2.prep','SD'], 
+  r_r_sd_int   = vitalrates.Cnigro.df['alpha.prep','SD'],
+  r_r_sd_slope = vitalrates.Cnigro.df['beta1.prep','SD'],  
+  r_r_sd_slope2 = vitalrates.Cnigro.df['beta2.prep','SD'], 
   
   #Number of eggs/embryos
-  r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','Mean'], 
-  r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','Mean'],   
-  #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','Mean'],  
+  r_n_mu_int   = vitalrates.Cnigro.df['alpha.fec','Mean'], 
+  r_n_mu_slope = vitalrates.Cnigro.df['beta1.fec','Mean'],   
+  #r_n_mu_slope2 =vitalrates.Cnigro.df['beta2.fec','Mean'],  
   
-  r_n_sd_int   = ipm2.Cnigro.df['alpha.fec','SD'], 
-  r_n_sd_slope = ipm2.Cnigro.df['beta1.fec','SD'],   
-  #r_n_sd_slope2 =ipm2.Cnigro.df['beta2.fec','SD'],  
+  r_n_sd_int   = vitalrates.Cnigro.df['alpha.fec','SD'], 
+  r_n_sd_slope = vitalrates.Cnigro.df['beta1.fec','SD'],   
+  #r_n_sd_slope2 =vitalrates.Cnigro.df['beta2.fec','SD'],  
   
   
   #Size of newborns
@@ -224,18 +225,18 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-f.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "f", 
-                                            x = row.names(ipm2.Cnigro.df))[1:850],])
-tail(f.ipm2)
+f.vitalrates <- as.data.frame(vitalrates.Cnigro.df[grep(pattern = "f", 
+                                            x = row.names(vitalrates.Cnigro.df))[1:850],])
+tail(f.vitalrates)
 
-phi.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "phi", 
-                                              x = row.names(ipm2.Cnigro.df))[1:850],])
-tail(phi.ipm2)
+phi.vitalrates <- as.data.frame(vitalrates.Cnigro.df[grep(pattern = "phi", 
+                                              x = row.names(vitalrates.Cnigro.df))[1:850],])
+tail(phi.vitalrates)
 
-rho.ipm2 <- as.data.frame(ipm2.Cnigro.df[grep(pattern = "rho", 
-                                              x = row.names(ipm2.Cnigro.df))[1:845],])
-head(rho.ipm2)
-tail(rho.ipm2)
+rho.vitalrates <- as.data.frame(vitalrates.Cnigro.df[grep(pattern = "rho", 
+                                              x = row.names(vitalrates.Cnigro.df))[1:845],])
+head(rho.vitalrates)
+tail(rho.vitalrates)
 
 f.pradel <- as.data.frame(pradel.Cnigro.df[grep(pattern = "f", 
                                                 x = row.names(pradel.Cnigro.df))[1:850],])
@@ -251,14 +252,14 @@ head(rho.pradel)
 tail(rho.pradel)
 
 
-f.ipm2$plot <- rep(1:5,170)
-f.ipm2$time <- rep(1:170, each = 5)
+f.vitalrates$plot <- rep(1:5,170)
+f.vitalrates$time <- rep(1:170, each = 5)
 
-phi.ipm2$plot <- rep(1:5,170)
-phi.ipm2$time <- rep(1:170, each = 5)
+phi.vitalrates$plot <- rep(1:5,170)
+phi.vitalrates$time <- rep(1:170, each = 5)
 
-rho.ipm2$plot <- rep(1:5,169)
-rho.ipm2$time <- rep(1:169, each = 5)
+rho.vitalrates$plot <- rep(1:5,169)
+rho.vitalrates$time <- rep(1:169, each = 5)
 
 f.pradel$plot <- rep(1:5,170)
 f.pradel$time <- rep(1:170, each = 5)
@@ -269,14 +270,14 @@ phi.pradel$time <- rep(1:170, each = 5)
 rho.pradel$plot <- rep(1:5,169)
 rho.pradel$time <- rep(1:169, each = 5)
 
-f.diffmean <- f.ipm2$Mean - f.pradel$mean
+f.diffmean <- f.vitalrates$Mean - f.pradel$mean
 
-phi.diffmean <- phi.ipm2$Mean - phi.pradel$mean
+phi.diffmean <- phi.vitalrates$Mean - phi.pradel$mean
 
-rho.diffmean <- rho.ipm2$Mean - rho.pradel$mean
+rho.diffmean <- rho.vitalrates$Mean - rho.pradel$mean
 
-f.ipm2[f.diffmean > 1,]
-rho.ipm2[rho.diffmean > .5,]
+f.vitalrates[f.diffmean > 1,]
+rho.vitalrates[rho.diffmean > .5,]
 
 summary(f.diffmean)
 boxplot(f.diffmean ~ rep(1:5,170))
@@ -288,17 +289,17 @@ summary(phi.diffmean)
 boxplot(phi.diffmean ~ rep(1:5,170))
 
 f.pradel$plot <- as.factor(f.pradel$plot)
-f.ipm2$plot <- as.factor(f.ipm2$plot)
+f.vitalrates$plot <- as.factor(f.vitalrates$plot)
 phi.pradel$plot <- as.factor(phi.pradel$plot)
-phi.ipm2$plot <- as.factor(phi.ipm2$plot)
+phi.vitalrates$plot <- as.factor(phi.vitalrates$plot)
 
 tapply(rho.pradel$mean, rho.pradel$plot, FUN = function(x) exp(mean(log(x))))
-tapply(rho.ipm2$Mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x))))
+tapply(rho.vitalrates$Mean, rho.vitalrates$plot, FUN = function(x) exp(mean(log(x))))
 
 
-ggplot(f.ipm2, aes(x = time, y = Mean, colour = plot))+
+ggplot(f.vitalrates, aes(x = time, y = Mean, colour = plot))+
   geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  #geom_path(data=f.pradel[f.vitalrates$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
   ylim(c(0,0.3))+
   scale_color_manual(values=turbo(5))
 
@@ -309,7 +310,7 @@ ggplot(f.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
   scale_color_manual(values=turbo(5))
 #scale_fill_manual(values=turbo(5))
 
-ggplot(phi.ipm2, aes(x = time, y = Mean,fill = plot, colour = plot))+
+ggplot(phi.vitalrates, aes(x = time, y = Mean,fill = plot, colour = plot))+
   geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
   #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
   ylim(c(0.75,1))+
@@ -2321,13 +2322,13 @@ cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
 
 
-# print(ipm2.Cnigro)
+# print(vitalrates.Cnigro)
 rm(cjs.Cnigro)
 gc()
-# ipm2.Cnigro.df <- MCMCsummary(ipm2.Cnigro.samples)
+# vitalrates.Cnigro.df <- MCMCsummary(vitalrates.Cnigro.samples)
 
-# write.csv(ipm2.Cnigro.df, "results.ipm2.Cnigro.df.csv")
-ipm2.Cnigro.df <- readRDS("results_ipm2_Cnigro_df.rds")
+# write.csv(vitalrates.Cnigro.df, "results.vitalrates.Cnigro.df.csv")
+vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
 cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
 pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")
 
@@ -2524,14 +2525,14 @@ res_param_perturb <- function(plot, nkernel){
         r_f_mu_TSLF    = pradel.Cnigro.df['betaf[10]','mean']+ add.s[j]*ord[j,23,i],
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.Cnigro.df['alpha.prep','Mean']+ add.s[j]*ord[j,24,i],
-        r_r_mu_slope = ipm2.Cnigro.df['beta1.prep','Mean']+ add.s[j]*ord[j,25,i],  
-        r_r_mu_slope2 = ipm2.Cnigro.df['beta2.prep','Mean']+ add.s[j]*ord[j,26,i], 
+        r_r_mu_int   = vitalrates.Cnigro.df['alpha.prep','Mean']+ add.s[j]*ord[j,24,i],
+        r_r_mu_slope = vitalrates.Cnigro.df['beta1.prep','Mean']+ add.s[j]*ord[j,25,i],  
+        r_r_mu_slope2 = vitalrates.Cnigro.df['beta2.prep','Mean']+ add.s[j]*ord[j,26,i], 
 
         #Number of eggs/embryos
-        r_n_mu_int   = ipm2.Cnigro.df['alpha.fec','Mean']+ add.s[j]*ord[j,27,i], 
-        r_n_mu_slope = ipm2.Cnigro.df['beta1.fec','Mean']+ add.s[j]*ord[j,28,i],   
-        #r_n_mu_slope2 =ipm2.Cnigro.df['beta2.fec','Mean'],  
+        r_n_mu_int   = vitalrates.Cnigro.df['alpha.fec','Mean']+ add.s[j]*ord[j,27,i], 
+        r_n_mu_slope = vitalrates.Cnigro.df['beta1.fec','Mean']+ add.s[j]*ord[j,28,i],   
+        #r_n_mu_slope2 =vitalrates.Cnigro.df['beta2.fec','Mean'],  
         
         #Size of newborns
         mu_rd     = Cnigropunctatum.data$mu.L0,   

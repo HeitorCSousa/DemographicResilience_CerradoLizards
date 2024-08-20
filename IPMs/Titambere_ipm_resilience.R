@@ -1,5 +1,9 @@
 rm(list = ls())
-setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado")
+
+#Set working directory
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/IPMs")
+
+#Load packages
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -11,8 +15,8 @@ library(MCMCvis)
 library(ggplot2)
 library(viridis)
 
+#Read results and data to build IPMs
 Titambere.data <- readRDS("Titambere.data.rds")
-# setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado/runjags_ipm2_itambere_crc")
 
 ipm2.Titambere.samples <- readRDS("sims_list_Titambere.rds")
 

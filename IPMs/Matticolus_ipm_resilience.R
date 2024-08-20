@@ -1,6 +1,9 @@
 rm(list = ls())
 
-# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+#Set working directory
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/IPMs")
+
+#Load packages
 library(jagsUI)
 library(rjags)
 library(ipmr)
@@ -13,52 +16,53 @@ library(MCMCvis)
 library(mcmcr)
 library(viridis)
 
+#Read results and data to build IPMs
 Matticolus.data <- readRDS("Matticolus.data.rds")
-ipm2.Matticolus <- readRDS("results_imp2_Matticolus.rds")
-#ipm2.Matticolus.samples <- as.mcmc.list(ipm2.Matticolus$samples)
+vitalrates.Matticolus <- readRDS("results_vitalrates_Matticolus.rds")
+#vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
-ipm2.Matticolus.samples <- ipm2.Matticolus$samples
+vitalrates.Matticolus.samples <- vitalrates.Matticolus$samples
 
-muK.Matticolus.samples <- ipm2.Matticolus$sims.list$mu.K
+muK.Matticolus.samples <- vitalrates.Matticolus$sims.list$mu.K
 
-rm(ipm2.Matticolus)
+rm(vitalrates.Matticolus)
 gc()
-# ipm2.Matticolus.df <- MCMCsummary(ipm2.Matticolus.samples)
+# vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus.samples)
 
-# write.csv(ipm2.Matticolus.df, "results.ipm2.Matticolus.df_100000iters.csv")
-ipm2.Matticolus.df <- read.csv("results.ipm2.Matticolus.df_100000iters.csv")
+# write.csv(vitalrates.Matticolus.df, "results.vitalrates.Matticolus.df_100000iters.csv")
+vitalrates.Matticolus.df <- read.csv("results.vitalrates.Matticolus.df_100000iters.csv")
 
-View(ipm2.Matticolus.df)
+View(vitalrates.Matticolus.df)
 
-f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
+f.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "f", x = vitalrates.Matticolus.df$X)[1:850],]
 
-rho.ipm2 <- ipm2.Matticolus.df[grep(pattern = "rho", x = ipm2.Matticolus.df$X)[1:850],]
+rho.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "rho", x = vitalrates.Matticolus.df$X)[1:850],]
 
-phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+phi.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "phi", x = vitalrates.Matticolus.df$X)[1:850],]
 
-f.ipm2$plot <- rep(1:5,170)
-f.ipm2$time <- rep(1:170, each = 5)
+f.vitalrates$plot <- rep(1:5,170)
+f.vitalrates$time <- rep(1:170, each = 5)
 
-rho.ipm2$plot <- rep(1:5,170)
-rho.ipm2$time <- rep(1:170, each = 5)
+rho.vitalrates$plot <- rep(1:5,170)
+rho.vitalrates$time <- rep(1:170, each = 5)
 
-phi.ipm2$plot <- rep(1:5,170)
-phi.ipm2$time <- rep(1:170, each = 5)
+phi.vitalrates$plot <- rep(1:5,170)
+phi.vitalrates$time <- rep(1:170, each = 5)
 
-tapply(rho.ipm2$mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
+tapply(rho.vitalrates$mean, rho.vitalrates$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
 table(Matticolus.data$plot)
 plot(y = colSums(Matticolus.data$y), x = (1:170)/12, type = "l")
 
-f.ipm2$plot <- as.factor(f.ipm2$plot)
-phi.ipm2$plot <- as.factor(phi.ipm2$plot)
+f.vitalrates$plot <- as.factor(f.vitalrates$plot)
+phi.vitalrates$plot <- as.factor(phi.vitalrates$plot)
 
-ggplot(f.ipm2, aes(x = time, y = mean, colour = plot))+
+ggplot(f.vitalrates, aes(x = time, y = mean, colour = plot))+
   geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  #geom_path(data=f.pradel[f.vitalrates$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
   ylim(c(0,2.5))+
   scale_color_manual(values=turbo(5))
 
-ggplot(phi.ipm2, aes(x = time, y = mean,fill = plot, colour = plot))+
+ggplot(phi.vitalrates, aes(x = time, y = mean,fill = plot, colour = plot))+
   geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
   #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
   ylim(c(0.3,1))+
@@ -68,10 +72,10 @@ ggplot(phi.ipm2, aes(x = time, y = mean,fill = plot, colour = plot))+
 
 library(ggmcmc)
 
-S <- ggs(ipm2.Matticolus.samples[,c(851:877,1723:1749,2600:2626,3472:3505),])
-S <- ggs(ipm2.Matticolus.samples[,c(3475:3480)])
+S <- ggs(vitalrates.Matticolus.samples[,c(851:877,1723:1749,2600:2626,3472:3505),])
+S <- ggs(vitalrates.Matticolus.samples[,c(3475:3480)])
 
-rm(ipm2.Matticolus.samples)
+rm(vitalrates.Matticolus.samples)
 
 str(S)
 levels(S$Parameter)
@@ -235,87 +239,87 @@ ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_cr
 # Define some fixed parameters
 
 fixed_list <- list(
-  s_mu_slope   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta.phi'],    #survival slope
-  #s_mu_slope2   = ipm2.Matticolus.df['beta.phi2','mean'],    #survival slope
+  s_mu_slope   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='beta.phi'],    #survival slope
+  #s_mu_slope2   = vitalrates.Matticolus.df['beta.phi2','mean'],    #survival slope
   
-  s_sd_slope   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='beta.phi'],    #survival slope
-  #s_sd_slope2  = ipm2.Matticolus.df['beta.phi2','sd'],    #survival slope
+  s_sd_slope   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='beta.phi'],    #survival slope
+  #s_sd_slope2  = vitalrates.Matticolus.df['beta.phi2','sd'],    #survival slope
   
   
   #Environmental slopes for survival
-  s_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[1]'],
-  s_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[2]'],
-  s_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[3]'],
-  s_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[4]'],
-  s_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[5]'],
-  s_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[6]'],
-  s_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[7]'],
-  s_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[8]'],
-  s_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[9]'],
-  s_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[10]'],
+  s_mu_tmed2m  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[1]'],
+  s_mu_RHmax   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[2]'],
+  s_mu_sol     = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[3]'],
+  s_mu_tmed0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[4]'],
+  s_mu_tmin0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[5]'],
+  s_mu_precip  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[6]'],
+  s_mu_perf    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[7]'],
+  s_mu_ha_90   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[8]'],
+  s_mu_fire    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[9]'],
+  s_mu_TSLF    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[10]'],
   
-  s_sd_tmed2m  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[1]'],
-  s_sd_RHmax   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[2]'],
-  s_sd_sol     = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[3]'],
-  s_sd_tmed0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[4]'],
-  s_sd_tmin0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[5]'],
-  s_sd_precip  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[6]'],
-  s_sd_perf    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[7]'],
-  s_sd_ha_90   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[8]'],
-  s_sd_fire    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[9]'],
-  s_sd_TSLF    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaphiJS[10]'],
+  s_sd_tmed2m  = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[1]'],
+  s_sd_RHmax   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[2]'],
+  s_sd_sol     = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[3]'],
+  s_sd_tmed0cm = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[4]'],
+  s_sd_tmin0cm = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[5]'],
+  s_sd_precip  = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[6]'],
+  s_sd_perf    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[7]'],
+  s_sd_ha_90   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[8]'],
+  s_sd_fire    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[9]'],
+  s_sd_TSLF    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaphiJS[10]'],
   
-  sigma.phiJS = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='sigma.phiJS'],
+  sigma.phiJS = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='sigma.phiJS'],
   
   #Environmental slopes for reproduction
-  r_f_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[1]'],
-  r_f_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[2]'],
-  r_f_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[3]'],
-  r_f_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[4]'],
-  r_f_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[5]'],
-  r_f_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[6]'],
-  r_f_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[7]'],
-  r_f_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[8]'],
-  r_f_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[9]'],
-  r_f_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[10]'],
+  r_f_mu_tmed2m  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[1]'],
+  r_f_mu_RHmax   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[2]'],
+  r_f_mu_sol     = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[3]'],
+  r_f_mu_tmed0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[4]'],
+  r_f_mu_tmin0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[5]'],
+  r_f_mu_precip  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[6]'],
+  r_f_mu_perf    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[7]'],
+  r_f_mu_ha_90   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[8]'],
+  r_f_mu_fire    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[9]'],
+  r_f_mu_TSLF    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[10]'],
   
-  r_f_sd_tmed2m  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[1]'],
-  r_f_sd_RHmax   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[2]'],
-  r_f_sd_sol     = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[3]'],
-  r_f_sd_tmed0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[4]'],
-  r_f_sd_tmin0cm = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[5]'],
-  r_f_sd_precip  = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[6]'],
-  r_f_sd_perf    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[7]'],
-  r_f_sd_ha_90   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[8]'],
-  r_f_sd_fire    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[9]'],
-  r_f_sd_TSLF    = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='betaf[10]'],
+  r_f_sd_tmed2m  = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[1]'],
+  r_f_sd_RHmax   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[2]'],
+  r_f_sd_sol     = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[3]'],
+  r_f_sd_tmed0cm = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[4]'],
+  r_f_sd_tmin0cm = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[5]'],
+  r_f_sd_precip  = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[6]'],
+  r_f_sd_perf    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[7]'],
+  r_f_sd_ha_90   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[8]'],
+  r_f_sd_fire    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[9]'],
+  r_f_sd_TSLF    = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='betaf[10]'],
   
-  sigma.f = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='sigma.f'],
+  sigma.f = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='sigma.f'],
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.prep'],
-  r_r_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.prep'],  
-  #r_r_mu_slope2 = ipm2.Matticolus.df['beta2.fec','mean'], 
+  r_r_mu_int   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.prep'],
+  r_r_mu_slope = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='beta1.prep'],  
+  #r_r_mu_slope2 = vitalrates.Matticolus.df['beta2.fec','mean'], 
   
-  r_r_sd_int   = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.prep'],
-  r_r_sd_slope = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='beta1.prep'],  
-  #r_r_sd_slope2 = ipm2.Matticolus.df['beta2.prep','sd'], 
+  r_r_sd_int   = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.prep'],
+  r_r_sd_slope = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='beta1.prep'],  
+  #r_r_sd_slope2 = vitalrates.Matticolus.df['beta2.prep','sd'], 
   
   #Number of eggs/embryos
-  #r_n_mu_int   = ipm2.Matticolus.df['alpha.fec','mean'], 
-  #r_n_mu_slope = ipm2.Matticolus.df['beta1.fec','mean'],   
-  #r_n_mu_slope2 =ipm2.Matticolus.df['beta2.fec','mean'],  
+  #r_n_mu_int   = vitalrates.Matticolus.df['alpha.fec','mean'], 
+  #r_n_mu_slope = vitalrates.Matticolus.df['beta1.fec','mean'],   
+  #r_n_mu_slope2 =vitalrates.Matticolus.df['beta2.fec','mean'],  
   
-  #r_n_sd_int   = ipm2.Matticolus.df['alpha.fec','sd'], 
-  #r_n_sd_slope = ipm2.Matticolus.df['beta1.fec','sd'],   
-  #r_n_sd_slope2 =ipm2.Matticolus.df['beta2.fec','sd'],  
+  #r_n_sd_int   = vitalrates.Matticolus.df['alpha.fec','sd'], 
+  #r_n_sd_slope = vitalrates.Matticolus.df['beta1.fec','sd'],   
+  #r_n_sd_slope2 =vitalrates.Matticolus.df['beta2.fec','sd'],  
   
   
   #Size of newborns
   mu_rd     = Matticolus.data$mu.L0,   
   sd_rd     = sqrt(Matticolus.data$tau.L0),
-  mu_LI = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.LI']
+  mu_LI = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.LI']
   
 )
 
@@ -325,52 +329,52 @@ fixed_list <- list(
 
 # First, we create vector of values that each random component can take.
 s_params  <- list(
-  s_g_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[1]'],
-  s_g_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[2]'],
-  s_g_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[3]'],
-  s_g_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[4]'],
-  s_g_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[5]'],
+  s_g_mu_int_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[1]'],
+  s_g_mu_int_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[2]'],
+  s_g_mu_int_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[3]'],
+  s_g_mu_int_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[4]'],
+  s_g_mu_int_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[5]'],
   
-  s_g_sd_int_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[1]'],
-  s_g_sd_int_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[2]'],
-  s_g_sd_int_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[3]'],
-  s_g_sd_int_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[4]'],
-  s_g_sd_int_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.phiJS[5]']
+  s_g_sd_int_1 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.phiJS[1]'],
+  s_g_sd_int_2 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.phiJS[2]'],
+  s_g_sd_int_3 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.phiJS[3]'],
+  s_g_sd_int_4 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.phiJS[4]'],
+  s_g_sd_int_5 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.phiJS[5]']
 )
 
 g_params <- list(
   
-  g_g_mu_K_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[1]'],
-  g_g_mu_K_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[2]'],
-  g_g_mu_K_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[3]'],
-  g_g_mu_K_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[4]'],
-  g_g_mu_K_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[5]'],
+  g_g_mu_K_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[1]'],
+  g_g_mu_K_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[2]'],
+  g_g_mu_K_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[3]'],
+  g_g_mu_K_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[4]'],
+  g_g_mu_K_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[5]'],
   
-  g_g_sd_K_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[1]'],
-  g_g_sd_K_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[2]'],
-  g_g_sd_K_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[3]'],
-  g_g_sd_K_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[4]'],
-  g_g_sd_K_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='mu.K[5]']
+  g_g_sd_K_1 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='mu.K[1]'],
+  g_g_sd_K_2 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='mu.K[2]'],
+  g_g_sd_K_3 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='mu.K[3]'],
+  g_g_sd_K_4 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='mu.K[4]'],
+  g_g_sd_K_5 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='mu.K[5]']
 )
 
 r_params <- list(
-  r_f_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[1]'],
-  r_f_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[2]'],
-  r_f_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[3]'],
-  r_f_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[4]'],
-  r_f_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[5]'],
+  r_f_mu_int_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[1]'],
+  r_f_mu_int_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[2]'],
+  r_f_mu_int_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[3]'],
+  r_f_mu_int_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[4]'],
+  r_f_mu_int_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[5]'],
   
-  r_f_sd_int_1 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[1]'],
-  r_f_sd_int_2 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[2]'],
-  r_f_sd_int_3 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[3]'],
-  r_f_sd_int_4 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[4]'],
-  r_f_sd_int_5 = ipm2.Matticolus.df$sd[ipm2.Matticolus.df$X=='alpha.f[5]'],
+  r_f_sd_int_1 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.f[1]'],
+  r_f_sd_int_2 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.f[2]'],
+  r_f_sd_int_3 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.f[3]'],
+  r_f_sd_int_4 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.f[4]'],
+  r_f_sd_int_5 = vitalrates.Matticolus.df$sd[vitalrates.Matticolus.df$X=='alpha.f[5]'],
   
-  r_p_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[1]'],
-  r_p_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[2]'],
-  r_p_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[3]'],
-  r_p_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[4]'],
-  r_p_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.pJS[5]']
+  r_p_mu_int_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.pJS[1]'],
+  r_p_mu_int_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.pJS[2]'],
+  r_p_mu_int_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.pJS[3]'],
+  r_p_mu_int_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.pJS[4]'],
+  r_p_mu_int_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.pJS[5]']
 )
 
 # Each set of parameters is converted to a named list. The names should match
@@ -415,19 +419,19 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
+f.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "f", x = vitalrates.Matticolus.df$X)[1:850],]
 
-phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+phi.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "phi", x = vitalrates.Matticolus.df$X)[1:850],]
 
 
-f.ipm2$plot <- rep(1:5,170)
-f.ipm2$time <- rep(1:170, each = 5)
+f.vitalrates$plot <- rep(1:5,170)
+f.vitalrates$time <- rep(1:170, each = 5)
 
-phi.ipm2$plot <- rep(1:5,170)
-phi.ipm2$time <- rep(1:170, each = 5)
+phi.vitalrates$plot <- rep(1:5,170)
+phi.vitalrates$time <- rep(1:170, each = 5)
 
-surv.pradel <- matrix(phi.ipm2$mean,nrow = 5, ncol = 170)
-recr.pradel <- matrix(f.ipm2$mean,nrow = 5, ncol = 170)
+surv.pradel <- matrix(phi.vitalrates$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
 env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
 
@@ -961,16 +965,16 @@ par(mfrow=c(1,1))
 quartz(10,10)
 plot(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.9,1.8), 
      bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
-lines(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)])
+lines(rho.vitalrates$mean[rho.vitalrates$plot==1][-c(1, 170)])
 
 quartz(8,8)
-plot(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+plot(rho.vitalrates$mean[rho.vitalrates$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
      ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
-ccf(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
-cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)])
+ccf(rho.vitalrates$mean[rho.vitalrates$plot==1][-c(1, 170)], lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.vitalrates$mean[rho.vitalrates$plot==1][-c(1, 170)])
 
-summary(rho.ipm2$mean[rho.ipm2$plot==1][-c(1, 170)] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
+summary(rho.vitalrates$mean[rho.vitalrates$plot==1][-c(1, 170)] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Quadriennial#
@@ -1151,16 +1155,16 @@ plot_ipm_sd_rv(Q_ipm_rv$ht_v,
 quartz(10,10)
 plot(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.6,2.2), 
      bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
-lines(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+lines(rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)])
 
 quartz(8,8)
-plot(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+plot(rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
      ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
-ccf(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
-cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+ccf(rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)], lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)])
 
-summary(rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
+summary(rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ################
 #Early biennial#
@@ -1340,16 +1344,16 @@ plot_ipm_sd_rv(EB_ipm_rv$ht_v,
 quartz(10,10)
 plot(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.2), 
      bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
-lines(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)])
+lines(rho.vitalrates$mean[rho.vitalrates$plot==3][-c(1, 170)])
 
 quartz(8,8)
-plot(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+plot(rho.vitalrates$mean[rho.vitalrates$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
      ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
-ccf(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
-cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)])
+ccf(rho.vitalrates$mean[rho.vitalrates$plot==3][-c(1, 170)], lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.vitalrates$mean[rho.vitalrates$plot==3][-c(1, 170)])
 
-summary(rho.ipm2$mean[rho.ipm2$plot==3][-c(1, 170)] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
+summary(rho.vitalrates$mean[rho.vitalrates$plot==3][-c(1, 170)] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ##############
 #Mid biennial#
@@ -1529,16 +1533,16 @@ par(mfrow = c(1,1))
 quartz(10,10)
 plot(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.5), 
      bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
-lines(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)])
+lines(rho.vitalrates$mean[rho.vitalrates$plot==4][-c(1, 170)])
 
 quartz(8,8)
-plot(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+plot(rho.vitalrates$mean[rho.vitalrates$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
      ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
-ccf(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
-cor.test(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)])
+ccf(rho.vitalrates$mean[rho.vitalrates$plot==4][-c(1, 170)], lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(MB_ipm,type_lambda = 'all')[-c(1,170)], rho.vitalrates$mean[rho.vitalrates$plot==4][-c(1, 170)])
 
-summary(rho.ipm2$mean[rho.ipm2$plot==4][-c(1, 170)] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
+summary(rho.vitalrates$mean[rho.vitalrates$plot==4][-c(1, 170)] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 ###############
 #Late biennial#
@@ -1719,16 +1723,16 @@ par(mfrow=c(1,1))
 quartz(10,10)
 plot(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], type = "l", ylim = c(0.5,2.5), 
      bty = "n", col = "red", ylab = "Population growth", xlab = "Time (months)")
-lines(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)])
+lines(rho.vitalrates$mean[rho.vitalrates$plot==5][-c(1, 170)])
 
 quartz(8,8)
-plot(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
+plot(rho.vitalrates$mean[rho.vitalrates$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)], bty = "n",
      ylab = "Population growth (IPM)", xlab = "Population growth (PJS)", col = rgb(0,0,0,0.5), pch = 19)
 
-ccf(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
-cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.ipm2$mean[rho.ipm2$plot==2][-c(1, 170)])
+ccf(rho.vitalrates$mean[rho.vitalrates$plot==5][-c(1, 170)], lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
+cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.vitalrates$mean[rho.vitalrates$plot==2][-c(1, 170)])
 
-summary(rho.ipm2$mean[rho.ipm2$plot==5][-c(1, 170)] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
+summary(rho.vitalrates$mean[rho.vitalrates$plot==5][-c(1, 170)] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
 
 #######################
 #Perturbation analyses#
@@ -2418,16 +2422,16 @@ library(mcmcr)
 library(viridis)
 
 Matticolus.data <- readRDS("Matticolus.data.rds")
-ipm2.Matticolus <- readRDS("results_imp2_Matticolus.rds")
-#ipm2.Matticolus.samples <- as.mcmc.list(ipm2.Matticolus$samples)
+vitalrates.Matticolus <- readRDS("results_vitalrates_Matticolus.rds")
+#vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
-muK.Matticolus.samples <- ipm2.Matticolus$sims.list$mu.K
-rm(ipm2.Matticolus)
+muK.Matticolus.samples <- vitalrates.Matticolus$sims.list$mu.K
+rm(vitalrates.Matticolus)
 gc()
-# ipm2.Matticolus.df <- MCMCsummary(ipm2.Matticolus.samples)
+# vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus.samples)
 
-# write.csv(ipm2.Matticolus.df, "results.ipm2.Matticolus.df_100000iters.csv")
-ipm2.Matticolus.df <- read.csv("results.ipm2.Matticolus.df_100000iters.csv")
+# write.csv(vitalrates.Matticolus.df, "results.vitalrates.Matticolus.df_100000iters.csv")
+vitalrates.Matticolus.df <- read.csv("results.vitalrates.Matticolus.df_100000iters.csv")
 
 #Functions
 ##########
@@ -2465,18 +2469,18 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
-f.ipm2 <- ipm2.Matticolus.df[grep(pattern = "f", x = ipm2.Matticolus.df$X)[1:850],]
-phi.ipm2 <- ipm2.Matticolus.df[grep(pattern = "phi", x = ipm2.Matticolus.df$X)[1:850],]
+f.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "f", x = vitalrates.Matticolus.df$X)[1:850],]
+phi.vitalrates <- vitalrates.Matticolus.df[grep(pattern = "phi", x = vitalrates.Matticolus.df$X)[1:850],]
 
 
-f.ipm2$plot <- rep(1:5,170)
-f.ipm2$time <- rep(1:170, each = 5)
+f.vitalrates$plot <- rep(1:5,170)
+f.vitalrates$time <- rep(1:170, each = 5)
 
-phi.ipm2$plot <- rep(1:5,170)
-phi.ipm2$time <- rep(1:170, each = 5)
+phi.vitalrates$plot <- rep(1:5,170)
+phi.vitalrates$time <- rep(1:170, each = 5)
 
-surv.pradel <- matrix(phi.ipm2$mean,nrow = 5, ncol = 170)
-recr.pradel <- matrix(f.ipm2$mean,nrow = 5, ncol = 170)
+surv.pradel <- matrix(phi.vitalrates$mean,nrow = 5, ncol = 170)
+recr.pradel <- matrix(f.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
 env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
 
@@ -2577,57 +2581,57 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       
       fixed_list <- list(
-        s_mu_slope   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
+        s_mu_slope   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
         
         #Environmental slopes for survival
-        s_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[1]'] + add.s[j]*ord[j,2,i],
-        s_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[2]']+ add.s[j] *ord[j,3,i],
-        s_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[3]']+ add.s[j] *ord[j,4,i],
-        s_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[4]']+ add.s[j]*ord[j,5,i],
-        s_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[5]']+ add.s[j]*ord[j,6,i],
-        s_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[6]']+ add.s[j]*ord[j,7,i],
-        s_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[7]']+ add.s[j]*ord[j,8,i],
-        s_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[8]']+ add.s[j]*ord[j,9,i],
-        s_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[9]']+ add.s[j]*ord[j,10,i],
-        s_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaphiJS[10]']+ add.s[j]*ord[j,11,i],
+        s_mu_tmed2m  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[1]'] + add.s[j]*ord[j,2,i],
+        s_mu_RHmax   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[2]']+ add.s[j] *ord[j,3,i],
+        s_mu_sol     = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[3]']+ add.s[j] *ord[j,4,i],
+        s_mu_tmed0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[4]']+ add.s[j]*ord[j,5,i],
+        s_mu_tmin0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[5]']+ add.s[j]*ord[j,6,i],
+        s_mu_precip  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[6]']+ add.s[j]*ord[j,7,i],
+        s_mu_perf    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[7]']+ add.s[j]*ord[j,8,i],
+        s_mu_ha_90   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[8]']+ add.s[j]*ord[j,9,i],
+        s_mu_fire    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[9]']+ add.s[j]*ord[j,10,i],
+        s_mu_TSLF    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaphiJS[10]']+ add.s[j]*ord[j,11,i],
 
         
-        #sigma.phiJS = ipm2.Matticolus.df['sigma.phiJS','mean'],
+        #sigma.phiJS = vitalrates.Matticolus.df['sigma.phiJS','mean'],
         
         #Environmental slopes for reproduction
-        r_f_mu_tmed2m  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[1]']+ add.s[j]*ord[j,13,i],
-        r_f_mu_RHmax   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[2]']+ add.s[j]*ord[j,14,i],
-        r_f_mu_sol     = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[3]']+ add.s[j]*ord[j,15,i],
-        r_f_mu_tmed0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[4]']+ add.s[j]*ord[j,16,i],
-        r_f_mu_tmin0cm = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[5]']+ add.s[j]*ord[j,17,i],
-        r_f_mu_precip  = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[6]']+ add.s[j]*ord[j,18,i],
-        r_f_mu_perf    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[7]']+ add.s[j]*ord[j,19,i],
-        r_f_mu_ha_90   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[8]']+ add.s[j]*ord[j,20,i],
-        r_f_mu_fire    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[9]']+ add.s[j]*ord[j,21,i],
-        r_f_mu_TSLF    = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='betaf[10]']+ add.s[j]*ord[j,22,i],
+        r_f_mu_tmed2m  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[1]']+ add.s[j]*ord[j,13,i],
+        r_f_mu_RHmax   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[2]']+ add.s[j]*ord[j,14,i],
+        r_f_mu_sol     = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[3]']+ add.s[j]*ord[j,15,i],
+        r_f_mu_tmed0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[4]']+ add.s[j]*ord[j,16,i],
+        r_f_mu_tmin0cm = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[5]']+ add.s[j]*ord[j,17,i],
+        r_f_mu_precip  = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[6]']+ add.s[j]*ord[j,18,i],
+        r_f_mu_perf    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[7]']+ add.s[j]*ord[j,19,i],
+        r_f_mu_ha_90   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[8]']+ add.s[j]*ord[j,20,i],
+        r_f_mu_fire    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[9]']+ add.s[j]*ord[j,21,i],
+        r_f_mu_TSLF    = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='betaf[10]']+ add.s[j]*ord[j,22,i],
 
         
-        #sigma.f = ipm2.Matticolus.df['sigma.f','mean'],
+        #sigma.f = vitalrates.Matticolus.df['sigma.f','mean'],
         
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.prep']+ add.s[j]*ord[j,23,i],
-        r_r_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.prep']+ add.s[j]*ord[j,24,i],  
-        # r_r_mu_slope2 = ipm2.Matticolus.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
-        # r_r_sd_slope2 = ipm2.Matticolus.df['beta2.prep','sd'], 
+        r_r_mu_int   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.prep']+ add.s[j]*ord[j,23,i],
+        r_r_mu_slope = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='beta1.prep']+ add.s[j]*ord[j,24,i],  
+        # r_r_mu_slope2 = vitalrates.Matticolus.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
+        # r_r_sd_slope2 = vitalrates.Matticolus.df['beta2.prep','sd'], 
         
         #Number of eggs/embryos
-        # r_n_mu_int   = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.fec']+ add.s[j]*ord[j,25,i], 
-        # r_n_mu_slope = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='beta1.fec']+ add.s[j]*ord[j,26,i],   
-        #r_n_mu_slope2 =ipm2.Matticolus.df['beta2.fec','mean'],  
+        # r_n_mu_int   = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.fec']+ add.s[j]*ord[j,25,i], 
+        # r_n_mu_slope = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='beta1.fec']+ add.s[j]*ord[j,26,i],   
+        #r_n_mu_slope2 =vitalrates.Matticolus.df['beta2.fec','mean'],  
         
-        #r_n_sd_slope2 =ipm2.Matticolus.df['beta2.fec','sd'],  
+        #r_n_sd_slope2 =vitalrates.Matticolus.df['beta2.fec','sd'],  
         
         
         #Size of newborns
         mu_rd     = Matticolus.data$mu.L0,   
         sd_rd     = sqrt(Matticolus.data$tau.L0),
-        mu_LI = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.LI']
+        mu_LI = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.LI']
         
       )
       
@@ -2637,30 +2641,30 @@ res_param_perturb <- function(plot,mu_LI_plot,nkernel){
       
       # First, we create vector of values that each random component can take.
       s_params  <- list(
-        s_g_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[1]']+ add.s[j]*ord[j,25,i],
-        s_g_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[2]']+ add.s[j]*ord[j,25,i],
-        s_g_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[3]']+ add.s[j]*ord[j,25,i],
-        s_g_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[4]']+ add.s[j]*ord[j,25,i],
-        s_g_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.phiJS[5]']+ add.s[j]*ord[j,25,i]
+        s_g_mu_int_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[1]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[2]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[3]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[4]']+ add.s[j]*ord[j,25,i],
+        s_g_mu_int_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.phiJS[5]']+ add.s[j]*ord[j,25,i]
 
       )
       
       g_params <- list(
         
-        g_g_mu_K_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[1]']+ add.s[j]*ord[j,26,i],
-        g_g_mu_K_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[2]']+ add.s[j]*ord[j,26,i],
-        g_g_mu_K_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[3]']+ add.s[j]*ord[j,26,i],
-        g_g_mu_K_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[4]']+ add.s[j]*ord[j,26,i],
-        g_g_mu_K_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='mu.K[5]']+ add.s[j]*ord[j,26,i]
+        g_g_mu_K_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[1]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[2]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[3]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[4]']+ add.s[j]*ord[j,26,i],
+        g_g_mu_K_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='mu.K[5]']+ add.s[j]*ord[j,26,i]
         
       )
       
       r_params <- list(
-        r_f_mu_int_1 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[1]']+ add.s[j]*ord[j,27,i],
-        r_f_mu_int_2 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[2]']+ add.s[j]*ord[j,27,i],
-        r_f_mu_int_3 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[3]']+ add.s[j]*ord[j,27,i],
-        r_f_mu_int_4 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[4]']+ add.s[j]*ord[j,27,i],
-        r_f_mu_int_5 = ipm2.Matticolus.df$mean[ipm2.Matticolus.df$X=='alpha.f[5]']+ add.s[j]*ord[j,27,i]
+        r_f_mu_int_1 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[1]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_2 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[2]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_3 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[3]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_4 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[4]']+ add.s[j]*ord[j,27,i],
+        r_f_mu_int_5 = vitalrates.Matticolus.df$mean[vitalrates.Matticolus.df$X=='alpha.f[5]']+ add.s[j]*ord[j,27,i]
       )
       
       all_params_list <- c(fixed_list, g_params, s_params, r_params)
