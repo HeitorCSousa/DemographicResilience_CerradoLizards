@@ -14,55 +14,56 @@ library(BayesPostEst)
 library(MCMCvis)
 library(ggplot2)
 library(viridis)
+library(psych)
 
 #Read results and data to build IPMs
-Titambere.data <- readRDS("Titambere.data.rds")
+Titambere.data <- readRDS("Titambere_data.rds")
 
-ipm2.Titambere.samples <- readRDS("sims_list_Titambere.rds")
+vitalrates.Titambere.samples <- readRDS("sims_list_Titambere.rds")
 
-ipm2.Titambere.df <- read.csv("results.ipm2.Titambere.df_100000iters.csv")
+vitalrates.Titambere.df <- read.csv("results_vitalrates_Titambere_df_100000iters.csv")
 
-pradel.Titambere.df <- read.csv("results.pradel.itambere.df_400000_noecophys.csv")
+pradel.Titambere.df <- read.csv("results_pradel_itambere_df_400000_noecophys.csv")
 
 fec.Titambere.df <- read.csv("results_fecund_itambere_df.csv")
 
-f.ipm2 <- ipm2.Titambere.df[grep(pattern = "f", x = ipm2.Titambere.df$X)[1:850],]
+f.vitalrates <- vitalrates.Titambere.df[grep(pattern = "f", x = vitalrates.Titambere.df$X)[1:850],]
 f.pradel <- pradel.Titambere.df[grep(pattern = "f", x = pradel.Titambere.df$X)[1:850],]
 
-rho.ipm2 <- ipm2.Titambere.df[grep(pattern = "rho", x = ipm2.Titambere.df$X)[1:850],]
+rho.vitalrates <- vitalrates.Titambere.df[grep(pattern = "rho", x = vitalrates.Titambere.df$X)[1:850],]
 rho.pradel <- pradel.Titambere.df[grep(pattern = "rho", x = pradel.Titambere.df$X)[1:850],]
 
 phi.pradel <- pradel.Titambere.df[grep(pattern = "phi", x = pradel.Titambere.df$X)[1:850],]
-phi.ipm2 <- ipm2.Titambere.df[grep(pattern = "phi", x = ipm2.Titambere.df$X)[1:850],]
+phi.vitalrates <- vitalrates.Titambere.df[grep(pattern = "phi", x = vitalrates.Titambere.df$X)[1:850],]
 
 
 
-f.ipm2$plot <- rep(1:5,170)
+f.vitalrates$plot <- rep(1:5,170)
 f.pradel$plot <- rep(1:5,170)
 
-f.ipm2$time <- rep(1:170, each = 5)
+f.vitalrates$time <- rep(1:170, each = 5)
 f.pradel$time <- rep(1:170, each = 5)
 
-rho.ipm2$plot <- rep(1:5,170)
+rho.vitalrates$plot <- rep(1:5,170)
 rho.pradel$plot <- rep(1:5,170)
 
-rho.ipm2$time <- rep(1:170, each = 5)
+rho.vitalrates$time <- rep(1:170, each = 5)
 rho.pradel$time <- rep(1:170, each = 5)
 
 phi.pradel$plot <- rep(1:5,170)
 phi.pradel$time <- rep(1:170, each = 5)
 
-table(f.ipm2$X == f.pradel$X)
-table(rho.ipm2$X == rho.pradel$X)
+table(f.vitalrates$X == f.pradel$X)
+table(rho.vitalrates$X == rho.pradel$X)
 
-f.diffmean <- f.ipm2$mean - f.pradel$mean
+f.diffmean <- f.vitalrates$mean - f.pradel$mean
 
-rho.diffmean <- rho.ipm2$mean - rho.pradel$mean
+rho.diffmean <- rho.vitalrates$mean - rho.pradel$mean
 
-phi.diffmean <- phi.ipm2$mean - phi.pradel$mean
+phi.diffmean <- phi.vitalrates$mean - phi.pradel$mean
 
-f.ipm2[f.diffmean > 1,]
-rho.ipm2[rho.diffmean > 1,]
+f.vitalrates[f.diffmean > 1,]
+rho.vitalrates[rho.diffmean > 1,]
 
 
 summary(f.diffmean)
@@ -75,16 +76,16 @@ summary(phi.diffmean)
 boxplot(phi.diffmean ~ rep(1:5,170))
 
 tapply(rho.pradel$mean, rho.pradel$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
-tapply(rho.ipm2$mean, rho.ipm2$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
+tapply(rho.vitalrates$mean, rho.vitalrates$plot, FUN = function(x) exp(mean(log(x), na.rm = T)))
 
-f.ipm2$diff <- f.ipm2$mean - f.pradel$mean
+f.vitalrates$diff <- f.vitalrates$mean - f.pradel$mean
 f.pradel$plot <- as.factor(f.pradel$plot)
-f.ipm2$plot <- as.factor(f.ipm2$plot)
+f.vitalrates$plot <- as.factor(f.vitalrates$plot)
 phi.pradel$plot <- as.factor(phi.pradel$plot)
 
-ggplot(f.ipm2, aes(x = time, y = mean, colour = plot))+
+ggplot(f.vitalrates, aes(x = time, y = mean, colour = plot))+
   geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_path(data=f.pradel[f.ipm2$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
+  #geom_path(data=f.pradel[f.vitalrates$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
   ylim(c(0,5))+
   scale_color_manual(values=turbo(5))
 
@@ -100,163 +101,6 @@ ggplot(phi.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
   ylim(c(0.65,0.95))+
   scale_color_manual(values=turbo(5))
 
-library(ggmcmc)
-
-S <- ggs(ipm2.Titambere.samples[,,c(851:876,1722:1747,3473:3495)])
-str(S)
-levels(S$Parameter)
-
-ggmcmc(S)
-
-quartz(12,8)
-ggs_density(S,family="alpha.phiJS")
-ggs_density(S,family="alpha.f")
-# ggs_density(S,family="alpha.pJS")
-ggs_density(S,family="mu.K")
-# ggs_density(S,family="mu.LI")
-ggs_density(S,family="mn.AFC")
-ggs_density(S,family="p.AFC")
-ggs_density(S,family="r.AFC")
-
-
-ggs_traceplot(S,family="alpha.phiJS")
-ggs_traceplot(S,family="alpha.f")
-# ggs_traceplot(S,family="alpha.pJS")
-ggs_traceplot(S,family="mu.K")
-ggs_traceplot(S,family="mn.AFC")
-
-# ggs_traceplot(S,family="mu.LI")
-ggs_traceplot(S,family="sigma.phiJS")
-ggs_traceplot(S,family="sigma.f")
-ggs_traceplot(S,family="sigma.pJS")
-
-
-ggs_running(S,family="c")
-ggs_running(S,family="beta0")
-ggs_running(S,family="beta1")
-ggs_running(S,family="mu.K")
-ggs_running(S,family="sd.K")
-ggs_running(S,family="mu.LI")
-ggs_running(S,family="sd.LI")
-
-ggs_compare_partial(S,family="c")
-ggs_compare_partial(S,family="beta0")
-ggs_compare_partial(S,family="beta1")
-ggs_compare_partial(S,family="mu.K")
-ggs_compare_partial(S,family="sd.K")
-ggs_compare_partial(S,family="mu.LI")
-ggs_compare_partial(S,family="sd.LI")
-
-ggs_autocorrelation(S,family="c")
-ggs_autocorrelation(S,family="beta0")
-ggs_autocorrelation(S,family="beta1")
-ggs_autocorrelation(S,family="mu.K")
-ggs_autocorrelation(S,family="sd.K")
-ggs_autocorrelation(S,family="mu.LI")
-ggs_autocorrelation(S,family="sd.LI")
-
-ggs_crosscorrelation(S,family="c")
-ggs_crosscorrelation(S,family="beta0")
-ggs_crosscorrelation(S,family="beta1")
-ggs_crosscorrelation(S,family="mu.K")
-ggs_crosscorrelation(S,family="mu.LI")
-
-ggs_geweke(S,family="c")
-ggs_geweke(S,family="beta0")
-ggs_geweke(S,family="beta1")
-ggs_geweke(S,family="mu.K")
-ggs_geweke(S,family="sd.K")
-ggs_geweke(S,family="mu.LI")
-ggs_geweke(S,family="sd.LI")
-
-ggs_effective(S,family="c")
-ggs_effective(S,family="beta0")
-ggs_effective(S,family="beta1")
-ggs_effective(S,family="mu.K")
-ggs_effective(S,family="sd.K")
-ggs_effective(S,family="mu.LI")
-ggs_effective(S,family="sd.LI")
-
-ggs_caterpillar(S,family="c")
-ggs_caterpillar(S,family="beta0")
-ggs_caterpillar(S,family="beta1")
-ggs_caterpillar(S,family="mu.K")
-ggs_caterpillar(S,family="sd.K")
-ggs_caterpillar(S,family="mu.LI")
-ggs_caterpillar(S,family="sd.LI")
-
-#Generating pdfs
-ggmcmc(S, file="model_density_c.pdf",family=c("c"),plot="ggs_density")
-ggmcmc(S, file="model_density_beta0.pdf",family=c("beta0"),plot="ggs_density")
-ggmcmc(S, file="model_density_beta1.pdf",family=c("beta1"),plot="ggs_density")
-ggmcmc(S, file="model_density_mu.K.pdf",family=c("mu.K"),plot="ggs_density")
-ggmcmc(S, file="model_density_mu.LI.pdf",family=c("mu.LI"),plot="ggs_density")
-ggmcmc(S, file="model_density_sd.LI.pdf",family=c("sd.LI"),plot="ggs_density")
-ggmcmc(S, file="model_density_sd.K.pdf",family=c("sd.K"),plot="ggs_density")
-
-ggmcmc(S, file="model_traceplot_c.pdf",family=c("c"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_beta0.pdf",family=c("beta0"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_beta1.pdf",family=c("beta1"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_mu.K.pdf",family=c("mu.K"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_mu.LI.pdf",family=c("mu.LI"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_sd.LI.pdf",family=c("sd.LI"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_sd.K.pdf",family=c("sd.K"),plot="ggs_traceplot")
-
-ggmcmc(S, file="model_running_c.pdf",family=c("c"),plot="ggs_running")
-ggmcmc(S, file="model_running_beta0.pdf",family=c("beta0"),plot="ggs_running")
-ggmcmc(S, file="model_running_beta1.pdf",family=c("beta1"),plot="ggs_running")
-ggmcmc(S, file="model_running_mu.K.pdf",family=c("mu.K"),plot="ggs_running")
-ggmcmc(S, file="model_running_mu.LI.pdf",family=c("mu.LI"),plot="ggs_running")
-ggmcmc(S, file="model_running_sd.LI.pdf",family=c("sd.LI"),plot="ggs_running")
-ggmcmc(S, file="model_running_sd.K.pdf",family=c("sd.K"),plot="ggs_running")
-
-ggmcmc(S, file="model_compare_partial_c.pdf",family=c("c"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_beta0.pdf",family=c("beta0"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_beta1.pdf",family=c("beta1"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_mu.K.pdf",family=c("mu.K"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_mu.LI.pdf",family=c("mu.LI"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_sd.LI.pdf",family=c("sd.LI"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_sd.K.pdf",family=c("sd.K"),plot="ggs_compare_partial")
-
-ggmcmc(S, file="model_autocorrelation_c.pdf",family=c("c"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_beta0.pdf",family=c("beta0"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_beta1.pdf",family=c("beta1"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_mu.K.pdf",family=c("mu.K"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_sd.LI.pdf",family=c("sd.LI"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_sd.K.pdf",family=c("sd.K"),plot="ggs_autocorrelation")
-
-ggmcmc(S, file="model_geweke_c.pdf",family=c("c"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_beta0.pdf",family=c("beta0"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_beta1.pdf",family=c("beta1"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_mu.K.pdf",family=c("mu.K"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_mu.LI.pdf",family=c("mu.LI"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_sd.LI.pdf",family=c("sd.LI"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_sd.K.pdf",family=c("sd.K"),plot="ggs_geweke")
-
-ggmcmc(S, file="model_effective_c.pdf",family=c("c"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_beta0.pdf",family=c("beta0"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_beta1.pdf",family=c("beta1"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_mu.K.pdf",family=c("mu.K"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_mu.LI.pdf",family=c("mu.LI"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_sd.LI.pdf",family=c("sd.LI"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_sd.K.pdf",family=c("sd.K"),plot="ggs_effective")
-
-ggmcmc(S, file="model_caterpillar_c.pdf",family=c("c"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_beta0.pdf",family=c("beta0"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_beta1.pdf",family=c("beta1"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_mu.K.pdf",family=c("mu.K"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_mu.LI.pdf",family=c("mu.LI"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_sd.LI.pdf",family=c("sd.LI"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_sd.K.pdf",family=c("sd.K"),plot="ggs_caterpillar")
-
-ggmcmc(S, file="model_crosscorrelation_c.pdf",family=c("c"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_beta0.pdf",family=c("beta0"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_beta1.pdf",family=c("beta1"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_mu.K.pdf",family=c("mu.K"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_crosscorrelation")
-
-
 #Use the param option
 #One with continuous varying environments and another with pre-defined ones
 
@@ -267,11 +111,11 @@ ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_cr
 # Define some fixed parameters
 
 fixed_list <- list(
-  s_mu_slope   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta.phi'],    #survival slope
-  #s_mu_slope2   = ipm2.Titambere.df['beta.phi2','mean'],    #survival slope
+  s_mu_slope   = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='beta.phi'],    #survival slope
+  #s_mu_slope2   = vitalrates.Titambere.df['beta.phi2','mean'],    #survival slope
   
-  s_sd_slope   = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta.phi'],    #survival slope
-  #s_sd_slope2  = ipm2.Titambere.df['beta.phi2','sd'],    #survival slope
+  s_sd_slope   = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='beta.phi'],    #survival slope
+  #s_sd_slope2  = vitalrates.Titambere.df['beta.phi2','sd'],    #survival slope
   
   
   #Environmental slopes for survival
@@ -322,13 +166,13 @@ fixed_list <- list(
   
   
   #Probability of reproduction
-  r_r_mu_int   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='alpha.prep'],
-  r_r_mu_slope = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta1.prep'],  
-  # r_r_mu_slope2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta2.prep'], 
+  r_r_mu_int   = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='alpha.prep'],
+  r_r_mu_slope = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='beta1.prep'],  
+  # r_r_mu_slope2 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='beta2.prep'], 
   
-  r_r_sd_int   = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='alpha.prep'],
-  r_r_sd_slope = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta1.prep'],  
-  # r_r_sd_slope2 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='beta2.prep'], 
+  r_r_sd_int   = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='alpha.prep'],
+  r_r_sd_slope = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='beta1.prep'],  
+  # r_r_sd_slope2 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='beta2.prep'], 
   
   #Number of eggs/embryos
   r_n_mu_int   = fec.Titambere.df$Mean[fec.Titambere.df$X=='alpha.fec'],
@@ -343,7 +187,7 @@ fixed_list <- list(
   #Size of newborns
   mu_rd     = Titambere.data$mu.L0,   
   sd_rd     = sqrt(Titambere.data$tau.L0),
-  mu_LI = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.LI']
+  mu_LI = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.LI']
   
 )
 
@@ -368,17 +212,17 @@ s_params  <- list(
 
 g_params <- list(
   
-  g_g_mu_K_1 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[1]'],
-  g_g_mu_K_2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[2]'],
-  g_g_mu_K_3 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[3]'],
-  g_g_mu_K_4 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[4]'],
-  g_g_mu_K_5 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[5]'],
+  g_g_mu_K_1 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[1]'],
+  g_g_mu_K_2 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[2]'],
+  g_g_mu_K_3 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[3]'],
+  g_g_mu_K_4 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[4]'],
+  g_g_mu_K_5 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[5]'],
   
-  g_g_sd_K_1 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[1]'],
-  g_g_sd_K_2 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[2]'],
-  g_g_sd_K_3 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[3]'],
-  g_g_sd_K_4 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[4]'],
-  g_g_sd_K_5 = ipm2.Titambere.df$sd[ipm2.Titambere.df$X=='mu.K[5]']
+  g_g_sd_K_1 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='mu.K[1]'],
+  g_g_sd_K_2 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='mu.K[2]'],
+  g_g_sd_K_3 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='mu.K[3]'],
+  g_g_sd_K_4 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='mu.K[4]'],
+  g_g_sd_K_5 = vitalrates.Titambere.df$sd[vitalrates.Titambere.df$X=='mu.K[5]']
 )
 
 r_params <- list(
@@ -435,7 +279,7 @@ sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+
 sd_growth <- function(x,mu.L0,mu_LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu_LI,
-                           unlist(ipm2.Titambere.samples[,paste0('mu.K[',site,']')]))
+                           unlist(.Titambere.samples[,paste0('mu.K[',site,']')]))
   return(sd(mean.values,na.rm=T))
 }
 
@@ -2446,11 +2290,10 @@ saveRDS(res.lh.param.Ti, "res.lh.param.Ti.rds")
 rm(list = ls())
 
 Titambere.data <- readRDS("Titambere.data.rds")
-# setwd("/Users/heito/Documents/IPMs/Cap2_LizardsDemography_Cerrado/runjags_ipm2_itambere_crc")
 
-ipm2.Titambere.samples <- readRDS("sims_list_Titambere.rds")
+vitalrates.Titambere.samples <- readRDS("sims_list_Titambere.rds")
 
-ipm2.Titambere.df <- read.csv("results.ipm2.Titambere.df_100000iters.csv")
+vitalrates.Titambere.df <- read.csv("results.vitalrates.Titambere.df_100000iters.csv")
 
 pradel.Titambere.df <- read.csv("results.pradel.itambere.df_400000_noecophys.csv")
 
@@ -2485,7 +2328,7 @@ sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+
 sd_growth <- function(x,mu.L0,mu_LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu_LI,
-                           unlist(ipm2.Titambere.samples[,paste0('mu.K[',site,']')]))
+                           unlist(vitalrates.Titambere.samples[,paste0('mu.K[',site,']')]))
   return(sd(mean.values,na.rm=T))
 }
 
@@ -2605,8 +2448,8 @@ res_param_perturb <- function(plot,nkernel){
       
       
       fixed_list <- list(
-        s_mu_slope   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
-        # s_mu_slope2   = ipm2.itambere.df['beta2.phi','mean']+ add.s[j]*ord[j,13,i],    #survival slope
+        s_mu_slope   = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='beta.phi'] + add.s[j]*ord[j,12,i],    #survival slope
+        # s_mu_slope2   = vitalrates.itambere.df['beta2.phi','mean']+ add.s[j]*ord[j,13,i],    #survival slope
         
         #Environmental slopes for survival
         s_mu_tmed2m  = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaphiJS[1]'] + add.s[j]*ord[j,2,i],
@@ -2633,9 +2476,9 @@ res_param_perturb <- function(plot,nkernel){
         r_f_mu_TSLF    = pradel.Titambere.df$mean[pradel.Titambere.df$X=='betaf[10]']+ add.s[j]*ord[j,22,i],
         
         #Probability of reproduction
-        r_r_mu_int   = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='alpha.prep'] + add.s[j]*ord[j,23,i],
-        r_r_mu_slope = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='beta1.prep'] + add.s[j]*ord[j,24,i],  
-        # r_r_mu_slope2 = ipm2.itambere.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
+        r_r_mu_int   = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='alpha.prep'] + add.s[j]*ord[j,23,i],
+        r_r_mu_slope = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='beta1.prep'] + add.s[j]*ord[j,24,i],  
+        # r_r_mu_slope2 = vitalrates.itambere.df['beta2.prep','mean']+ add.s[j]*ord[j,26,i], 
         
         #Number of eggs/embryos
         r_n_mu_int   = fec.Titambere.df$Mean[fec.Titambere.df$X=='alpha.fec']+ add.s[j]*ord[j,25,i], 
@@ -2646,7 +2489,7 @@ res_param_perturb <- function(plot,nkernel){
         #Size of newborns
         mu_rd     = Titambere.data$mu.L0,   
         sd_rd     = sqrt(Titambere.data$tau.L0),
-        mu_LI = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.LI']
+        mu_LI = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.LI']
         
       )
       
@@ -2665,11 +2508,11 @@ res_param_perturb <- function(plot,nkernel){
       
       g_params <- list(
 
-        g_g_mu_K_1 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[1]'] + add.s[j]*ord[j,29,i],
-        g_g_mu_K_2 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[2]'] + add.s[j]*ord[j,29,i],
-        g_g_mu_K_3 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[3]'] + add.s[j]*ord[j,29,i],
-        g_g_mu_K_4 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[4]'] + add.s[j]*ord[j,29,i],
-        g_g_mu_K_5 = ipm2.Titambere.df$mean[ipm2.Titambere.df$X=='mu.K[5]'] + add.s[j]*ord[j,29,i]
+        g_g_mu_K_1 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[1]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_2 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[2]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_3 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[3]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_4 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[4]'] + add.s[j]*ord[j,29,i],
+        g_g_mu_K_5 = vitalrates.Titambere.df$mean[vitalrates.Titambere.df$X=='mu.K[5]'] + add.s[j]*ord[j,29,i]
       )
       
       r_params <- list(

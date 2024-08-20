@@ -15,9 +15,10 @@ library(BayesPostEst)
 library(MCMCvis)
 library(mcmcr)
 library(viridis)
+library(psych)
 
 #Read results and data to build IPMs
-Matticolus.data <- readRDS("Matticolus.data.rds")
+Matticolus.data <- readRDS("Matticolus_data.rds")
 vitalrates.Matticolus <- readRDS("results_vitalrates_Matticolus.rds")
 #vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
@@ -68,169 +69,7 @@ ggplot(phi.vitalrates, aes(x = time, y = mean,fill = plot, colour = plot))+
   ylim(c(0.3,1))+
   scale_color_manual(values=turbo(5))
 
-
-
-library(ggmcmc)
-
-S <- ggs(vitalrates.Matticolus.samples[,c(851:877,1723:1749,2600:2626,3472:3505),])
-S <- ggs(vitalrates.Matticolus.samples[,c(3475:3480)])
-
-rm(vitalrates.Matticolus.samples)
-
-str(S)
-levels(S$Parameter)
-
-ggmcmc(S)
-ggmcmc(S, file="model_density.pdf",family=c("c"),plot="ggs_density")
-
-quartz(12,8)
-ggs_density(S,family="alpha.phiJS")
-ggs_density(S,family="alpha.f")
-ggs_density(S,family="alpha.pJS")
-ggs_density(S,family="mu.K")
-ggs_density(S,family="mu.LI")
-ggs_density(S,family="mn.AFC")
-ggs_density(S,family="p.AFC")
-ggs_density(S,family="r.AFC")
-
-
-ggs_traceplot(S,family="alpha.phiJS")
-ggs_traceplot(S,family="alpha.f")
-ggs_traceplot(S,family="alpha.pJS")
-ggs_traceplot(S,family="mu.K")
-ggs_traceplot(S,family="mu.LI")
-ggs_traceplot(S,family="sigma.phiJS")
-ggs_traceplot(S,family="sigma.f")
-ggs_traceplot(S,family="sigma.pJS")
-
-
-ggs_running(S,family="c")
-ggs_running(S,family="beta0")
-ggs_running(S,family="beta1")
-ggs_running(S,family="mu.K")
-ggs_running(S,family="sd.K")
-ggs_running(S,family="mu.LI")
-ggs_running(S,family="sd.LI")
-
-ggs_compare_partial(S,family="c")
-ggs_compare_partial(S,family="beta0")
-ggs_compare_partial(S,family="beta1")
-ggs_compare_partial(S,family="mu.K")
-ggs_compare_partial(S,family="sd.K")
-ggs_compare_partial(S,family="mu.LI")
-ggs_compare_partial(S,family="sd.LI")
-
-ggs_autocorrelation(S,family="c")
-ggs_autocorrelation(S,family="beta0")
-ggs_autocorrelation(S,family="beta1")
-ggs_autocorrelation(S,family="mu.K")
-ggs_autocorrelation(S,family="sd.K")
-ggs_autocorrelation(S,family="mu.LI")
-ggs_autocorrelation(S,family="sd.LI")
-
-ggs_crosscorrelation(S,family="c")
-ggs_crosscorrelation(S,family="beta0")
-ggs_crosscorrelation(S,family="beta1")
-ggs_crosscorrelation(S,family="mu.K")
-ggs_crosscorrelation(S,family="mu.LI")
-
-ggs_geweke(S,family="c")
-ggs_geweke(S,family="beta0")
-ggs_geweke(S,family="beta1")
-ggs_geweke(S,family="mu.K")
-ggs_geweke(S,family="sd.K")
-ggs_geweke(S,family="mu.LI")
-ggs_geweke(S,family="sd.LI")
-
-ggs_effective(S,family="c")
-ggs_effective(S,family="beta0")
-ggs_effective(S,family="beta1")
-ggs_effective(S,family="mu.K")
-ggs_effective(S,family="sd.K")
-ggs_effective(S,family="mu.LI")
-ggs_effective(S,family="sd.LI")
-
-ggs_caterpillar(S,family="c")
-ggs_caterpillar(S,family="beta0")
-ggs_caterpillar(S,family="beta1")
-ggs_caterpillar(S,family="mu.K")
-ggs_caterpillar(S,family="sd.K")
-ggs_caterpillar(S,family="mu.LI")
-ggs_caterpillar(S,family="sd.LI")
-
-#Generating pdfs
-ggmcmc(S, file="model_density_c.pdf",family=c("c"),plot="ggs_density")
-ggmcmc(S, file="model_density_beta0.pdf",family=c("beta0"),plot="ggs_density")
-ggmcmc(S, file="model_density_beta1.pdf",family=c("beta1"),plot="ggs_density")
-ggmcmc(S, file="model_density_mu.K.pdf",family=c("mu.K"),plot="ggs_density")
-ggmcmc(S, file="model_density_mu.LI.pdf",family=c("mu.LI"),plot="ggs_density")
-ggmcmc(S, file="model_density_sd.LI.pdf",family=c("sd.LI"),plot="ggs_density")
-ggmcmc(S, file="model_density_sd.K.pdf",family=c("sd.K"),plot="ggs_density")
-
-ggmcmc(S, file="model_traceplot_c.pdf",family=c("c"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_beta0.pdf",family=c("beta0"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_beta1.pdf",family=c("beta1"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_mu.K.pdf",family=c("mu.K"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_mu.LI.pdf",family=c("mu.LI"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_sd.LI.pdf",family=c("sd.LI"),plot="ggs_traceplot")
-ggmcmc(S, file="model_traceplot_sd.K.pdf",family=c("sd.K"),plot="ggs_traceplot")
-
-ggmcmc(S, file="model_running_c.pdf",family=c("c"),plot="ggs_running")
-ggmcmc(S, file="model_running_beta0.pdf",family=c("beta0"),plot="ggs_running")
-ggmcmc(S, file="model_running_beta1.pdf",family=c("beta1"),plot="ggs_running")
-ggmcmc(S, file="model_running_mu.K.pdf",family=c("mu.K"),plot="ggs_running")
-ggmcmc(S, file="model_running_mu.LI.pdf",family=c("mu.LI"),plot="ggs_running")
-ggmcmc(S, file="model_running_sd.LI.pdf",family=c("sd.LI"),plot="ggs_running")
-ggmcmc(S, file="model_running_sd.K.pdf",family=c("sd.K"),plot="ggs_running")
-
-ggmcmc(S, file="model_compare_partial_c.pdf",family=c("c"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_beta0.pdf",family=c("beta0"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_beta1.pdf",family=c("beta1"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_mu.K.pdf",family=c("mu.K"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_mu.LI.pdf",family=c("mu.LI"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_sd.LI.pdf",family=c("sd.LI"),plot="ggs_compare_partial")
-ggmcmc(S, file="model_compare_partial_sd.K.pdf",family=c("sd.K"),plot="ggs_compare_partial")
-
-ggmcmc(S, file="model_autocorrelation_c.pdf",family=c("c"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_beta0.pdf",family=c("beta0"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_beta1.pdf",family=c("beta1"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_mu.K.pdf",family=c("mu.K"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_sd.LI.pdf",family=c("sd.LI"),plot="ggs_autocorrelation")
-ggmcmc(S, file="model_autocorrelation_sd.K.pdf",family=c("sd.K"),plot="ggs_autocorrelation")
-
-ggmcmc(S, file="model_geweke_c.pdf",family=c("c"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_beta0.pdf",family=c("beta0"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_beta1.pdf",family=c("beta1"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_mu.K.pdf",family=c("mu.K"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_mu.LI.pdf",family=c("mu.LI"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_sd.LI.pdf",family=c("sd.LI"),plot="ggs_geweke")
-ggmcmc(S, file="model_geweke_sd.K.pdf",family=c("sd.K"),plot="ggs_geweke")
-
-ggmcmc(S, file="model_effective_c.pdf",family=c("c"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_beta0.pdf",family=c("beta0"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_beta1.pdf",family=c("beta1"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_mu.K.pdf",family=c("mu.K"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_mu.LI.pdf",family=c("mu.LI"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_sd.LI.pdf",family=c("sd.LI"),plot="ggs_effective")
-ggmcmc(S, file="model_effective_sd.K.pdf",family=c("sd.K"),plot="ggs_effective")
-
-ggmcmc(S, file="model_caterpillar_c.pdf",family=c("c"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_beta0.pdf",family=c("beta0"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_beta1.pdf",family=c("beta1"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_mu.K.pdf",family=c("mu.K"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_mu.LI.pdf",family=c("mu.LI"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_sd.LI.pdf",family=c("sd.LI"),plot="ggs_caterpillar")
-ggmcmc(S, file="model_caterpillar_sd.K.pdf",family=c("sd.K"),plot="ggs_caterpillar")
-
-ggmcmc(S, file="model_crosscorrelation_c.pdf",family=c("c"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_beta0.pdf",family=c("beta0"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_beta1.pdf",family=c("beta1"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_mu.K.pdf",family=c("mu.K"),plot="ggs_crosscorrelation")
-ggmcmc(S, file="model_crosscorrelation_mu.LI.pdf",family=c("mu.LI"),plot="ggs_crosscorrelation")
-
-#Use the param option
-#One with continuous varying environments and another with pre-defined ones
+#Use the param option with predefined environments
 
 ##################################################################################
 #Simple deterministic IPM constructed from discretely varying parameter estimates#

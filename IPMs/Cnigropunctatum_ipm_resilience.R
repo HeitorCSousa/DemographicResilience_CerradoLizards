@@ -14,10 +14,11 @@ library(BayesPostEst)
 library(MCMCvis)
 library(viridis)
 library(ggplot2)
+library(psych)
 
 #Read results and data to build IPMs
 
-Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
+Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
 cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
 
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
@@ -33,23 +34,20 @@ View(vitalrates.Cnigro.df)
 View(cjs.Cnigro.df)
 View(pradel.Cnigro.df)
 
+#Use the param option with predefined environments
 
-#Use the param option
-#One with continuous varying environments and another with pre-defined ones
 
-##################################################################################
-#Simple deterministic IPM constructed from discretely varying parameter estimates#
-##################################################################################
+# Simple deterministic IPM constructed from discretely varying parameter estimates-------------------------------------------------------------------------
+
+
+## Define parameters -------------------------------------------------------
+
 
 # Define some fixed parameters
 
 fixed_list <- list(
   s_mu_slope   = cjs.Cnigro.df['beta.phi','Mean'],    #survival slope
   s_mu_slope2  = cjs.Cnigro.df['beta2.phi','Mean'],    #survival slope
-  
-  s_sd_slope   = cjs.Cnigro.df['beta.phi','SD'],    #survival slope
-  s_sd_slope2  = cjs.Cnigro.df['beta2.phi','SD'],    #survival slope
-  
   
   #Environmental slopes for survival
   s_mu_tmed2m  = pradel.Cnigro.df['betaphiJS[1]','mean'],
@@ -62,17 +60,6 @@ fixed_list <- list(
   s_mu_ha_90   = pradel.Cnigro.df['betaphiJS[8]','mean'],
   s_mu_fire    = pradel.Cnigro.df['betaphiJS[9]','mean'],
   s_mu_TSLF    = pradel.Cnigro.df['betaphiJS[10]','mean'],
-  
-  s_sd_tmed2m  = pradel.Cnigro.df['betaphiJS[1]','sd'],
-  s_sd_RHmax   = pradel.Cnigro.df['betaphiJS[2]','sd'],
-  s_sd_sol     = pradel.Cnigro.df['betaphiJS[3]','sd'],
-  s_sd_tmed0cm = pradel.Cnigro.df['betaphiJS[4]','sd'],
-  s_sd_tmin0cm = pradel.Cnigro.df['betaphiJS[5]','sd'],
-  s_sd_precip  = pradel.Cnigro.df['betaphiJS[6]','sd'],
-  s_sd_perf    = pradel.Cnigro.df['betaphiJS[7]','sd'],
-  s_sd_ha_90   = pradel.Cnigro.df['betaphiJS[8]','sd'],
-  s_sd_fire    = pradel.Cnigro.df['betaphiJS[9]','sd'],
-  s_sd_TSLF    = pradel.Cnigro.df['betaphiJS[10]','sd'],
   
   sigma.phiJS = pradel.Cnigro.df['sigma.phiJS','mean'],
   
@@ -88,17 +75,6 @@ fixed_list <- list(
   r_f_mu_fire    = pradel.Cnigro.df['betaf[9]','mean'],
   r_f_mu_TSLF    = pradel.Cnigro.df['betaf[10]','mean'],
   
-  r_f_sd_tmed2m  = pradel.Cnigro.df['betaf[1]','sd'],
-  r_f_sd_RHmax   = pradel.Cnigro.df['betaf[2]','sd'],
-  r_f_sd_sol     = pradel.Cnigro.df['betaf[3]','sd'],
-  r_f_sd_tmed0cm = pradel.Cnigro.df['betaf[4]','sd'],
-  r_f_sd_tmin0cm = pradel.Cnigro.df['betaf[5]','sd'],
-  r_f_sd_precip  = pradel.Cnigro.df['betaf[6]','sd'],
-  r_f_sd_perf    = pradel.Cnigro.df['betaf[7]','sd'],
-  r_f_sd_ha_90   = pradel.Cnigro.df['betaf[8]','sd'],
-  r_f_sd_fire    = pradel.Cnigro.df['betaf[9]','sd'],
-  r_f_sd_TSLF    = pradel.Cnigro.df['betaf[10]','sd'],
-  
   sigma.f = pradel.Cnigro.df['sigma.f','mean'],
   
   
@@ -107,19 +83,10 @@ fixed_list <- list(
   r_r_mu_slope = vitalrates.Cnigro.df['beta1.prep','Mean'],  
   r_r_mu_slope2 = vitalrates.Cnigro.df['beta2.prep','Mean'], 
   
-  r_r_sd_int   = vitalrates.Cnigro.df['alpha.prep','SD'],
-  r_r_sd_slope = vitalrates.Cnigro.df['beta1.prep','SD'],  
-  r_r_sd_slope2 = vitalrates.Cnigro.df['beta2.prep','SD'], 
-  
   #Number of eggs/embryos
   r_n_mu_int   = vitalrates.Cnigro.df['alpha.fec','Mean'], 
   r_n_mu_slope = vitalrates.Cnigro.df['beta1.fec','Mean'],   
   #r_n_mu_slope2 =vitalrates.Cnigro.df['beta2.fec','Mean'],  
-  
-  r_n_sd_int   = vitalrates.Cnigro.df['alpha.fec','SD'], 
-  r_n_sd_slope = vitalrates.Cnigro.df['beta1.fec','SD'],   
-  #r_n_sd_slope2 =vitalrates.Cnigro.df['beta2.fec','SD'],  
-  
   
   #Size of newborns
   mu_rd     = Cnigropunctatum.data$mu.L0,   
@@ -129,56 +96,31 @@ fixed_list <- list(
 )
 
 
-# Now, simulate some random intercepts for growth (g_), survival (s_),
-# and offspring production (r_s_). This part is for the purpose of the example.
-
-# First, we create vector of values that each random component can take.
+# Survival parameters (intercepts for each plot)
 s_params  <- list(
   s_g_mu_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
   s_g_mu_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
   s_g_mu_int_3 = pradel.Cnigro.df['alpha.phiJS[3]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
   s_g_mu_int_4 = pradel.Cnigro.df['alpha.phiJS[4]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
-  s_g_mu_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'],
-  
-  s_g_sd_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','sd'],
-  s_g_sd_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','sd'],
-  s_g_sd_int_3 = pradel.Cnigro.df['alpha.phiJS[3]','sd'],
-  s_g_sd_int_4 = pradel.Cnigro.df['alpha.phiJS[4]','sd'],
-  s_g_sd_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','sd']
+  s_g_mu_int_5 = pradel.Cnigro.df['alpha.phiJS[5]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']
 )
 
+#Growth parameters (growth rate for each plot)
 g_params <- list(
   g_g_mu_K_1 = cjs.Cnigro.df['mu.K[1]','Mean'],
   g_g_mu_K_2 = cjs.Cnigro.df['mu.K[2]','Mean'],
   g_g_mu_K_3 = cjs.Cnigro.df['mu.K[3]','Mean'],
   g_g_mu_K_4 = cjs.Cnigro.df['mu.K[4]','Mean'],
-  g_g_mu_K_5 = cjs.Cnigro.df['mu.K[5]','Mean'],
-  
-  g_g_sd_K_1 = cjs.Cnigro.df['mu.K[1]','SD'],
-  g_g_sd_K_2 = cjs.Cnigro.df['mu.K[2]','SD'],
-  g_g_sd_K_3 = cjs.Cnigro.df['mu.K[3]','SD'],
-  g_g_sd_K_4 = cjs.Cnigro.df['mu.K[4]','SD'],
-  g_g_sd_K_5 = cjs.Cnigro.df['mu.K[5]','SD']
+  g_g_mu_K_5 = cjs.Cnigro.df['mu.K[5]','Mean']
 )
 
+#Recruitment parameters (intercepts for each plot)
 r_params <- list(
   r_f_mu_int_1 = pradel.Cnigro.df['alpha.f[1]','mean'],
   r_f_mu_int_2 = pradel.Cnigro.df['alpha.f[2]','mean'],
   r_f_mu_int_3 = pradel.Cnigro.df['alpha.f[3]','mean'],
   r_f_mu_int_4 = pradel.Cnigro.df['alpha.f[4]','mean'],
-  r_f_mu_int_5 = pradel.Cnigro.df['alpha.f[5]','mean'],
-  
-  r_f_sd_int_1 = pradel.Cnigro.df['alpha.f[1]','sd'],
-  r_f_sd_int_2 = pradel.Cnigro.df['alpha.f[2]','sd'],
-  r_f_sd_int_3 = pradel.Cnigro.df['alpha.f[3]','sd'],
-  r_f_sd_int_4 = pradel.Cnigro.df['alpha.f[4]','sd'],
-  r_f_sd_int_5 = pradel.Cnigro.df['alpha.f[5]','sd'],
-  
-  r_p_mu_int_1 = pradel.Cnigro.df['alpha.pJS[1]','mean'],
-  r_p_mu_int_2 = pradel.Cnigro.df['alpha.pJS[2]','mean'],
-  r_p_mu_int_3 = pradel.Cnigro.df['alpha.pJS[3]','mean'],
-  r_p_mu_int_4 = pradel.Cnigro.df['alpha.pJS[4]','mean'],
-  r_p_mu_int_5 = pradel.Cnigro.df['alpha.pJS[5]','mean']
+  r_f_mu_int_5 = pradel.Cnigro.df['alpha.f[5]','mean']
 )
 
 # Each set of parameters is converted to a named list. The names should match
@@ -186,14 +128,16 @@ r_params <- list(
 # add them all together using c()
 
 
+## Custom functions --------------------------------------------------------
 
+#Inverse logit
 inv_logit <- function(x) {
   return(
     1/(1 + exp(-(x)))
   )
 }
 
-
+#Inverse poisson
 pois_r <- function(x) {
   return(
     exp(x)
@@ -210,8 +154,6 @@ size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/lo
 sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
 
 #Variance in growth#
-####################
-
 sd_growth <- function(x,mu.L0,mu.LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu.LI,
@@ -225,6 +167,7 @@ my_funs <- list(inv_logit   = inv_logit,
                 sizet0_t1 = sizet0_t1,
                 sd_growth = sd_growth)
 
+## PJS parameters ----------------------------------------------------------
 f.vitalrates <- as.data.frame(vitalrates.Cnigro.df[grep(pattern = "f", 
                                             x = row.names(vitalrates.Cnigro.df))[1:850],])
 tail(f.vitalrates)
@@ -270,67 +213,15 @@ phi.pradel$time <- rep(1:170, each = 5)
 rho.pradel$plot <- rep(1:5,169)
 rho.pradel$time <- rep(1:169, each = 5)
 
-f.diffmean <- f.vitalrates$Mean - f.pradel$mean
-
-phi.diffmean <- phi.vitalrates$Mean - phi.pradel$mean
-
-rho.diffmean <- rho.vitalrates$Mean - rho.pradel$mean
-
-f.vitalrates[f.diffmean > 1,]
-rho.vitalrates[rho.diffmean > .5,]
-
-summary(f.diffmean)
-boxplot(f.diffmean ~ rep(1:5,170))
-
-summary(rho.diffmean)
-boxplot(rho.diffmean ~ rep(1:5,169))
-
-summary(phi.diffmean)
-boxplot(phi.diffmean ~ rep(1:5,170))
-
 f.pradel$plot <- as.factor(f.pradel$plot)
 f.vitalrates$plot <- as.factor(f.vitalrates$plot)
 phi.pradel$plot <- as.factor(phi.pradel$plot)
 phi.vitalrates$plot <- as.factor(phi.vitalrates$plot)
 
-tapply(rho.pradel$mean, rho.pradel$plot, FUN = function(x) exp(mean(log(x))))
-tapply(rho.vitalrates$Mean, rho.vitalrates$plot, FUN = function(x) exp(mean(log(x))))
-
-
-ggplot(f.vitalrates, aes(x = time, y = Mean, colour = plot))+
-  geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_path(data=f.pradel[f.vitalrates$plot==3,], aes(x = time, y= mean, colour = plot), linetype = "dashed" )+
-  ylim(c(0,0.3))+
-  scale_color_manual(values=turbo(5))
-
-ggplot(f.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
-  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
-  ylim(c(0,0.3))+
-  scale_color_manual(values=turbo(5))
-#scale_fill_manual(values=turbo(5))
-
-ggplot(phi.vitalrates, aes(x = time, y = Mean,fill = plot, colour = plot))+
-  geom_line(aes(x = time, y = Mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
-  ylim(c(0.75,1))+
-  scale_color_manual(values=turbo(5))
-#scale_fill_manual(values=turbo(5))
-
-ggplot(phi.pradel, aes(x = time, y = mean,fill = plot, colour = plot))+
-  geom_line(aes(x = time, y = mean,colour=plot), alpha=0.5, linewidth = 2) +
-  #geom_ribbon(aes(ymin = X2.5., ymax = X97.5., fill=plot), alpha=0.4, colour = NA)+
-  ylim(c(0.75,1))+
-  scale_color_manual(values=turbo(5))
-#scale_fill_manual(values=turbo(5))
-
-plot(colSums(Cnigropunctatum.data$y), type = "l")
-table(Cnigropunctatum.data$plot)
-
 surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Cnigropunctatum.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Cnigropunctatum.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 env.states[,,12]
 dim(env.states)
@@ -338,192 +229,8 @@ dim(env.states)
 all_params_list <- c(fixed_list, g_params, s_params, r_params)
 
 
-################################################################################
-my_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
-  define_kernel(
-    
-    # Our P kernels will vary from site to site, so we index it with "_site"
-    
-    name             = 'P_site',
-    
-    # Similarly, our survival and growth functions will vary from site to site
-    # so these are also indexed
-    
-    formula          = s_site * g_site,
-    family           = "CC",
-    
-    # The linear predictor for the survival function can be split out
-    # into its own expression as well. This might help keep track of things.
-    # Survival is indexed by site as well.
-    
-    s_lin_site       = (rnorm(1,s_g_mu_int_site,s_g_sd_int_site) + 
-                          rnorm(1, s_mu_tmed2m , s_sd_tmed2m ) * tmed2m_site +
-                          rnorm(1, s_mu_RHmax  , s_sd_RHmax  ) * RHmax_site +
-                          rnorm(1, s_mu_sol    , s_sd_sol    ) * sol_site +
-                          rnorm(1, s_mu_tmed0cm, s_sd_tmed0cm) * tmed0cm_site +
-                          rnorm(1, s_mu_tmin0cm, s_sd_tmin0cm) * tmin0cm_site+
-                          rnorm(1, s_mu_precip , s_sd_precip ) * precip_site+
-                          rnorm(1, s_mu_perf   , s_sd_perf   ) * perf_site+
-                          rnorm(1, s_mu_ha_90  , s_sd_ha_90  ) * ha_90_site+
-                          rnorm(1, s_mu_fire   , s_sd_fire   ) * fire_site+
-                          rnorm(1, s_mu_TSLF   , s_sd_TSLF   ) * TSLF_site+
-                          rnorm(1, s_mu_slope, s_sd_slope) * ht_1 +
-                          rnorm(1, s_mu_slope2, s_sd_slope2) * (ht_1^2)) ,
-    s_sigma_site = surv_site - inv_logit(s_lin_site), 
-    s_site           =  inv_logit(s_lin_site) + s_sigma_site,
-    
-    # Again, we modify the vital rate expression to include "_site".
-    
-    g_site           = dnorm(ht_2, 
-                             mean = sizet0_t1(ht_1, 
-                                              mu_rd,
-                                              mu_LI,
-                                              g_g_mu_K_site), 
-                             sd = sd_growth(ht_1,
-                                            mu_rd,
-                                            mu_LI,
-                                            site)),
-    
-    data_list        = all_params_list,
-    states           = list(c('ht')),
-    
-    # Here, we tell ipmr that the model has some parameter sets, and
-    # provide a list describing the values the index can take. The values in
-    # par_set_indices are substituted for "site" everywhere in the model, except
-    # for the data list. This is why we had to make sure that the names there
-    # matched the levels we supply here.
-    
-    uses_par_sets    = TRUE,
-    par_set_indices  = list(site = 1:5),
-    
-    # We must also index the variables in the eviction function
-    
-    evict_cor        = TRUE,
-    evict_fun        = truncated_distributions("norm", "g_site")
-    
-  ) %>%
-  define_kernel(
-    
-    # The F kernel also varies from site to site
-    
-    name             = "F_site",
-    formula          = (1-(surv_site/(surv_site+r_f_site))) * r_n_site*r_r_site * r_d ,
-    family           = "CC",
-    
-    # We didn't include a site level effect for probability
-    # of reproduction. Thus, this expression is NOT indexed.
-    
-    r_r_lin          = (rnorm(1,r_r_mu_int,r_r_sd_int) + 
-                          rnorm(1, r_r_mu_slope, r_r_sd_slope) * ht_1 + 
-                          rnorm(1, r_r_mu_slope2, r_r_sd_slope2) * (ht_1^2)),
-    r_r_site              = inv_logit(r_r_lin),
-    
-    # We index the seed production expression with the site effect
-    
-    r_n_lin_site          = (rnorm(1,r_n_mu_int, r_n_sd_int) +
-                               rnorm(1,r_n_mu_slope,r_n_sd_slope) * ht_1),
-    r_n_site         = pois_r(r_n_lin_site),
-    r_f_lin_site         = ( rnorm(1, r_f_mu_int_site, r_f_sd_int_site) +
-                               rnorm(1, r_f_mu_tmed2m , r_f_sd_tmed2m ) * tmed2m_site +
-                               rnorm(1, r_f_mu_RHmax  , r_f_sd_RHmax  ) * RHmax_site +
-                               rnorm(1, r_f_mu_sol    , r_f_sd_sol    ) * sol_site +
-                               rnorm(1, r_f_mu_tmed0cm, r_f_sd_tmed0cm) * tmed0cm_site +
-                               rnorm(1, r_f_mu_tmin0cm, r_f_sd_tmin0cm) * tmin0cm_site+
-                               rnorm(1, r_f_mu_precip , r_f_sd_precip ) * precip_site+
-                               rnorm(1, r_f_mu_perf   , r_f_sd_perf   ) * perf_site+
-                               rnorm(1, r_f_mu_ha_90  , r_f_sd_ha_90  ) * ha_90_site+
-                               rnorm(1, r_f_mu_fire   , r_f_sd_fire   ) * fire_site+
-                               rnorm(1, r_f_mu_TSLF   , r_f_sd_TSLF   ) * TSLF_site),
-    r_f_sigma_site = f_site - pois_r(r_f_lin_site), 
-    r_f_site = pois_r(r_f_lin_site) + r_f_sigma_site,
-    r_d              = dnorm(ht_2, mean = mu_rd, sd = sd_rd),
-    data_list        = all_params_list,
-    states           = list(c('ht')),
-    
-    # As in the P kernel, we specify the values the index can have.
-    
-    uses_par_sets    = TRUE,
-    par_set_indices  = list(site = 1:5),
-    evict_cor        = TRUE,
-    evict_fun        = truncated_distributions("norm", "r_d")
-  ) %>%
-  define_impl(
-    make_impl_args_list(
-      
-      # The impl_args are also modified with the index
-      
-      kernel_names = c("P_site", "F_site"),
-      int_rule     = rep("midpoint", 2),
-      state_start    = rep("ht", 2),
-      state_end      = rep("ht", 2)
-    )
-  ) %>%
-  define_domains(ht = c(30, all_params_list$mu_LI, 100)) 
+# Build mean IPM ---------------------------------------------------------------
 
-# We also append the suffix in define_pop_state(). THis will create a deterministic
-# simulation for every "site"
-
-sample_env <- function(env_states, site, iteration) {
-  
-  out <- as.list(env_states[site, iteration, ])
-  names(out) <- c(paste0("tmed2m_",site), 
-                  paste0("RHmax_",site),  
-                  paste0("sol_",site),    
-                  paste0("tmed0cm_",site),
-                  paste0("tmin0cm_",site),
-                  paste0("precip_",site) ,
-                  paste0("perf_",site)   ,
-                  paste0("ha_90_",site)  ,
-                  paste0("fire_" ,site)  ,
-                  paste0("TSLF_",site)   ,
-                  paste0("surv_",site)   ,
-                  paste0("f_",site))
-  
-  
-  return(out)
-  
-}
-
-
-my_ipm <- my_ipm %>%
-  define_env_state(env_params = sample_env(env.states, site=site,
-                                           iteration = t), # "t" indexes the current model iteration
-                   
-                   
-                   data_list = list(
-                     env.states = env.states,
-                     sample_env = sample_env,
-                     site = 1:5
-                   )) %>%
-  
-  define_pop_state(pop_vectors = list(n_ht = runif(100))) %>%
-  make_ipm(usr_funs = my_funs,
-           iterate  = TRUE,
-           kernel_seq = rep(1:5, each=170),
-           iterations = 170,
-           return_sub_kernels = TRUE,
-           uses_par_sets    = TRUE,
-           par_set_indices  = list(site = 1:5))
-
-lambda(my_ipm,type_lambda = 'all')
-lambda(my_ipm,log = F)
-
-library(fields)
-quartz(8,12)
-mean.kernel<-mean_kernel(my_ipm)
-
-par(mfrow=c(1,2))
-plot(mean.kernel$mean_P_site, do_contour=T,col=turbo(1000))
-
-plot(mean.kernel$mean_F_site, do_contour=T,col=turbo(1000))
-par(mfrow=c(1,1))
-
-######################
-#Without sd estimates#
-######################
-
-
-################################################################################
 my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
     
@@ -680,9 +387,9 @@ plot(mean.kernel$mean_F_site,do_contour=T,col=turbo(1000))
 par(mfrow=c(1,1))
 
 
-###############
-#For each plot#
-###############
+## Build IPM for each plot -------------------------------------------------
+
+###Control (C) plot -----------------------------------------------------------
 
 C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
@@ -877,9 +584,7 @@ cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.prade
 
 summary(rho.pradel$mean[rho.pradel$plot==1][-1] - lambda(C_ipm,type_lambda = 'all')[-c(1, 170)])
 
-##############
-#Quadriennial#
-##############
+###Quadrennial (Q) plot -----------------------------------------------------------
 
 Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
@@ -1068,9 +773,8 @@ cor.test(lambda(Q_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.prade
 
 summary(rho.pradel$mean[rho.pradel$plot==2][-1] - lambda(Q_ipm,type_lambda = 'all')[-c(1, 170)])
 
-################
-#Early biennial#
-################
+###Early Biennial (EB) plot -----------------------------------------------------------
+
 EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
     
@@ -1260,9 +964,8 @@ cor.test(lambda(EB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.prad
 
 summary(rho.pradel$mean[rho.pradel$plot==3][-1] - lambda(EB_ipm,type_lambda = 'all')[-c(1, 170)])
 
-##############
-#Mid biennial#
-##############
+###Mid Biennial (MB) plot -----------------------------------------------------------
+
 MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
     
@@ -1450,9 +1153,8 @@ cor.test(lambda(C_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.prade
 
 summary(rho.pradel$mean[rho.pradel$plot==4][-1] - lambda(MB_ipm,type_lambda = 'all')[-c(1, 170)])
 
-###############
-#Late biennial#
-###############
+###Late Biennial (LB) plot -----------------------------------------------------------
+
 LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_param = "param") %>%
   define_kernel(
     
@@ -1638,9 +1340,9 @@ cor.test(lambda(LB_ipm,type_lambda = 'all')[-c(1,170)], rho.pradel$mean[rho.prad
 
 summary(rho.pradel$mean[rho.pradel$plot==5][-1] - lambda(LB_ipm,type_lambda = 'all')[-c(1, 170)])
 
-#######################
-#Perturbation analyses#
-#######################
+
+# Perturbation analyses ---------------------------------------------------
+
 mean.kernel$mean_K_site <-mean.kernel$mean_P_site + mean.kernel$mean_F_site
 C.mean.kernel$mean_K_site <-C.mean.kernel$mean_P_site + C.mean.kernel$mean_F_site
 Q.mean.kernel$mean_K_site <-Q.mean.kernel$mean_P_site + Q.mean.kernel$mean_F_site
@@ -1756,11 +1458,7 @@ imagePlot(t(stoch.elas.mean.K.LB$E),ylim=c(1,0),col=turbo(100))
 imagePlot(t(stoch.elas.mean.K.LB$E_mu),ylim=c(1,0),col=turbo(100))
 imagePlot(t(stoch.elas.mean.K.LB$E_sigma),ylim=c(1,0),col=turbo(100))
 
-
-
-######################################
-#Life-history and Resilience measures#
-######################################
+# Life-history traits -----------------------------------------------------
 
 #Survival and lifespan traits
 life_expect_mean(matU = mean.kernel$mean_P_site, start = 1)  # mean life expectancy
@@ -1893,9 +1591,9 @@ shape_rep(mx.EB)       # shape of fecundity trajectory
 shape_rep(mx.MB)       # shape of fecundity trajectory
 shape_rep(mx.LB)       # shape of fecundity trajectory
 
-#####################
-#For monthly kernels#
-#####################
+
+## For monthly kernels -----------------------------------------------------
+
 P_F_array <- function(ipm,sites,time){
   stoch.P <- array(0,dim = c(100,100,time))
   stoch.F <- array(0,dim = c(100,100,time))
@@ -2048,9 +1746,7 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 ))
 
 
-#######################
-#Resilience parameters#
-#######################
+# Demographic resilience components ---------------------------------------
 
 #Testing assumptions
 isErgodic(mean.kernel$mean_K_site)
@@ -2165,8 +1861,8 @@ isPrimitive(as.matrix(unlist(LB.mean.kernel$mean_K_site),100,100))
 (kreiss.up.K.LB<- Kreiss(LB.mean.kernel$mean_K_site, bound = "upper"))
 (kreiss.low.K.LB<- Kreiss(LB.mean.kernel$mean_K_site, bound = "lower"))
 
-#Using monthly stochastic kernels#
-##################################
+
+# For monthly kernels -----------------------------------------------------
 
 #Reactivity (first-timestep amplification) and first-time step attenuation
 (r.up.K.stoch <- unlist(apply(array(unlist(stoch.K),dim = c(100,100,850)), MARGIN = c(3),FUN=  reac, bound = "upper", simplify = F)))
@@ -2285,6 +1981,7 @@ ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
   scale_color_viridis_d(option = "H") +
   labs(x = "Time (months)", y = "Population growth")
 
+#Create data.frame with life-history traits and demographic resilience components
 (res.lh.param.Cn <- data.frame(species = c(rep("C_nigropunctatum", 850)),
                                plot = rep(c("C", "Q", "EB", "MB", "LB"),each = 170),
                                life.expect = c(life.expect.C, life.expect.Q, life.expect.EB, life.expect.MB, life.expect.LB),
@@ -2311,12 +2008,12 @@ cor(res.lh.param.Cn[,c(3:12)],use="na.or.complete")
 cor(res.lh.param.Cn[,c(13:16)],use="na.or.complete")     
 saveRDS(res.lh.param.Cn, "res.lh.param.Cn.rds")
 
-#################################
-#Parameter perturbation analyses#
-#################################
+# Parameter perturbation analysis -----------------------------------------
+
 rm(list = ls())
 
-Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
+#Load data
+Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
 cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
 
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
@@ -2332,8 +2029,7 @@ vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
 cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
 pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")
 
-#Functions
-##########
+## Custom functions --------------------------------------------------------
 
 inv_logit <- function(x) {
   return(
@@ -2358,7 +2054,6 @@ size_to_age <- function(x,mu.L0,mu.LI,K) log(1-((x - mu.L0)/(mu.LI - mu.L0)))/lo
 sizet0_t1 <- function(x,mu.L0,mu.LI,K) age_to_size(size_to_age(x,mu.L0,mu.LI,K)+1,mu.L0,mu.LI,K)
 
 #Variance in growth
-
 sd_growth <- function(x,mu.L0,mu.LI,site){
   mean.values <- sizet0_t1(x,mu.L0,
                            mu.LI,
@@ -2396,7 +2091,7 @@ phi.pradel$time <- rep(1:170, each = 5)
 surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Cnigropunctatum.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Cnigropunctatum.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 sample_env <- function(env_states, site, iteration) {
   
@@ -2735,18 +2430,20 @@ res.Cnigro.param.sens.EB <- res_param_perturb(3, 100)
 res.Cnigro.param.sens.MB <- res_param_perturb(4, 100)
 res.Cnigro.param.sens.LB <- res_param_perturb(5, 100)
 
-saveRDS(res.Cnigro.param.sens.C,"res.Cnigro.param.sens.C.rds")
-saveRDS(res.Cnigro.param.sens.Q,"res.Cnigro.param.sens.Q.rds")
-saveRDS(res.Cnigro.param.sens.EB,"res.Cnigro.param.sens.EB.rds")
-saveRDS(res.Cnigro.param.sens.MB,"res.Cnigro.param.sens.MB.rds")
-saveRDS(res.Cnigro.param.sens.LB,"res.Cnigro.param.sens.LB.rds")
+saveRDS(res.Cnigro.param.sens.C,"res_Cnigro_param_sens_C.rds")
+saveRDS(res.Cnigro.param.sens.Q,"res_Cnigro_param_sens_Q.rds")
+saveRDS(res.Cnigro.param.sens.EB,"res_Cnigro_param_sens_EB.rds")
+saveRDS(res.Cnigro.param.sens.MB,"res_Cnigro_param_sens_MB.rds")
+saveRDS(res.Cnigro.param.sens.LB,"res_Cnigro_param_sens_LB.rds")
 
-res.Cnigro.param.sens.C  <- readRDS("res.Cnigro.param.sens.C.rds")
-res.Cnigro.param.sens.Q  <- readRDS("res.Cnigro.param.sens.Q.rds")
-res.Cnigro.param.sens.EB <- readRDS("res.Cnigro.param.sens.EB.rds")
-res.Cnigro.param.sens.MB <- readRDS("res.Cnigro.param.sens.MB.rds")
-res.Cnigro.param.sens.LB <- readRDS("res.Cnigro.param.sens.LB.rds")
+#Load parameter perturbation results
+res.Cnigro.param.sens.C  <- readRDS("res_Cnigro_param_sens_C.rds")
+res.Cnigro.param.sens.Q  <- readRDS("res_Cnigro_param_sens_Q.rds")
+res.Cnigro.param.sens.EB <- readRDS("res_Cnigro_param_sens_EB.rds")
+res.Cnigro.param.sens.MB <- readRDS("res_Cnigro_param_sens_MB.rds")
+res.Cnigro.param.sens.LB <- readRDS("res_Cnigro_param_sens_LB.rds")
 
+#Function to calculate parameter sensitivities
 sens.res <- function(res.array){
   add.s <- seq(0,0.01,0.001)
   res.sens <- array(NA, dim = c(169,10,31))
@@ -2812,7 +2509,6 @@ sens.res <- function(res.array){
 (sens.Cnigro.recov.t.LB <- sens.res(res.Cnigro.param.sens.LB$recov.t))
 
 #Summary statistics
-library(psych)
 sens.Cnigro.fst.amp.summary <- print(describe(rbind(sens.Cnigro.fst.amp.C, 
               sens.Cnigro.fst.amp.Q, 
               sens.Cnigro.fst.amp.EB,
@@ -3000,1603 +2696,3 @@ ggplot(recov.t.Cnigro.param.sens.mean,
                                  expression(alpha["f"]))[c(which(sens.Cnigro.recov.t.summary$mean!=0))-1])+
   labs(x = "Perturbation magnitude", y = "Recovery time")
 
-#Barplots
-quartz(height = 8, width = 12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.C[,-1],las=2,ylab="Compensation",main=expression("C - "*italic("C. nigropunctatum")),
-        names = c(expression(beta[phi]*"tmed2m"),
-                      expression(beta[phi]*"RHmax"),
-                      expression(beta[phi]*"sol"),
-                      expression(beta[phi]*"tmed0cm"),
-                      expression(beta[phi]*"tmin0cm"),
-                      expression(beta[phi]*"precip"),
-                      expression(beta[phi]*"perf"),
-                      expression(beta[phi]*"ha"),
-                      expression(beta[phi]*"fire"),
-                      expression(beta[phi]*"TSLF"),
-                      expression(beta[phi]*"SVL"),
-                      expression(beta[phi]*"SVL"^2),
-                      expression(beta["f"]*"tmed2m"),
-                      expression(beta["f"]*"RHmax"),
-                      expression(beta["f"]*"sol"),
-                      expression(beta["f"]*"tmed0cm"),
-                      expression(beta["f"]*"tmin0cm"),
-                      expression(beta["f"]*"precip"),
-                      expression(beta["f"]*"perf"),
-                      expression(beta["f"]*"ha"),
-                      expression(beta["f"]*"fire"),
-                      expression(beta["f"]*"TSLF"),
-                      expression(alpha["prep"]),
-                      expression(beta["prep"]*"SVL"),
-                      expression(beta["prep"]*"SVL"^2),
-                      expression(alpha["nb"]),
-                      expression(beta["nb"]*"SVL"),
-                      expression(alpha[phi]),
-                      expression(mu["K"]),
-                      expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                border = c(rep("brown",12),
-                           rep("darkcyan",15),
-                           rep("brown",2),
-                           "darkcyan"),
-                           notch = T)
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(height = 8, width = 12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.C[,-1],las=2,
-        ylab="Compensation",main=expression("C - "*italic("C. nigropunctatum")),
-        ylim = c(0,10),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                border = c(rep("brown",12),
-                           rep("darkcyan",15),
-                           rep("brown",2),
-                           "darkcyan"),
-                           notch = T)
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.Q[,-1],las=2,
-           ylab="Compensation", 
-           main=expression("Q - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-           notch=T,
-           border = c(rep("brown",12),
-                      rep("darkcyan",15),
-                      rep("brown",2),
-                      "darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.Q[,-1],las=2,
-        ylab="Compensation", 
-        main=expression("Q - "*italic("C. nigropunctatum")),
-        ylim = c(0,10),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"))
-                   
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.EB[,-1],las=2,
-        ylab="Compensation",main=expression("EB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.EB[,-1],las=2,
-        ylab="Compensation",main=expression("EB - "*italic("C. nigropunctatum")),
-        ylim = c(0,12),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.MB[,-1],las=2,ylab="Compensation",main=expression("MB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.MB[,-1],las=2,
-        ylab="Compensation",main=expression("MB - "*italic("C. nigropunctatum")),
-        ylim = c(0,10),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.LB[,-1],las=2,ylab="Compensation",main=expression("LB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.amp.LB[,-1],las=2,ylab="Compensation",
-        main=expression("LB - "*italic("C. nigropunctatum")),
-        ylim = c(0,10),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.C[,-1],las=2,
-        ylab="Resistance",main=expression("C - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.C[,-1],las=2,
-        ylab="Resistance",main=expression("C - "*italic("C. nigropunctatum")),
-        ylim = c(-1.5,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.Q[,-1],las=2,ylab="Resistance",main=expression("Q - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.Q[,-1],las=2,ylab="Resistance",
-        main=expression("Q - "*italic("C. nigropunctatum")),
-        ylim = c(-2,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.EB[,-1],las=2,ylab="Resistance",
-        main=expression("EB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.EB[,-1],las=2,ylab="Resistance",
-        main=expression("EB - "*italic("C. nigropunctatum")),
-        ylim = c(-2,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.MB[,-1],las=2,ylab="Resistance",main=expression("MB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.MB[,-1],las=2,
-        ylab="Resistance",main=expression("MB - "*italic("C. nigropunctatum")),
-        ylim = c(-1.5,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.LB[,-1],las=2,ylab="Resistance",main=expression("LB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.fst.att.LB[,-1],las=2,ylab="Resistance",
-        main=expression("LB - "*italic("C. nigropunctatum")),
-        ylim = c(-1.5,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.C[,-1],las=2,ylab="Recovery time",main=expression("C - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.C[,-1],las=2,ylab="Recovery time",
-        main=expression("C - "*italic("C. nigropunctatum")),
-        ylim = c(-100,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.Q[,-1],las=2,ylab="Recovery time",main=expression("Q - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.Q[,-1],las=2,ylab="Recovery time",
-        main=expression("Q - "*italic("C. nigropunctatum")),
-        ylim = c(-100, 0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.EB[,-1],las=2,ylab="Recovery time",main=expression("EB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.EB[,-1],las=2,ylab="Recovery time",
-        main=expression("EB - "*italic("C. nigropunctatum")),
-        ylim = c(-120, 0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.MB[,-1],las=2,ylab="Recovery time",main=expression("MB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.MB[,-1],las=2,ylab="Recovery time",
-        main=expression("MB - "*italic("C. nigropunctatum")),
-        ylim = c(-120,0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.LB[,-1],las=2,ylab="Recovery time",main=expression("LB - "*italic("C. nigropunctatum")),
-           names = c(expression(beta[phi]*"tmed2m"),
-                         expression(beta[phi]*"RHmax"),
-                         expression(beta[phi]*"sol"),
-                         expression(beta[phi]*"tmed0cm"),
-                         expression(beta[phi]*"tmin0cm"),
-                         expression(beta[phi]*"precip"),
-                         expression(beta[phi]*"perf"),
-                         expression(beta[phi]*"ha"),
-                         expression(beta[phi]*"fire"),
-                         expression(beta[phi]*"TSLF"),
-                         expression(beta[phi]*"SVL"),
-                         expression(beta[phi]*"SVL"^2),
-                         expression(beta["f"]*"tmed2m"),
-                         expression(beta["f"]*"RHmax"),
-                         expression(beta["f"]*"sol"),
-                         expression(beta["f"]*"tmed0cm"),
-                         expression(beta["f"]*"tmin0cm"),
-                         expression(beta["f"]*"precip"),
-                         expression(beta["f"]*"perf"),
-                         expression(beta["f"]*"ha"),
-                         expression(beta["f"]*"fire"),
-                         expression(beta["f"]*"TSLF"),
-                         expression(alpha["prep"]),
-                         expression(beta["prep"]*"SVL"),
-                         expression(beta["prep"]*"SVL"^2),
-                         expression(alpha["nb"]),
-                         expression(beta["nb"]*"SVL"),
-                         expression(alpha[phi]),
-                         expression(mu["K"]),
-                         expression(alpha["f"])),
-           col = c(rep("brown",12),
-                   rep("darkcyan",15),
-                   rep("brown",2),
-                   "darkcyan"),
-                   notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(sens.Cnigro.recov.t.LB[,-1],las=2,ylab="Recovery time",
-        main=expression("LB - "*italic("C. nigropunctatum")),
-        ylim = c(-100, 0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-#Average among plots
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.fst.amp.C[,-1],
-              sens.Cnigro.fst.amp.Q[,-1],
-              sens.Cnigro.fst.amp.EB[,-1],
-              sens.Cnigro.fst.amp.MB[,-1],
-              sens.Cnigro.fst.amp.LB[,-1]),
-        las=2,ylab="Compensation",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.fst.amp.C[,-1],
-              sens.Cnigro.fst.amp.Q[,-1],
-              sens.Cnigro.fst.amp.EB[,-1],
-              sens.Cnigro.fst.amp.MB[,-1],
-              sens.Cnigro.fst.amp.LB[,-1]),
-        las=2,ylab="Compensation",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        ylim = c(0, 10),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("topleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.fst.att.C[,-1],
-              sens.Cnigro.fst.att.Q[,-1],
-              sens.Cnigro.fst.att.EB[,-1],
-              sens.Cnigro.fst.att.MB[,-1],
-              sens.Cnigro.fst.att.LB[,-1]),
-        las=2,ylab="Resistance",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.fst.att.C[,-1],
-              sens.Cnigro.fst.att.Q[,-1],
-              sens.Cnigro.fst.att.EB[,-1],
-              sens.Cnigro.fst.att.MB[,-1],
-              sens.Cnigro.fst.att.LB[,-1]),
-        las=2,ylab="Resistance",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        ylim = c(-1.5, 0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.recov.t.C[,-1],
-              sens.Cnigro.recov.t.Q[,-1],
-              sens.Cnigro.recov.t.EB[,-1],
-              sens.Cnigro.recov.t.MB[,-1],
-              sens.Cnigro.recov.t.LB[,-1]),
-        las=2,ylab="Recovery time",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
-
-quartz(8,12)
-par(mar=c(7,4,1,.5))
-boxplot(rbind(sens.Cnigro.recov.t.C[,-1],
-              sens.Cnigro.recov.t.Q[,-1],
-              sens.Cnigro.recov.t.EB[,-1],
-              sens.Cnigro.recov.t.MB[,-1],
-              sens.Cnigro.recov.t.LB[,-1]),
-        las=2,ylab="Recovery time",
-        main=expression("Average - "*italic("C. nigropunctatum")),
-        ylim = c(-100, 0),
-        names = c(expression(beta[phi]*"tmed2m"),
-                  expression(beta[phi]*"RHmax"),
-                  expression(beta[phi]*"sol"),
-                  expression(beta[phi]*"tmed0cm"),
-                  expression(beta[phi]*"tmin0cm"),
-                  expression(beta[phi]*"precip"),
-                  expression(beta[phi]*"perf"),
-                  expression(beta[phi]*"ha"),
-                  expression(beta[phi]*"fire"),
-                  expression(beta[phi]*"TSLF"),
-                  expression(beta[phi]*"SVL"),
-                  expression(beta[phi]*"SVL"^2),
-                  expression(beta["f"]*"tmed2m"),
-                  expression(beta["f"]*"RHmax"),
-                  expression(beta["f"]*"sol"),
-                  expression(beta["f"]*"tmed0cm"),
-                  expression(beta["f"]*"tmin0cm"),
-                  expression(beta["f"]*"precip"),
-                  expression(beta["f"]*"perf"),
-                  expression(beta["f"]*"ha"),
-                  expression(beta["f"]*"fire"),
-                  expression(beta["f"]*"TSLF"),
-                  expression(alpha["prep"]),
-                  expression(beta["prep"]*"SVL"),
-                  expression(beta["prep"]*"SVL"^2),
-                  expression(alpha["nb"]),
-                  expression(beta["nb"]*"SVL"),
-                  expression(alpha[phi]),
-                  expression(mu["K"]),
-                  expression(alpha["f"])),
-        col = c(rep("brown",12),
-                rep("darkcyan",15),
-                rep("brown",2),
-                "darkcyan"),
-                notch=T,
-        border = c(rep("brown",12),rep("darkcyan",15), rep("brown",2),"darkcyan"))
-
-legend("bottomleft",legend = c("P kernel","F kernel"), fill = c("brown","darkcyan"))
