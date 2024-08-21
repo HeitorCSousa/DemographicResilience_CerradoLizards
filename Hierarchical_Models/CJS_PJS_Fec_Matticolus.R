@@ -1023,10 +1023,29 @@ vitalrates.Matticolus<- jags(bugs.data, inits, parameters, "vitalrates-micra-svl
 
 #print(vitalrates.Matticolus, digits = 3)
 saveRDS(vitalrates.Matticolus, "results_vitalrates_Matticolus.rds")
-#summary(vitalrates.Matticolus)
-#vitalrates.Matticolus.df<-vitalrates.Matticolus$summary
+options(timeout = 10000)
+vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a8gk0xxmerb/results_vitalrates_Matticolus.rds?rlkey=iwb3yibgrvo1frmp610e2ckkq&dl=1"))
+summary(vitalrates.Matticolus)
+# vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus$samples))
+# write.csv(vitalrates.Matticolus.df, "results_vitalrates_Matticolus_df.csv")
+
+View(vitalrates.Matticolus.df)
 #write.table(vitalrates.Matticolus.df,"results_vitalrates.Matticolus.txt",sep="\t")
 
+#Diagnostics
+S <- ggs(vitalrates.Matticolus$samples[,c(851:877,1723:1749,2600:2626,3469:3482),])
+ggs_density(S,family="alpha.phiJS")
+ggs_density(S,family="betaphiJS")
+ggs_density(S,family="betaf")
+
+ggs_density(S,family="mu.K")
+
+ggs_density(S,family="beta2.phi")
+ggs_traceplot(S,family="betaphiJS")
+ggs_traceplot(S,family="betaf")
+ggs_traceplot(S,family="beta.phi")
+
+ggs_traceplot(S,family="mu.K")
 
 #CJS model per sex -------------------------
 

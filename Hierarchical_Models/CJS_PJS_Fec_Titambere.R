@@ -1040,7 +1040,7 @@ gamma[j,i]<-phiJS[j,i-1]/(phiJS[j,i-1]+f[j,i-1])
 sink()
 
 # MCMC settings
-ni <- 100000
+ni <- 400000
 nt <- 10
 nb <- 50000
 nc <- 4
@@ -1053,11 +1053,30 @@ bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
 cl <- makeCluster(4)
 runjags.options(jagspath = "/usr/local/bin/jags") #set path for JAGS
-vitalrates.itambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-itambere-svl.jags",
+vitalrates.Titambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model="vitalrates-itambere-svl.jags",
                                 n.chains = nc, adapt = na,thin = nt, sample = ni, burnin = nb,
                                 method = "parallel", jags.refresh = 30,keep.jags.files = TRUE,jags = "/usr/local/bin/jags",
                          summarise = FALSE,
                          modules = c("glm"))
+
+results.vitalrates.Titambere <- results.jags(vitalrates.Titambere)
+results.vitalrates.Titambere <- add.summary(results.vitalrates.Titambere)
+
+results.vitalrates.Titambere.df <- summary(results.vitalrates.Titambere)
+View(results.vitalrates.Titambere.df)
+
+saveRDS(results.vitalrates.Titambere.df,"results_vitalrates_Titambere_df.rds")
+saveRDS(results.vitalrates.Titambere, "results_vitalrates_Titambere.rds")
+summary(vitalrates.Titambere)
+
+results.vitalrates.Titambere.df <- readRDS("results_vitalrates_Titambere_df.rds")
+write.csv(results.vitalrates.Titambere.df, "results_vitalrates_Titambere_df.csv")
+
+S <- ggs(results.vitalrates.Titambere$mcmc[,3459:3460])
+ggs_density(S,family="beta.phi")
+ggs_density(S,family="beta2.phi")
+ggs_traceplot(S,family="beta.phi")
+ggs_traceplot(S,family="beta2.phi")
 
 #Pradel parameters did not converge. Next, we run each model (PJS, CJS, and fecundity GLM) separately
 
