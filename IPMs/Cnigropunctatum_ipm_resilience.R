@@ -42,6 +42,34 @@ View(pradel.Cnigro.df)
 
 # Simple deterministic IPM constructed from discretely varying parameter estimates-------------------------------------------------------------------------
 
+f.vitalrates <- vitalrates.Titambere.df[grep(pattern = "f", x = vitalrates.Titambere.df$X)[1:850],]
+f.pradel <- pradel.Titambere.df[grep(pattern = "f", x = pradel.Titambere.df$X)[1:850],]
+
+rho.vitalrates <- vitalrates.Titambere.df[grep(pattern = "rho", x = vitalrates.Titambere.df$X)[1:850],]
+rho.pradel <- pradel.Titambere.df[grep(pattern = "rho", x = pradel.Titambere.df$X)[1:850],]
+
+phi.pradel <- pradel.Titambere.df[grep(pattern = "phi", x = pradel.Titambere.df$X)[1:850],]
+phi.vitalrates <- vitalrates.Titambere.df[grep(pattern = "phi", x = vitalrates.Titambere.df$X)[1:850],]
+
+
+f.vitalrates$plot <- rep(1:5,170)
+f.pradel$plot <- rep(1:5,170)
+
+f.vitalrates$time <- rep(1:170, each = 5)
+f.pradel$time <- rep(1:170, each = 5)
+
+rho.vitalrates$plot <- rep(1:5,170)
+rho.pradel$plot <- rep(1:5,170)
+
+rho.vitalrates$time <- rep(1:170, each = 5)
+rho.pradel$time <- rep(1:170, each = 5)
+
+phi.pradel$plot <- rep(1:5,170)
+phi.pradel$time <- rep(1:170, each = 5)
+
+f.pradel$plot <- as.factor(f.pradel$plot)
+f.vitalrates$plot <- as.factor(f.vitalrates$plot)
+phi.pradel$plot <- as.factor(phi.pradel$plot)
 ## Define parameters -------------------------------------------------------
 
 # Define some fixed parameters
@@ -311,7 +339,7 @@ my_ipm2 <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_p
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin) + (1-(surv_site/(surv_site+r_f_site))),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -471,7 +499,7 @@ C_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -666,7 +694,7 @@ Q_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_par
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -853,7 +881,7 @@ EB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -1044,7 +1072,7 @@ MB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -1233,7 +1261,7 @@ LB_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "stoch",kern_pa
                           rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
     r_r_site              = inv_logit(r_r_lin),
     
-    # We index the seed production expression with the site effect
+    # We index the recruitment expression with the site effect
     
     r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                rnorm(1,r_n_mu_slope,0) * ht_1),
@@ -1458,6 +1486,8 @@ imagePlot(t(stoch.elas.mean.K.LB$E_mu),ylim=c(1,0),col=turbo(100))
 imagePlot(t(stoch.elas.mean.K.LB$E_sigma),ylim=c(1,0),col=turbo(100))
 
 # Life-history traits -----------------------------------------------------
+
+##For mean kernels---------------------------------------------------------
 
 #Survival and lifespan traits
 life_expect_mean(matU = mean.kernel$mean_P_site, start = 1)  # mean life expectancy
@@ -1746,6 +1776,8 @@ P_F_LB_ipm <- P_F_array(LB_ipm,1,170)
 
 
 # Demographic resilience components ---------------------------------------
+
+##For mean kernels---------------------------------------------------------
 
 #Testing assumptions
 isErgodic(mean.kernel$mean_K_site)
@@ -2237,11 +2269,6 @@ res_param_perturb <- function(plot, nkernel){
         
       )
       
-      
-      # Now, simulate some random intercepts for growth (g_), survival (s_),
-      # and offspring production (r_s_). This part is for the purpose of the example.
-      
-      # First, we create vector of values that each random component can take.
       s_params  <- list(
         s_g_mu_int_1 = pradel.Cnigro.df['alpha.phiJS[1]','mean'] + cjs.Cnigro.df['alpha.phi','Mean'] + add.s[j]*ord[j,29,i],
         s_g_mu_int_2 = pradel.Cnigro.df['alpha.phiJS[2]','mean'] + cjs.Cnigro.df['alpha.phi','Mean']+ add.s[j]*ord[j,29,i],
@@ -2348,7 +2375,7 @@ res_param_perturb <- function(plot, nkernel){
                                 rnorm(1, r_r_mu_slope2, 0) * (ht_1^2)),
           r_r_site              = inv_logit(r_r_lin),
           
-          # We index the seed production expression with the site effect
+          # We index the recruitment expression with the site effect
           
           r_n_lin_site          = (rnorm(1,r_n_mu_int, 0) +
                                      rnorm(1,r_n_mu_slope,0) * ht_1),
