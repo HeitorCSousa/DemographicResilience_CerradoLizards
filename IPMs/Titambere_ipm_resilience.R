@@ -2286,20 +2286,20 @@ ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
 
 cor(res.lh.param.Ti[,c(3:12)],use="na.or.complete", method = "spearman") 
 cor(res.lh.param.Ti[,c(13:16)],use="na.or.complete", method = "spearman")     
-saveRDS(res.lh.param.Ti, "res.lh.param.Ti.rds")
+saveRDS(res.lh.param.Ti, "res_lh_param_Ti.rds")
 
 #########################################################################
 #Bring more perturbation analyses from IPM Book - parameter perturbation#
 #########################################################################
 rm(list = ls())
 
-Titambere.data <- readRDS("Titambere.data.rds")
+Titambere.data <- readRDS("Titambere_data.rds")
 
 vitalrates.Titambere.samples <- readRDS(url("https://www.dropbox.com/scl/fi/s27cfrzbox0h3i5ayzb4n/sims_list_Titambere.rds?rlkey=e6deyq4fyims95gkelbosboc9&dl=1"))
 
-vitalrates.Titambere.df <- read.csv("results.vitalrates.Titambere.df_100000iters.csv")
+vitalrates.Titambere.df <- read.csv("results_vitalrates_Titambere_df_100000iters.csv")
 
-pradel.Titambere.df <- read.csv("results.pradel.itambere.df_400000_noecophys.csv")
+pradel.Titambere.df <- read.csv("results_pradel_itambere_df_400000_noecophys.csv")
 
 fec.Titambere.df <- read.csv("results_fecund_itambere_df.csv")
 
@@ -2696,17 +2696,17 @@ res.Titambere.param.sens.EB <- res_param_perturb(3, 100)
 res.Titambere.param.sens.MB <- res_param_perturb(4, 100)
 res.Titambere.param.sens.LB <- res_param_perturb(5, 100)
 
-saveRDS(res.Titambere.param.sens.C,"res.Titambere.param.sens.C.rds")
-saveRDS(res.Titambere.param.sens.Q,"res.Titambere.param.sens.Q.rds")
-saveRDS(res.Titambere.param.sens.EB,"res.Titambere.param.sens.EB.rds")
-saveRDS(res.Titambere.param.sens.MB,"res.Titambere.param.sens.MB.rds")
-saveRDS(res.Titambere.param.sens.LB,"res.Titambere.param.sens.LB.rds")
+saveRDS(res.Titambere.param.sens.C,"res_Titambere_param_sens_C.rds")
+saveRDS(res.Titambere.param.sens.Q,"res_Titambere_param_sens_Q.rds")
+saveRDS(res.Titambere.param.sens.EB,"res_Titambere_param_sens_EB.rds")
+saveRDS(res.Titambere.param.sens.MB,"res_Titambere_param_sens_MB.rds")
+saveRDS(res.Titambere.param.sens.LB,"res_Titambere_param_sens_LB.rds")
 
-res.Titambere.param.sens.C  <- readRDS("res.Titambere.param.sens.C.rds")
-res.Titambere.param.sens.Q  <- readRDS("res.Titambere.param.sens.Q.rds")
-res.Titambere.param.sens.EB <- readRDS("res.Titambere.param.sens.EB.rds")
-res.Titambere.param.sens.MB <- readRDS("res.Titambere.param.sens.MB.rds")
-res.Titambere.param.sens.LB <- readRDS("res.Titambere.param.sens.LB.rds")
+res.Titambere.param.sens.C  <- readRDS("res_Titambere_param_sens_C.rds")
+res.Titambere.param.sens.Q  <- readRDS("res_Titambere_param_sens_Q.rds")
+res.Titambere.param.sens.EB <- readRDS("res_Titambere_param_sens_EB.rds")
+res.Titambere.param.sens.MB <- readRDS("res_Titambere_param_sens_MB.rds")
+res.Titambere.param.sens.LB <- readRDS("res_Titambere_param_sens_LB.rds")
 
 
 sens.res <- function(res.array){

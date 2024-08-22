@@ -1480,7 +1480,7 @@ results.pradel.itambere <- readRDS(url("https://www.dropbox.com/scl/fi/ygu9gm12g
 results.pradel.itambere.df<- MCMCsummary(results.pradel.itambere$mcmc)
 #results.pradel.itambere <- add.summary(results.pradel.itambere)#Too much memory
 
-write.csv(results.pradel.itambere.df, "results.pradel.itambere.df_400000_noecophys.csv")
+write.csv(results.pradel.itambere.df, "results_pradel_itambere_df_400000_noecophys.csv")
 
 saveRDS(results.pradel.itambere, "results_pradel_itambere_400000_noecophys.rds")
 
@@ -1938,7 +1938,7 @@ write.csv(results.cjs.Titambere.df,"results_cjs_Titambere_sex_df.csv")
 
 #Function plots 
 results.cjs.Titambere.sex.df <- read.csv("results_cjs_Titambere_sex_df.csv")
-results.cjs.Titambere.df <- read.csv("results.vitalrates.Titambere.df_100000iters.csv")
+results.cjs.Titambere.df <- read.csv("results_vitalrates_Titambere_df_100000iters.csv")
 
 #Function to estimate size from age
 age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-plogis(K)^x)

@@ -2005,7 +2005,7 @@ ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
 
 cor(res.lh.param.Cn[,c(3:12)],use="na.or.complete") 
 cor(res.lh.param.Cn[,c(13:16)],use="na.or.complete")     
-saveRDS(res.lh.param.Cn, "res.lh.param.Cn.rds")
+saveRDS(res.lh.param.Cn, "res_lh_param_Cn.rds")
 
 # Parameter perturbation analysis -----------------------------------------
 
@@ -2023,7 +2023,7 @@ rm(cjs.Cnigro)
 gc()
 # vitalrates.Cnigro.df <- MCMCsummary(vitalrates.Cnigro.samples)
 
-# write.csv(vitalrates.Cnigro.df, "results.vitalrates.Cnigro.df.csv")
+# write.csv(vitalrates.Cnigro.df, "results_vitalrates_Cnigro_df.csv")
 vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
 cjs.Cnigro.df <- readRDS("results_cjs_Cnigro_df.rds")
 pradel.Cnigro.df <- readRDS("results_pradel_Cnigro_df.rds")

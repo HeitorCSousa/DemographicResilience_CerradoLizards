@@ -1419,7 +1419,7 @@ write.csv(results.cjs.Matticolus.df,"results_cjs_Matticolus_sex_df.csv")
 
 #Function plots 
 results.cjs.Matticolus.sex.df <- read.csv("results_cjs_Matticolus_sex_df.csv")
-results.cjs.Matticolus.df <- read.csv("results.vitalrates.Matticolus.df_100000iters.csv")
+results.cjs.Matticolus.df <- read.csv("results_vitalrates_Matticolus_df_100000iters.csv")
 
 #Function to estimate size from age
 age_to_size <- function(x,mu.L0,mu.LI,K) mu.L0 + (mu.LI-mu.L0)*(1-plogis(K)^x)

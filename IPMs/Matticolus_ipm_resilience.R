@@ -34,8 +34,8 @@ rm(vitalrates.Matticolus)
 gc()
 # vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus.samples)
 
-# write.csv(vitalrates.Matticolus.df, "results.vitalrates.Matticolus.df_100000iters.csv")
-vitalrates.Matticolus.df <- read.csv("results.vitalrates.Matticolus.df_100000iters.csv")
+# write.csv(vitalrates.Matticolus.df, "results_vitalrates_Matticolus_df_100000iters.csv")
+vitalrates.Matticolus.df <- read.csv("results_vitalrates_Matticolus_df_100000iters.csv")
 
 View(vitalrates.Matticolus.df)
 
@@ -2244,7 +2244,7 @@ ggplot(bounds.ipms, aes(x = time, y = V1, color = as.factor(plot))) +
 cor(res.lh.param.Ma[,c(3:12)],use="na.or.complete") 
 cor(res.lh.param.Ma[,c(13:16)],use="na.or.complete")  
 
-saveRDS(res.lh.param.Ma, "res.lh.param.Ma.rds")
+saveRDS(res.lh.param.Ma, "res_lh_param_Ma.rds")
 
 #########################################################################
 #Bring more perturbation analyses from IPM Book - parameter perturbation#
@@ -2264,7 +2264,7 @@ library(MCMCvis)
 library(mcmcr)
 library(viridis)
 
-Matticolus.data <- readRDS("Matticolus.data.rds")
+Matticolus.data <- readRDS("Matticolus_data.rds")
 vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a8gk0xxmerb/results_vitalrates_Matticolus.rds?rlkey=iwb3yibgrvo1frmp610e2ckkq&dl=1"))
 #vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
@@ -2274,7 +2274,7 @@ gc()
 # vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus.samples)
 
 # write.csv(vitalrates.Matticolus.df, "results.vitalrates.Matticolus.df_100000iters.csv")
-vitalrates.Matticolus.df <- read.csv("results.vitalrates.Matticolus.df_100000iters.csv")
+vitalrates.Matticolus.df <- read.csv("results_vitalrates_Matticolus_df_100000iters.csv")
 
 #Functions
 ##########
@@ -2684,17 +2684,17 @@ res.Matticolus.param.sens.EB <- res_param_perturb(3, all_params_list$mu_LI, 60)
 res.Matticolus.param.sens.MB <- res_param_perturb(4, all_params_list$mu_LI, 60)
 res.Matticolus.param.sens.LB <- res_param_perturb(5, all_params_list$mu_LI, 60)
 
-saveRDS(res.Matticolus.param.sens.C,"res.param.sens.C.Matticolus.rds")
-saveRDS(res.Matticolus.param.sens.Q,"res.param.sens.Q.Matticolus.rds")
-saveRDS(res.Matticolus.param.sens.EB,"res.param.sens.EB.Matticolus.rds")
-saveRDS(res.Matticolus.param.sens.MB,"res.param.sens.MB.Matticolus.rds")
-saveRDS(res.Matticolus.param.sens.LB,"res.param.sens.LB.Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.C,"res_param_sens_C_Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.Q,"res_param_sens_Q_Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.EB,"res_param_sens_EB_Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.MB,"res_param_sens_MB_Matticolus.rds")
+saveRDS(res.Matticolus.param.sens.LB,"res_param_sens_LB_Matticolus.rds")
 
-res.Matticolus.param.sens.C  <- readRDS("res.param.sens.C.Matticolus.rds")
-res.Matticolus.param.sens.Q  <- readRDS("res.param.sens.Q.Matticolus.rds")
-res.Matticolus.param.sens.EB <- readRDS("res.param.sens.EB.Matticolus.rds")
-res.Matticolus.param.sens.MB <- readRDS("res.param.sens.MB.Matticolus.rds")
-res.Matticolus.param.sens.LB <- readRDS("res.param.sens.LB.Matticolus.rds")
+res.Matticolus.param.sens.C  <- readRDS("res_param_sens_C.Matticolus.rds")
+res.Matticolus.param.sens.Q  <- readRDS("res_param_sens_Q.Matticolus.rds")
+res.Matticolus.param.sens.EB <- readRDS("res_param_sens_EB.Matticolus.rds")
+res.Matticolus.param.sens.MB <- readRDS("res_param_sens_MB.Matticolus.rds")
+res.Matticolus.param.sens.LB <- readRDS("res_param_sens_LB.Matticolus.rds")
 
 
 sens.res <- function(res.array){
