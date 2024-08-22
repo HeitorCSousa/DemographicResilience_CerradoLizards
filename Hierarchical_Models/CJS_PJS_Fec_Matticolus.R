@@ -1016,9 +1016,7 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-# Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
-
+# Call JAGS from R (This run may take a while - days. The results can be loaded instead, in line 1026)
 vitalrates.Matticolus<- jags(bugs.data, inits, parameters, "vitalrates-micra-svl.jags", 
                    n.chains = nc, n.thin = nt, n.adapt = na,n.iter = ni, n.burnin = nb, 
                    parallel = T, codaOnly = parameters)
@@ -1029,9 +1027,6 @@ vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a
 summary(vitalrates.Matticolus)
 # vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus$samples))
 # write.csv(vitalrates.Matticolus.df, "results_vitalrates_Matticolus_df.csv")
-
-View(vitalrates.Matticolus.df)
-#write.table(vitalrates.Matticolus.df,"results_vitalrates.Matticolus.txt",sep="\t")
 
 #Diagnostics
 S <- ggs(vitalrates.Matticolus$samples[,c(851:877,1723:1749,2600:2626,3469:3482),])
@@ -1341,8 +1336,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, in line 1391)
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
 
@@ -1393,6 +1387,8 @@ cjs.Matticolus.extend.sex3 <- extend.jags(results.cjs.Matticolus.sex,
                                       keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
 
 results.cjs.Matticolus.sex <- results.jags(cjs.Matticolus.extend.sex3,  combine = T)#runjagsfiles_4
+
+results.cjs.Matticolus.sex <- readRDS(url("https://www.dropbox.com/scl/fi/74zmzc2nxrnqyii9d173l/results_cjs_Matticolus_sex.rds?rlkey=q4v343qvprwdj9su3y8xun0xl&dl=1"))
 # results.cjs.Matticolus <- add.summary(results.cjs.Matticolus)
 
 results.cjs.Matticolus.df <- summary(results.cjs.Matticolus.sex)

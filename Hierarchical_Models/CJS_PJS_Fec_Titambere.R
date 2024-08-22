@@ -4,7 +4,6 @@ rm(list = ls())
 
 options(timeout = 10000) # increase the time to download large files
 
-
 ## Tropidurus itambere ----
 
 #Set working directory
@@ -1049,8 +1048,7 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1064)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1063,6 +1061,7 @@ vitalrates.Titambere<- run.jags(data=bugs.data, inits=inits, monitor=parameters,
                          modules = c("glm"))
 
 results.vitalrates.Titambere <- results.jags(vitalrates.Titambere)
+results.vitalrates.Titambere <- readRDS(url("https://www.dropbox.com/scl/fi/hxu741xx0g6cvxts9u42a/results_vitalrates_Titambere.rds?rlkey=i44n12zwdinaide3rzlvnf2nu&dl=1"))
 results.vitalrates.Titambere <- add.summary(results.vitalrates.Titambere)
 
 results.vitalrates.Titambere.df <- summary(results.vitalrates.Titambere)
@@ -1451,8 +1450,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1479)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1478,7 +1476,7 @@ pradel.itambere.extend3 <- extend.jags(results.pradel.itambere,
                                        keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
 
 results.pradel.itambere <- results.jags(pradel.itambere.extend3,  combine = F)
-
+results.pradel.itambere <- readRDS(url("https://www.dropbox.com/scl/fi/ygu9gm12g7guuvgonhgv2/results_pradel_itambere_400000_noecophys.rds?rlkey=5ijhfh447zvpjxi2dsxn1si9w&dl=1"))
 results.pradel.itambere.df<- MCMCsummary(results.pradel.itambere$mcmc)
 #results.pradel.itambere <- add.summary(results.pradel.itambere)#Too much memory
 
@@ -1486,7 +1484,7 @@ write.csv(results.pradel.itambere.df, "results.pradel.itambere.df_400000_noecoph
 
 saveRDS(results.pradel.itambere, "results_pradel_itambere_400000_noecophys.rds")
 
-
+#Diagnostics
 S <- ggs(results.pradel.itambere$mcmc[,1722:1748])
 
 quartz(8,12)
@@ -1551,8 +1549,7 @@ nb <- 1800000
 nc <- 4
 na <- 100000
 
-#Call JAGS from R (This run may take a while. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1566,10 +1563,9 @@ fecund.itambere <- run.jags(data=bugs.data, inits=inits, monitor=parameters, mod
                             modules = c("glm"))
 
 results.fecund.itambere <- results.jags(fecund.itambere)
-
 #results.pradel.itambere <- add.summary(results.pradel.itambere)
 summary(results.fecund.itambere)
-plot(results.fecund.itambere)
+plot(results.fecund.itambere)#Diagnostics
 results.fecund.itambere.df <- summary(results.fecund.itambere)
 
 write.csv(results.fecund.itambere.df, "results_fecund_itambere_df.csv")
@@ -1872,8 +1868,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1909)
 
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
@@ -1911,6 +1906,7 @@ cjs.Titambere.extend.sex2 <- extend.jags(results.cjs.Titambere.sex,
                                       keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
 
 results.cjs.Titambere.sex <- results.jags(cjs.Titambere.extend.sex2,  combine = T)#runjagsfiles_2
+results.cjs.Titambere.sex <- readRDS(url("https://www.dropbox.com/scl/fi/qr2zsp5j1o576f5kt2z31/results_cjs_Titambere_sex.rds?rlkey=zfyh29a5o6ecejo3zzldzlyec&dl=1"))
 # results.cjs.Titambere <- add.summary(results.cjs.Titambere)
 
 results.cjs.Titambere.df <- summary(results.cjs.Titambere.sex)

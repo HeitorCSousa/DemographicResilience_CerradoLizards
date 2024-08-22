@@ -4,7 +4,6 @@ rm(list = ls())
 
 options(timeout = 10000) # increase the time to download large files
 
-
 #Set working directory
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/IPMs")
 
@@ -24,7 +23,7 @@ library(psych)
 #Read results and data to build IPMs
 
 Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
-cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
+cjs.Cnigro <- readRDS(url("https://www.dropbox.com/scl/fi/tqp2b4vwhm9619iqlwebk/results_cjs_Cnigro.rds?rlkey=wqpksytaaf1x5au9fwkag7k7y&dl=1"))
 
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
 
@@ -1862,7 +1861,7 @@ isPrimitive(as.matrix(unlist(LB.mean.kernel$mean_K_site),100,100))
 (kreiss.low.K.LB<- Kreiss(LB.mean.kernel$mean_K_site, bound = "lower"))
 
 
-# For monthly kernels -----------------------------------------------------
+## For monthly kernels -----------------------------------------------------
 
 #Reactivity (first-timestep amplification) and first-time step attenuation
 (r.up.K.stoch <- unlist(apply(array(unlist(stoch.K),dim = c(100,100,850)), MARGIN = c(3),FUN=  reac, bound = "upper", simplify = F)))
@@ -2014,7 +2013,7 @@ rm(list = ls())
 
 #Load data
 Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
-cjs.Cnigro <- readRDS("results_cjs_Cnigro.rds")
+cjs.Cnigro <- readRDS(url("https://www.dropbox.com/scl/fi/tqp2b4vwhm9619iqlwebk/results_cjs_Cnigro.rds?rlkey=wqpksytaaf1x5au9fwkag7k7y&dl=1"))
 
 cjs.Cnigro.samples <- cjs.Cnigro$mcmc[490000:500000,]
 

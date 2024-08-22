@@ -23,7 +23,7 @@ library(psych)
 
 #Read results and data to build IPMs
 Matticolus.data <- readRDS("Matticolus_data.rds")
-vitalrates.Matticolus <- readRDS("results_vitalrates_Matticolus.rds")
+vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a8gk0xxmerb/results_vitalrates_Matticolus.rds?rlkey=iwb3yibgrvo1frmp610e2ckkq&dl=1"))
 #vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
 vitalrates.Matticolus.samples <- vitalrates.Matticolus$samples
@@ -2265,7 +2265,7 @@ library(mcmcr)
 library(viridis)
 
 Matticolus.data <- readRDS("Matticolus.data.rds")
-vitalrates.Matticolus <- readRDS("results_vitalrates_Matticolus.rds")
+vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a8gk0xxmerb/results_vitalrates_Matticolus.rds?rlkey=iwb3yibgrvo1frmp610e2ckkq&dl=1"))
 #vitalrates.Matticolus.samples <- as.mcmc.list(vitalrates.Matticolus$samples)
 
 muK.Matticolus.samples <- vitalrates.Matticolus$sims.list$mu.K

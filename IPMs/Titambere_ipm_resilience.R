@@ -23,7 +23,7 @@ library(psych)
 #Read results and data to build IPMs
 Titambere.data <- readRDS("Titambere_data.rds")
 
-vitalrates.Titambere.samples <- readRDS("sims_list_Titambere.rds")
+vitalrates.Titambere.samples <- readRDS(url("https://www.dropbox.com/scl/fi/s27cfrzbox0h3i5ayzb4n/sims_list_Titambere.rds?rlkey=e6deyq4fyims95gkelbosboc9&dl=1"))
 
 vitalrates.Titambere.df <- read.csv("results_vitalrates_Titambere_df_100000iters.csv")
 
@@ -2295,7 +2295,7 @@ rm(list = ls())
 
 Titambere.data <- readRDS("Titambere.data.rds")
 
-vitalrates.Titambere.samples <- readRDS("sims_list_Titambere.rds")
+vitalrates.Titambere.samples <- readRDS(url("https://www.dropbox.com/scl/fi/s27cfrzbox0h3i5ayzb4n/sims_list_Titambere.rds?rlkey=e6deyq4fyims95gkelbosboc9&dl=1"))
 
 vitalrates.Titambere.df <- read.csv("results.vitalrates.Titambere.df_100000iters.csv")
 

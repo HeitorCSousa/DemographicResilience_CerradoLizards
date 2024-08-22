@@ -1049,8 +1049,7 @@ nb <- 50000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1065)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1062,7 +1061,10 @@ vitalrates.Cnigro <- run.jags(data=bugs.data, inits=inits, monitor=parameters, m
                          modules = c("glm"))
 
 results.vitalrates.Cnigro <- results.jags(vitalrates.Cnigro)
-results.vitalrates.Cnigro <- add.summary(results.vitalrates.Cnigro)
+
+results.vitalrates.Cnigro <- readRDS(url("https://www.dropbox.com/scl/fi/jm1isiv4tjpv6zml9rnha/results_vitalrates_Cnigro.rds?rlkey=615wmkfd780t0i7cic0sbulz9&dl=1"))
+
+# results.vitalrates.Cnigro <- add.summary(results.vitalrates.Cnigro)
 
 results.vitalrates.Cnigro.df <- summary(results.vitalrates.Cnigro)
 View(results.vitalrates.Cnigro.df)
@@ -1074,6 +1076,7 @@ summary(vitalrates.Cnigro)
 results.vitalrates.Cnigro.df <- readRDS("results_vitalrates_Cnigro_df.rds")
 write.csv(results.vitalrates.Cnigro.df, "results_vitalrates_Cnigro_df.csv")
 
+#Diagnostics
 S <- ggs(results.vitalrates.Cnigro$mcmc[,3459:3460])
 ggs_density(S,family="beta.phi")
 ggs_density(S,family="beta2.phi")
@@ -1431,8 +1434,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1451)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1445,6 +1447,8 @@ pradel.Cnigro<- run.jags(data=bugs.data, inits=inits, monitor=parameters, model=
                        modules = c("glm"))
 
 results.pradel.Cnigro <- results.jags(pradel.Cnigro)
+
+results.pradel.Cnigro <- readRDS(url("https://www.dropbox.com/scl/fi/m50pgbaoo39j3faw7axys/results_pradel_Cnigro2.rds?rlkey=amadio13nt4sf4xneu6wjv37w&dl=1"))
 
 results.pradel.Cnigro.df <- MCMCsummary(results.pradel.Cnigro$mcmc)
 View(results.pradel.Cnigro.df)
@@ -1552,8 +1556,7 @@ nb <- 100000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 1632)
 
 bugs.data$y <- as.matrix(bugs.data$y)
 bugs.data$z <- as.matrix(bugs.data$z)
@@ -1626,6 +1629,7 @@ cjs.Cnigro.extend4 <- extend.jags(results.cjs.Cnigro,
                                   keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
 
 results.cjs.Cnigro <- results.jags(cjs.Cnigro.extend4,  combine = T)#runjagsfiles_8
+results.cjs.Cnigro <- readRDS(url("https://www.dropbox.com/scl/fi/tqp2b4vwhm9619iqlwebk/results_cjs_Cnigro.rds?rlkey=wqpksytaaf1x5au9fwkag7k7y&dl=1"))
 # results.cjs.Cnigro <- add.summary(results.cjs.Cnigro)
 
 results.cjs.Cnigro.df <- summary(results.cjs.Cnigro)
@@ -1948,8 +1952,7 @@ nb <- 200000
 nc <- 4
 na <- 50000
 
-#Call JAGS from R (This run may take a while - days. The results can be loaded instead)
-#For the full run results (mcmc iterations), please send an e-mail to heitorsousa.bio@gmail.com
+#Call JAGS from R (This run may take a while - days. The results can be loaded instead, on line 2004)
 
 bugs.data.sex$y <- as.matrix(bugs.data.sex$y)
 bugs.data.sex$z <- as.matrix(bugs.data.sex$z)
@@ -1998,6 +2001,7 @@ cjs.Cnigro.extend.sex3 <- extend.jags(results.cjs.Cnigro.sex,
                                   keep.jags.files = TRUE,jags = "/usr/local/bin/jags")
 
 results.cjs.Cnigro.sex <- results.jags(cjs.Cnigro.extend.sex3,  combine = T)#runjagsfiles_6
+results.cjs.Cnigro.sex <- readRDS(url("https://www.dropbox.com/scl/fi/rn2m1ixjr1h7147f20ud1/results_cjs_Cnigro_sex.rds?rlkey=w0fdjj3fbh3ghtqkwtea2uadi&dl=1"))
 # results.cjs.Cnigro <- add.summary(results.cjs.Cnigro)
 
 results.cjs.Cnigro.df <- summary(results.cjs.Cnigro.sex)
