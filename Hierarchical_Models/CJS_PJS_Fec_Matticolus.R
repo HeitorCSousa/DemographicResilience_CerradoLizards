@@ -2,6 +2,8 @@
 
 rm(list = ls())
 
+options(timeout = 10000) # increase the time to download large files
+
 ## Micrablepharus atticolus ----
 
 #Load packages
@@ -1023,7 +1025,6 @@ vitalrates.Matticolus<- jags(bugs.data, inits, parameters, "vitalrates-micra-svl
 
 #print(vitalrates.Matticolus, digits = 3)
 saveRDS(vitalrates.Matticolus, "results_vitalrates_Matticolus.rds")
-options(timeout = 10000)
 vitalrates.Matticolus <- readRDS(url("https://www.dropbox.com/scl/fi/rp27iddh98a8gk0xxmerb/results_vitalrates_Matticolus.rds?rlkey=iwb3yibgrvo1frmp610e2ckkq&dl=1"))
 summary(vitalrates.Matticolus)
 # vitalrates.Matticolus.df <- MCMCsummary(vitalrates.Matticolus$samples))

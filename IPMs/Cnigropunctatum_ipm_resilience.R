@@ -1,4 +1,9 @@
+# Build Integral Projection Models (IPMs) and estimate life-history traits and demographic resilience components -------------------------------------------------------------------------
+
 rm(list = ls())
+
+options(timeout = 10000) # increase the time to download large files
+
 
 #Set working directory
 setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/IPMs")

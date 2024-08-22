@@ -2,6 +2,9 @@
 
 rm(list = ls())
 
+options(timeout = 10000) # increase the time to download large files
+
+
 ## Tropidurus itambere ----
 
 #Set working directory
