@@ -296,7 +296,7 @@ my_funs <- list(inv_logit   = inv_logit,
 surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Titambere.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Titambere.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 env.states[,,11]
 
@@ -2349,7 +2349,7 @@ phi.pradel <- pradel.Titambere.df[grep(pattern = "phi", x = pradel.Titambere.df$
 surv.pradel <- matrix(phi.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.pradel$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Titambere.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Titambere.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 env.states[,,11]
 

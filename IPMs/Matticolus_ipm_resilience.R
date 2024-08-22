@@ -276,7 +276,7 @@ phi.vitalrates$time <- rep(1:170, each = 5)
 surv.pradel <- matrix(phi.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Matticolus.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 env.states[,,12]
 
@@ -2325,7 +2325,7 @@ phi.vitalrates$time <- rep(1:170, each = 5)
 surv.pradel <- matrix(phi.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel <- matrix(f.vitalrates$mean,nrow = 5, ncol = 170)
 recr.pradel[,170] <- 0.0001
-env.states <- array(c(Matticolus.data$amb,surv.pradel,recr.pradel), dim = c(5,170,12))
+env.states <- array(c(Matticolus.data$env,surv.pradel,recr.pradel), dim = c(5,170,12))
 
 env.states[,,12]
 
