@@ -598,7 +598,7 @@ canopy.fire.day <- canopy.fire %>%
                    canopy.BM = mean(canopy.BM),
                    canopy.BT = mean(canopy.BT))
 
-saveRDS(canopy.fire.day,"canopy.fire.day.rds")
+saveRDS(canopy.fire.day,"canopy_fire_day.rds")
 
 #Using NichemapR micro_era5 function#
 #####################################
@@ -721,7 +721,7 @@ boxplot(TALOC ~ canopy, data=micro.fire)
 
 
 #setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/")
-climate.df <- readRDS("climate.df.rds")
+climate.df <- readRDS("climate_df.rds")
 
 microclim.BSB <- readRDS("microclimate_BSB.rds")
 summary(microclim.BSB,2)
