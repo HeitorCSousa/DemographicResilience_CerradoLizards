@@ -3,8 +3,10 @@
 ###########################################
 rm(list = ls())
 
-# setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis")
+#Set working directory
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/DGAMs")
 
+# Load packages -----------------------------------------------------------
 
 library(brms)
 library(sjPlot)
@@ -35,13 +37,17 @@ rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 # options(brms.backend = "cmdstanr")
 
-res.lh.param.Cn <- readRDS("res.lh.param.Cn.rds")
-res.lh.param.Ma <- readRDS("res.lh.param.Ma.rds")
-res.lh.param.Ti <- readRDS("res.lh.param.Ti.rds")
 
-Cnigropunctatum.data <- readRDS("Cnigropunctatum.data.rds")
-Matticolus.data <- readRDS("Matticolus.data.rds")
-Titambere.data <- readRDS("Titambere.data.rds")
+# Read and organize data --------------------------------------------------
+
+
+res.lh.param.Cn <- readRDS("res_lh_param_Cn.rds")
+res.lh.param.Ma <- readRDS("res_lh_param_Ma.rds")
+res.lh.param.Ti <- readRDS("res_lh_param_Ti.rds")
+
+Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
+Matticolus.data <- readRDS("Matticolus_data.rds")
+Titambere.data <- readRDS("Titambere_data.rds")
 dim(Titambere.data$amb)
 
 env.array.df <- function(env.array){
@@ -117,11 +123,10 @@ fit.recov.time <- fitDist(res.env.cerrado.liz$recovery.time
 fit.recov.time$fits
 summary(fit.recov.time)
 
-
-
 summary(res.env.cerrado.liz)
 
-#Check correlations
+
+# Check correlations ------------------------------------------------------
 
 #Life-history
 cor(res.env.cerrado.liz[,3:12], use="na.or.complete", method="spearman")
@@ -165,9 +170,7 @@ ggpairs(res.env.cerrado.liz[,c(1,2,13:17,20:31)],
                                       colour = rgb(1,0,0,1))))
 
 
-#####
-#PCA#
-#####
+# PCA ---------------------------------------------------------------------
 
 #Resilience components
 pca.res<-prcomp(res.env.cerrado.liz[,c(13,14,16)],scale=T, center=T)
@@ -200,36 +203,6 @@ autoplot(pca.lh, data=na.omit(res.env.cerrado.liz), colour = "species",
   scale_colour_manual(values=alpha.col(c("black", "blue", "brown"), 0.4), name = "Species")+
   scale_fill_manual(values=alpha.col(c("black", "blue", "brown"), 0.4), name = "Species")
 
-
-#Using fast-slow and reproductive strategies
-res.lh.env.cerrado.liz <- na.omit(res.env.cerrado.liz)
-res.lh.env.cerrado.liz$reprod <- pca.lh$x[,1]
-res.lh.env.cerrado.liz$fastslow <- pca.lh$x[,2]
-
-pca.res2 <- prcomp(res.lh.env.cerrado.liz[,c(13,14,16)],scale=T, center=T)
-
-quartz(height = 8, width = 10)
-autoplot(pca.res2, data=na.omit(res.lh.env.cerrado.liz), colour = c("reprod"),alpha=0.5,label=F,shape ="species",
-         loadings=T, loadings.label = TRUE,scale=1)+
-  scale_colour_gradientn(colours=viridis(1000))
-
-quartz(height = 8, width = 10)
-autoplot(pca.res2, data=na.omit(res.lh.env.cerrado.liz), colour = c("fastslow"),alpha=0.5,label=F,shape ="species",
-         loadings=T, loadings.label = TRUE,scale=1)+
-  scale_colour_gradientn(colours=viridis(1000))
-
-#Reslience components coloured by life history traits (reproduction and generation time)
-quartz(height = 8, width = 10)
-autoplot(pca.res2, data=na.omit(res.lh.env.cerrado.liz), colour = c("repro.value"),alpha=0.5,label=F,shape ="species",
-         loadings=T, loadings.label = TRUE,scale=1)+
-  scale_colour_gradientn(colours=viridis(1000))
-
-quartz(height = 8, width = 10)
-autoplot(pca.res2, data=na.omit(res.lh.env.cerrado.liz), colour = c("gen.time"),alpha=0.5,label=F,shape ="species",
-         loadings=T, loadings.label = TRUE,scale=1)+
-  scale_colour_gradientn(colours=viridis(1000))
-
-
 #Life history and resilience components
 pca.lh.res<-prcomp(na.omit(res.lh.env.cerrado.liz[,c(3:16)]),scale=T, center=T)
 
@@ -244,43 +217,9 @@ quartz(height = 8, width = 10)
            loadings=T, loadings.label = TRUE,scale=0)+
   scale_colour_gradientn(colours=turbo(5))
 
-#Mean (by species and plot) resilience components
-summary(pca.res2)
-scores.pca.res <- pca.res2$x
-scores.pca.res <- cbind(res.lh.env.cerrado.liz,scores.pca.res)
 
-library(dplyr)
-mean.scores.pca.res <- scores.pca.res %>%
-  group_by(species, plot.int)%>%
-  summarise(PC1 = mean(PC1),
-            PC2 = mean(PC2))
+# Scale life-history predictors of interest-------------------------------------
 
-quartz(height = 8, width = 10)
-autoplot(pca.res2, label=F,shape=F,
-         loadings=T, loadings.label = TRUE,scale= 0)+
-  geom_point(data=mean.scores.pca.res, aes(x=PC1, y= PC2, colour = plot.int, shape = species),size=3)+
-  scale_colour_gradientn(colours=turbo(5))
-
-pca.env <- prcomp(na.omit(res.env.cerrado.liz[,c(20:29)]),scale=T,center=T)
-
-quartz(height = 8, width = 10)
-autoplot(pca.env, data=na.omit(res.env.cerrado.liz), colour = "plot.int",shape ="species", label=F,size=1.5,
-         loadings=T, loadings.label = TRUE,scale=0)+
-  scale_colour_gradientn(colours=turbo(5))
-
-quartz(height = 8, width = 10)
-autoplot(pca.env, data=na.omit(res.env.cerrado.liz), colour = "month",
-         label=F,size=1.5,
-         loadings=T, loadings.label = TRUE,scale=0)+
-  scale_colour_gradientn(colours=turbo(12))
-
-quartz(height = 8, width = 10)
-autoplot(pca.env, data=na.omit(res.env.cerrado.liz), colour = "precip",
-         label=F,size=1.5,
-         loadings=T, loadings.label = TRUE,scale=0)+
-  scale_colour_gradientn(colours=rev(viridis(12)))
-
-#Scale life-history predictors of interest
 hist(res.env.cerrado.liz$life.expect)
 hist(scale(log10(res.env.cerrado.liz$life.expect)))
 shapiro.test(scale(log10(res.env.cerrado.liz$life.expect)))
