@@ -1,17 +1,44 @@
 Sys.setenv(TZ = "America/Sao_Paulo")#set time zone
-setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/")
-# 
+#set working directory
+setwd("~/Documents/GitHub/DemographicResilience_CerradoLizards/Ecophysio/")
 
-#####################################
-## GERAR VARIAVEIS ECOFISIOLOGICAS ##
-#####################################
-# install.packages("lifecycle")
-# install.packages("ggplot2")
-# install.packages("gamm4")
 
+# Load packages -----------------------------------------------------------
+
+# devtools::install_github("ilyamaclean/microclima")
+# remotes::install_github("everydayduffy/mcera5")
+# devtools::install_github("mrke/NicheMapR")
+# install.packages("/Users/heito/Downloads/NicheMapR_3.1.0.tgz", repos = NULL, 
+#                  type = .Platform$pkgType)
+
+library(raster)
+library(NicheMapR)
+library(microclima)
+library(ecmwfr)
+library(mcera5)
+library(lubridate)
+library(dplyr)
+library(tidync)
+library(ncdf4)
 library(lifecycle)
 library(ggplot2)
 library(gamm4)
+library(MODISTools)
+library(gdalUtils)
+library(lubridate)
+library(tidyverse)
+library(lme4)
+library(mgcv)
+library(sjPlot)
+library(viridis)
+library(Mapinguari)
+library(usdm)
+library(corrplot)
+
+# Generate ecophysiological-related variables -----------------------------
+
+
+
 
 # Performance
 physio_BSB<- read.table("Ecophysio_BSB.txt", h=T)
@@ -188,13 +215,12 @@ ggplot(preddata_tpc_Titambere, aes(x=temp, y=predicted)) + geom_line() +
 #Leaf Area Index#
 #################
 #install.packages("MODISTools", dep=T)
-library(MODISTools)
-library(gdalUtils)
+
 mt_products()
 mt_bands(product = "MCD15A2H")
 
 
-pts.arms <- read.table("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Pontos_Armadilhas.txt", h=T)
+pts.arms <- read.table("Pontos_Armadilhas.txt", h=T)
 pts.arms$lat[pts.arms$local=="RECOR_FOGO" & pts.arms$armadilha=="5"]
 
 
@@ -307,31 +333,17 @@ boxplot(lai ~ plot, data = lai.fire.month)
 quartz(8,8)
 interaction.plot(lai.fire.month$year, lai.fire.month$plot, lai.fire.month$lai)
 
-saveRDS(lai.fire.month,"lai.fire.month.rds")
+saveRDS(lai.fire.month,"lai_fire_month.rds")
 
 ##############
 #Microclimate#
 ##############
 
-library(lubridate)
 
 ######################
 #Mechanistic approach#
 ######################
-# devtools::install_github("ilyamaclean/microclima")
-# remotes::install_github("everydayduffy/mcera5")
-# devtools::install_github("mrke/NicheMapR")
-# install.packages("/Users/heito/Downloads/NicheMapR_3.1.0.tgz", repos = NULL, 
-#                  type = .Platform$pkgType)
-library(raster)
-library(NicheMapR)
-library(microclima)
-library(ecmwfr)
-library(mcera5)
-library(lubridate)
-library(dplyr)
-library(tidync)
-library(ncdf4)
+
 
 # get ERA5 climate data with package mcera5 (just do once for region and time of interest)
 
@@ -342,7 +354,7 @@ cds_api_key <- "151ac044-f8cf-4ee0-aa00-64da02cf0295"
 
 ecmwfr::wf_set_key(user = uid, key = cds_api_key, service = "cds")
 
-pts.arms <- read.table("E:/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Pontos_Armadilhas.txt", h=T)
+pts.arms <- read.table("Pontos_Armadilhas.txt", h=T)
 
 pts.arms$lat[pts.arms$local=="RECOR_FOGO"]
 # bounding coordinates (in WGS84 / EPSG:4326)
@@ -363,7 +375,7 @@ op <- "/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cer
 # build a request (covering multiple years)
 req <- build_era5_request(xmin = xmn, xmax = xmx,
                           ymin = ymn, ymax = ymx,
-                          start_time = st_time #if gives error, update with new start time to download the rest of the years, lubridate::ymd("2019:01:01"),
+                          start_time = st_time, #if gives error, update with new start time to download the rest of the years, lubridate::ymd("2019:01:01"),
                           end_time = en_time,
                           outfile_name = file_prefix)
 str(req)
@@ -429,7 +441,6 @@ for(i in 1:length(my_nc)){
   
 }
 
-library(tidyverse)
 point_out.df <- point_out %>% reduce(rbind.data.frame) 
 summary(point_out.df)
 
@@ -453,60 +464,16 @@ summary(filter(point_out_precip.df,obs_time >= "2005-11-01" & obs_time <= "2005-
 #We need some canopy cover estimate to predict microclimate data in different fire regimes
 #We use the leaf area index we downloaded previously and relate to canopy cover measures from 2009 and 2010
 
-#lai.fire.month<-readRDS("W:/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/lai.fire.month.rds") #Windows
-lai.fire.month<-readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/lai.fire.month.rds") #MacOS
+lai.fire.month <- readRDS("lai_fire_month.rds") #MacOS
 head(lai.fire.month)
-library(tidyverse)
+
 lai.month <- lai.fire.month %>% 
   group_by(year, month) %>%  
   summarise(lai = mean(lai))
 
-#Time series of the Leaf Area Index (LAI)
-head(lai.month)
-lai.month.ts<-ts(lai.month$lai,start = c(2005,11),end = c(2019,12),frequency = 12)
-lai.month.ts
-
-lai.stl <- stl(lai.month.ts,"periodic")
-summary(lai.stl)
-
-
-quartz(10,10)
-plot(lai.stl)
-
-# Percentage of the explained variation for each component of the time series
-p.sazonal<-(var(lai.stl$time.series[, 1]))/(var(lai.stl$time.series[, 1])+var(lai.stl$time.series[, 2])+var(lai.stl$time.series[, 3]))
-p.sazonal
-
-p.tendencia<-(var(lai.stl$time.series[, 2]))/(var(lai.stl$time.series[, 1])+var(lai.stl$time.series[, 2])+var(lai.stl$time.series[, 3]))
-p.tendencia
-
-p.residual<-(var(lai.stl$time.series[, 3]))/(var(lai.stl$time.series[, 1])+var(lai.stl$time.series[, 2])+var(lai.stl$time.series[, 3]))
-p.residual
-
-p.sazonal+p.tendencia+p.residual
-
-library(lme4)
-lai.fire.month$t <- 1:nrow(lai.fire.month)
-
-m1.year <- lmer(lai~t + (1|year),data=lai.fire.month)
-m0.year <- lmer(lai~ 1 + (1|year),data=lai.fire.month)
-anova(m1.year,m0.year)
-summary(m1.year)
-
-
-m1.month <- lmer(lai~t + (1|month),data=lai.fire.month)
-m0.month <- lmer(lai~ 1 + (1|month),data=lai.fire.month)
-anova(m1.month,m0.month)
-summary(m1.month)
-
-quartz(8,8)
-monthplot(lai.month.ts, ylab="Leaf Area Index", type="h")
-monthplot(lai.stl, choice="seasonal")
-monthplot(lai.stl, choice="trend")
 
 #Canopy cover measures
-#MH.df <- read.table("W:/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/MHbase.txt",h=T)#Windows
-MH.df <- read.table("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/MHbase.txt",h=T)#MacOS
+MH.df <- read.table("MHbase.txt",h=T)
 head(MH.df)
 
 #windows(10,10)#Windows
@@ -565,7 +532,6 @@ lines(xx,predict(glm1,newdata = data.frame(Parcela = rep("BT",31),lai =xx),type=
 lines(xx,predict(glm1,newdata = data.frame(Parcela = rep("C",31),lai =xx),type="response"),col=4)
 lines(xx,predict(glm1,newdata = data.frame(Parcela = rep("Q",31),lai =xx),type="response"),col=5)
 
-library(mgcv)
 gam1 <- gam(y ~ s(lai) + Parcela, data=MH.lai.df, family="binomial")
 summary(gam1)
 
@@ -573,8 +539,7 @@ quartz(8,8)
 plot(gam1)
 vis.gam(gam1,theta=60)
 
-library(sjPlot)
-library(viridis)
+
 quartz(8,8)
 plot_model(glm1,type = "pred",terms = c("lai","Parcela"),colors = "warm")
 
@@ -645,53 +610,45 @@ dfinish <- "31/12/2019"
 (x <- mean(c(xmn,xmx)))
 (y <- mean(c(ymn,ymx)))
 loc <- c(x, y)
-library(raster)
-library(NicheMapR)
-library(microclima)
-library(ecmwfr)
-library(mcera5)
-library(lubridate)
-library(dplyr)
-library(tidync)
-library(ncdf4)
+
 micro<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish,
-                  spatial = 'E:/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Spatial_Data/era5')
+                  spatial = '~/Documents/GitHub/DemographicResilience_CerradoLizards/Ecophysio/Spatial_Data/era5')
  
-saveRDS(micro,'E:/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.era5.rds')
+saveRDS(micro,'micro_era5.rds')
 
 micro.C<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish,
                     minshade = canopy.fire.day$canopy.C*100,
                     spatial = 'Spatial_Data/era5')
 
-saveRDS(micro.C,'micro.C.era5.rds')
+saveRDS(micro.C,'micro_C_era5.rds')
 
 micro.Q<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish,
                     minshade = canopy.fire.day$canopy.Q*100,runshade = 0,
                     spatial = 'Spatial_Data/era5')
 
-saveRDS(micro.Q,'micro.Q.era5.rds')
+saveRDS(micro.Q,'micro_Q_era5.rds')
 
 micro.BP<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, minshade = canopy.fire.day$canopy.BP*100,runshade = 0,
                      spatial = 'Spatial_Data/era5')
 
-saveRDS(micro.BP,'micro.BP.era5.rds')
+saveRDS(micro.BP,'micro_BP_era5.rds')
 
 micro.BM<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, minshade = canopy.fire.day$canopy.BM*100,runshade = 0,
                      spatial = 'Spatial_Data/era5')
 
-saveRDS(micro.BM,'micro.BM.era5.rds')
+saveRDS(micro.BM,'micro_BM_era5.rds')
 
 micro.BT<-micro_era5(loc = loc, dstart = dstart, dfinish = dfinish, minshade = canopy.fire.day$canopy.BT*100,runshade = 0,
                      spatial = 'Spatial_Data/era5')
 
-saveRDS(micro.BT,'micro.BT.era5.rds')
+saveRDS(micro.BT,'micro_BT_era5.rds')
 
-micro<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.era5.rds')
-micro.C<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.C.era5.rds')
-micro.Q<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.Q.era5.rds')
-micro.BP<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.BP.era5.rds')
-micro.BM<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.BM.era5.rds')
-micro.BT<-readRDS('/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/micro.BT.era5.rds')
+micro<-readRDS('micro_era5.rds')
+micro.C<-readRDS('micro_C_era5.rds')
+micro.Q<-readRDS('micro_Q_era5.rds')
+micro.BP<-readRDS('micro_BP_era5.rds')
+micro.BM<-readRDS('micro_BM_era5.rds')
+micro.BT<-readRDS('micro_BT_era5.rds')
 
 
 metmin<-as.data.frame(micro$metout) # above ground microclimatic conditions, min shade
@@ -730,7 +687,6 @@ soil.BT <- soil.BT[-c(7:12)]
 sapply(list(metmin,metmax,met.C,met.Q,met.BP,met.BM,met.BT),summary)
 sapply(list(soilmin,soilmax,soil.C,soil.Q,soil.BP,soil.BM,soil.BT),summary)
 
-library(tidyverse)
 # append dates
 tzone<-paste("Etc/GMT",0,sep="")
 dates<-seq(as.POSIXlt('2005-11-01'),
@@ -754,7 +710,6 @@ quartz(8,8)
 
 interaction.plot(micro.fire$TIME, micro.fire$canopy, micro.fire$TALOC)
 
-library(lubridate)
 micro.fire$year <- year(micro.fire$dates)
 micro.fire$month <- month(micro.fire$dates)
 micro.fire$hour <- hour(micro.fire$dates)
@@ -799,11 +754,10 @@ summary(micro.fire)
 
 # Horas de atividade
 
-#install.packages("Mapinguari")
-library(Mapinguari)
 
 
-tpref_BSB <- read.table("/Volumes/GoogleDrive/My Drive/Doutorado/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Tpref_BSB.txt", h=T)
+
+tpref_BSB <- read.table("Tpref_BSB.txt", h=T)
 str(tpref_BSB)
 
 tpref_Cnigropunctatum <- dplyr::filter(tpref_BSB, Species == "C_nigropunctatum")
@@ -852,9 +806,9 @@ interaction.plot(micro.fire$month,
                  micro.fire$Titambere_ha90, mean)
 
 
-saveRDS(micro.fire, "/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.rds")
+saveRDS(micro.fire, "climate_ecophysio.rds")
 
-climate.ecophysio <- readRDS("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.rds")
+climate.ecophysio <- readRDS("climate_ecophysio.rds")
 summary(climate.ecophysio)
 
 climate.ecophysio <- dplyr::filter(climate.ecophysio, canopy != "min")
@@ -923,12 +877,8 @@ climate.ecophysio.month <- left_join(climate.ecophysio.month, precip.month.df,
                                      by = c("month","year"))
 summary(climate.ecophysio.month)
 
-#install.packages("usdm", dep=T)
-library(usdm)
 vifcor(as.data.frame(climate.ecophysio.month[,c(4:16,23)]),th=.8) #take off tmin, tmax0cm, RH, tmin2m, tmed, tmax, and RHmin
 
-install.packages("corrplot", dep=T)
-library(corrplot)
 m <- cor(climate.ecophysio.month[,c(4:16,23)])
 quartz(8, 8)
 corrplot.mixed(m, order = 'AOE')
@@ -937,5 +887,5 @@ climate.ecophysio.month <- subset(climate.ecophysio.month,
                                   select = -c(tmin,tmax0cm, RH, tmin2m,
                                               tmed,tmax,tmax2m,RHmin))
 
-saveRDS(climate.ecophysio.month,"/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/climate.ecophysio.month.rds")
+saveRDS(climate.ecophysio.month,"climate_ecophysio_month.rds")
 
