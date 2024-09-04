@@ -48,7 +48,7 @@ res.lh.param.Ti <- readRDS("res_lh_param_Ti.rds")
 Cnigropunctatum.data <- readRDS("Cnigropunctatum_data.rds")
 Matticolus.data <- readRDS("Matticolus_data.rds")
 Titambere.data <- readRDS("Titambere_data.rds")
-dim(Titambere.data$amb)
+dim(Titambere.data$env)
 
 env.array.df <- function(env.array){
   env.df <- data.frame(plot.int = rep(1:5,170),
@@ -70,9 +70,9 @@ env.array.df <- function(env.array){
   return(env.df)
 }
 
-env.df.Cn <- env.array.df(Cnigropunctatum.data$amb)
-env.df.Ma <- env.array.df(Matticolus.data$amb)
-env.df.Ti <- env.array.df(Titambere.data$amb)
+env.df.Cn <- env.array.df(Cnigropunctatum.data$env)
+env.df.Ma <- env.array.df(Matticolus.data$env)
+env.df.Ti <- env.array.df(Titambere.data$env)
 env.df.cerrado.liz <- rbind(env.df.Cn,env.df.Ma,env.df.Ti)
 
 res.cerrado.liz <- rbind(res.lh.param.Cn, 
@@ -183,11 +183,6 @@ autoplot(pca.res, data=res.env.cerrado.liz, colour = "plot.int",shape ="species"
 pca.lh<-prcomp(na.omit(res.env.cerrado.liz[,c(3:12)]),scale=T,center=T)
 
 quartz(height = 8, width = 10)
-autoplot(pca.lh, data=na.omit(res.env.cerrado.liz), colour = "plot.int",shape ="species", label=F,size=1.5,
-         loadings=T, loadings.label = TRUE,scale=0)+
-  scale_colour_gradientn(colours=turbo(5))
-
-quartz(height = 8, width = 10)
 autoplot(pca.lh, data=na.omit(res.env.cerrado.liz), colour = "plot",shape ="species", 
          frame = T, frame.color = "plot",
          label=F,size=1.5,
@@ -202,20 +197,6 @@ autoplot(pca.lh, data=na.omit(res.env.cerrado.liz), colour = "species",
          loadings=T, loadings.label = TRUE,scale=0)+
   scale_colour_manual(values=alpha.col(c("black", "blue", "brown"), 0.4), name = "Species")+
   scale_fill_manual(values=alpha.col(c("black", "blue", "brown"), 0.4), name = "Species")
-
-#Life history and resilience components
-pca.lh.res<-prcomp(na.omit(res.lh.env.cerrado.liz[,c(3:16)]),scale=T, center=T)
-
-quartz(height = 8, width = 10)
-autoplot(pca.lh.res, data=res.lh.env.cerrado.liz, colour = "species",
-         label=F, frame = T, frame.colour = "species",
-         loadings=T, loadings.label = TRUE,scale=0)
-
-quartz(height = 8, width = 10)
-  autoplot(pca.lh.res, data=res.lh.env.cerrado.liz, colour = "plot.int",
-           label=F, shape = "species", size = 2,
-           loadings=T, loadings.label = TRUE,scale=0)+
-  scale_colour_gradientn(colours=turbo(5))
 
 
 # Scale life-history predictors of interest-------------------------------------
@@ -330,600 +311,8 @@ ggplot(res.env.cerrado.liz, aes(x = as.factor(plot.int), y = semel,
   labs(x="Fire severity", y="Degree of iteroparity") +
   coord_cartesian( clip = "off")
 
-plot(repro.value ~ semel, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Reproductive value", xlab="Degree of iteroparity",bty="n")
 
-plot(gen.time ~ semel, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Generation time", xlab="Degree of iteroparity",bty="n")
-
-plot(gen.time ~ scale(log10(longev)), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Generation time", xlab="Longevity",bty="n")
-
-plot(gen.time ~ life.expect, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Generation time", xlab="Life expectancy",bty="n")
-
-plot(gen.time ~ repro.value, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Generation time", xlab="Reproductive value",bty="n")
-
-quartz(height = 9, width = 6)
-ggplot(res.env.cerrado.liz, aes(x = gen.time, y = repro.value, 
-                                colour = plot.int)) + 
-  geom_point() +
-  scale_colour_gradientn(colours=turbo(5, alpha = .5), name="Fire severity")+
-  facet_wrap(~species, nrow = 3)+
-  labs(x="Generation time", y="Reproductive output") +
-  coord_cartesian( clip = "off")
-
-
-#Amplification
-#Life-history traits
-#pal.TSLF[as.numeric(as.factor(res.env.cerrado.liz$TSLF))]
-  
-plot(fst.amp ~ gen.time, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation", xlab="Generation time",bty="n")
-
-plot(fst.amp ~ life.expect, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation", xlab="Mean life expectancy",bty="n")
-
-plot(fst.amp ~ semel, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation", xlab="Degree of iteroparity",bty="n")
-
-plot(fst.amp ~ gen.time, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="LB",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="LB"]))+14,
-      xlab="Generation time",bty="n")#Change the plot to check if the pattern is the same
-
-plot(fst.amp ~ gen.time, data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],pch=16,
-     col=pal.plot[res.env.cerrado.liz$plot.int],xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.amp ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],pch=16,
-     col=pal.plot[res.env.cerrado.liz$plot.int],xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.amp ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],pch=16,
-     col=pal.plot[res.env.cerrado.liz$plot.int],xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.amp ~ repro.value, data=res.env.cerrado.liz, 
-     pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],
-     ylab="Compensation", xlab="Reproductive value",bty="n")
-
-plot(fst.amp ~ repro.value, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="C",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="LB"]))+14,
-     xlab="Reproductive value",bty="n")#Change the plot to check if the pattern is the same
-
-plot(fst.amp ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.amp ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.amp ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-
-boxplot(fst.amp ~ species, data=res.env.cerrado.liz,ylab="Compensation",xlab="Species")
-boxplot(fst.amp ~ plot.int, data=res.env.cerrado.liz,ylab="Compensation",xlab="Fire regime")
-boxplot(fst.amp ~ plot.int*species, data=res.env.cerrado.liz,ylab="Compensation",xlab="Fire regime")
-boxplot(fst.amp ~ year, data=res.env.cerrado.liz,ylab="Compensation",xlab="Year")
-boxplot(fst.amp ~ month, data=res.env.cerrado.liz,ylab="Compensation",xlab="Month")
-
-ggplot(res.env.cerrado.liz, 
-       aes(x = as.factor(plot.int), y = fst.amp)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Compensation") 
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",], 
-       aes(x = as.factor(plot.int), y = fst.amp)) + 
-  ggdist::stat_halfeye(
-    adjust = 5, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Compensation")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",], 
-       aes(x = as.factor(plot.int), y = fst.amp)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Compensation")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",], 
-       aes(x = as.factor(plot.int), y = fst.amp)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Compensation")
-
-#DA476AFF
-#Weather and microclimate
-plot(fst.amp ~ tmed2m, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.amp ~ RHmax, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.amp ~ sol, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.amp ~ tmed0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.amp ~ tmin0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.amp ~ precip, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Fire
-plot(fst.amp ~ jitter(plot.int), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation",xlab="Fire regime")
-plot(fst.amp ~ TSLF, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation",xlab="Time since last fire")
-plot(fst.amp ~ jitter(fire), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation",xlab="Fire occurrence")
-
-#Ecophysiology
-plot(fst.amp ~ ha_90, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation",xlab="Hours of activity")
-plot(fst.amp ~ perf, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Compensation",xlab="Locomotor performance")
-
-#Attenuation
-#Life-history traits
-plot(fst.att ~ gen.time, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Resistance",xlab="Generation time",bty="n")
-
-plot(fst.att ~ gen.time, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="LB",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="C"]))+14,
-     xlab="Generation time",bty="n")#Change the plot to check if the pattern is the same
-
-plot(fst.att ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.att ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.att ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.att ~ repro.value, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],ylab="Resistance",xlab="Reproductive value",bty="n")
-
-plot(fst.att ~ repro.value, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="LB",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="C"]))+14,
-     xlab="Reproductive value",bty="n")#Change the plot to check if the pattern is the same
-
-plot(fst.att ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.att ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-plot(fst.att ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n")#Change the species to check if the pattern is the same
-
-# plot(fst.att ~ shape.surv, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-#      col=pal.plot[res.env.cerrado.liz$plot.int])
-# plot(fst.att ~ shape.rep, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-#      col=pal.plot[res.env.cerrado.liz$plot.int])
-
-
-boxplot(fst.att ~ species, data=res.env.cerrado.liz,ylab="Resistance",xlab="Species")
-boxplot(fst.att ~ plot.int, data=res.env.cerrado.liz,ylab="Resistance",xlab="Fire regime")
-boxplot(fst.att ~ plot.int*species, data=res.env.cerrado.liz,ylab="Resistance",xlab="Fire regime")
-
-boxplot(fst.att ~ year, data=res.env.cerrado.liz,ylab="Compensation",xlab="Year")
-boxplot(fst.att ~ month, data=res.env.cerrado.liz,ylab="Compensation",xlab="Month")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz, 
-       aes(x = as.factor(plot.int), y = fst.att)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Resistance")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",], 
-       aes(x = as.factor(plot.int), y = fst.att)) + 
-  ggdist::stat_halfeye(
-    adjust = 5, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Resistance")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",], 
-       aes(x = as.factor(plot.int), y = fst.att)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Resistance")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",], 
-       aes(x = as.factor(plot.int), y = fst.att)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Resistance")
-
-#Weather and microclimate
-plot(fst.att ~ tmed2m, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ RHmax, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ sol, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ tmed0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ tmin0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ precip, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Fire
-plot(fst.att ~ jitter(plot.int), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ TSLF, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ jitter(fire), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Ecophysiology
-plot(fst.att ~ ha_90, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(fst.att ~ perf, data=res.env.cerrado.liz,pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Recovery time
-#Life-history traits
-plot(recovery.time ~ gen.time, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],bty="n",xlab="Generation time",ylab="Recovery time (months)")
-
-plot(recovery.time~ gen.time, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="C",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="C"]))+14,
-     xlab="Generation time",bty="n",ylab="Recovery time (months)")#Change the plot to check if the pattern is the same
-
-plot(recovery.time ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],
-     pch=16,col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-plot(recovery.time ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],
-     pch=16,col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-plot(recovery.time ~ gen.time, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],
-     pch=16,col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Generation time",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-plot(recovery.time ~ repro.value, 
-     data=res.env.cerrado.liz, 
-     pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int],xlab="Reproductive value",ylab="Recovery time (months)")
-
-plot(recovery.time~ repro.value, data=res.env.cerrado.liz[res.env.cerrado.liz$plot=="C",], pch=as.numeric(as.factor(res.env.cerrado.liz$species[res.env.cerrado.liz$plot=="C"]))+14,
-     xlab="Reproductive output",bty="n",ylab="Recovery time (months)")#Change the plot to check if the pattern is the same
-
-plot(recovery.time ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-plot(recovery.time ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-plot(recovery.time ~ repro.value, 
-     data=res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",],
-     pch=16, col=pal.plot[res.env.cerrado.liz$plot.int],
-     xlab="Reproductive value",bty="n",ylab="Recovery time (months)")#Change the species to check if the pattern is the same
-
-# plot(recovery.time ~ shape.surv, data=res.env.cerrado.liz,pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-#      col=pal.plot[res.env.cerrado.liz$plot.int])
-# plot(recovery.time ~ shape.rep, data=res.env.cerrado.liz,pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-#      col=pal.plot[res.env.cerrado.liz$plot.int])
-boxplot(recovery.time ~ species, data=res.env.cerrado.liz)
-boxplot(recovery.time ~ plot.int*species, data=res.env.cerrado.liz)
-boxplot(recovery.time ~ year, data=res.env.cerrado.liz)
-boxplot(recovery.time ~ month, data=res.env.cerrado.liz)
-
-ggplot(res.env.cerrado.liz, 
-       aes(x = as.factor(plot.int), y = recovery.time)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Recovery time")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="C_nigropunctatum",], 
-       aes(x = as.factor(plot.int), y = recovery.time)) + 
-  ggdist::stat_halfeye(
-    adjust = 5, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Recovery time (months)")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="M_atticolus",], 
-       aes(x = as.factor(plot.int), y = recovery.time)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Recovery time (months)")
-
-quartz(8,8)
-ggplot(res.env.cerrado.liz[res.env.cerrado.liz$species=="T_itambere",], 
-       aes(x = as.factor(plot.int), y = recovery.time)) + 
-  ggdist::stat_halfeye(
-    adjust = 1, 
-    width = .5, 
-    .width = .9, 
-    justification = -.2, 
-    point_colour = NA
-  ) + 
-  geom_boxplot(
-    width = .05, 
-    outlier.shape = NA
-  ) +
-  ## add justified jitter from the {gghalves} package
-  gghalves::geom_half_point(
-    ## draw jitter on the left
-    side = "l", 
-    ## control range of jitter
-    range_scale = .5, 
-    ## add some transparency
-    alpha = .3
-  ) +
-  coord_cartesian( clip = "off")+
-  labs(x="Fire severity", y="Recovery time (months)")
-
-
-#Weather and microclimate
-plot(recovery.time ~ tmed2m, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ RHmax, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ sol, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ tmed0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ tmin0cm, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ precip, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Fire
-plot(recovery.time ~ jitter(plot.int), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ TSLF, data=res.env.cerrado.liz,pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ jitter(fire), data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-#Ecophysiology
-plot(recovery.time ~ ha_90, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-plot(recovery.time ~ perf, data=res.env.cerrado.liz, pch=as.numeric(as.factor(res.env.cerrado.liz$species))+14,
-     col=pal.plot[res.env.cerrado.liz$plot.int])
-
-
-###########
-#Modelling#
-###########
+# Modelling ---------------------------------------------------------------
 
 #Scale predictors
 res.env.cerrado.liz$gen.time <- scale(log10(res.env.cerrado.liz$gen.time))
@@ -943,12 +332,14 @@ plot(fst.att ~ fst.att.lag1, data = res.env.cerrado.liz,
 plot(recovery.time ~ recov.lag1, data = res.env.cerrado.liz,
      bty = "n", pch = 19, col = rgb(0,0,0,.5))
 
-######################################################
-#First-step amplification (reactivity) = compensation#
-######################################################
+
+## First-step amplification (reactivity) = compensation --------------------
+
+
 load("brm_res_CerradoLizards.RData")
 
-#Species and plot
+
+### Species and plot --------------------------------------------------------
 
 
 
@@ -1287,9 +678,6 @@ avg_comparisons(m1.amp.plot.species.mvgam,
                 variables = list(plot.int = "pairwise"),
                 by = "species", type = "response")
 
-plot_comparisons(m1.amp.plot.species.mvgam,
-                 variables = list(plot.int = "pairwise"),
-                 by = "species", type = "response")
 
 
 
@@ -1318,7 +706,7 @@ ggplot(res.env.cerrado.liz,aes(plot.int, fst.amp))+
   facet_wrap(~ species, nrow = 3)+
   labs(x="Fire severity", y="Compensation")
 
-#Generation time
+### Generation time --------------------------------------------------------
 (priors<-get_prior(fst.amp ~ gen.time*species + (1|plot/species) + (1|year/month),
                    data = res.env.cerrado.liz , family = "gamma"))
 
@@ -1535,7 +923,7 @@ ggplot(res.env.cerrado.liz,aes(gen.time,fst.amp))+
   labs(x="Generation time", y="Compensation") 
 
 
-#Reproductive value
+### Reproductive output --------------------------------------------------------
 (priors<-get_prior(fst.amp ~ repro.value*species + (1|plot/species) + (1|year/month),
                    data = res.env.cerrado.liz , family = "gamma"))
 
@@ -1821,9 +1209,10 @@ mcmc_plot(m0.amp.mvgam, type = "dens_overlay", variable = "betas")
 
 loo_compare(m0.amp.mvgam, m1.amp.plot.species.mvgam, m1.amp.gen.time.mvgam, m1.amp.repro.value.mvgam)
 
-#####################################
-#First-step attenuation = resistance#
-#####################################
+## First-step attenuation = resistance -------------------------------------
+
+### Species and plot --------------------------------------------------------
+
 res.env.cerrado.liz$plot.int <- as.factor(res.env.cerrado.liz$plot.int)
 (priors<-get_prior(bf(fst.att ~ species:plot.int + (1|year/month),
                       phi ~ species),
@@ -2026,8 +1415,6 @@ plot(m1.att.plot.species.mvgam, type = "forecast", series = 13)
 plot(m1.att.plot.species.mvgam, type = "forecast", series = 14)
 plot(m1.att.plot.species.mvgam, type = "forecast", series = 15)
 
-
-#Residuals
 #Residuals
 plot(m1.att.plot.species.mvgam, type = "residuals", series = 1)
 lmtest::dwtest(colMeans(m1.att.plot.species.mvgam$resids$C_nigropunctatum.1) ~ 1)
@@ -2171,8 +1558,8 @@ ggplot(res.env.cerrado.liz,aes(plot.int, fst.att))+
   labs(x="Fire severity", y="Resistance")
 
 
+### Generation time --------------------------------------------------------
 
-#Generation time
 (priors<-get_prior(bf(fst.att ~ gen.time*species + (1|plot/species) + (1|year/month),
                       phi ~ species),
                    data = res.env.cerrado.liz , family = "beta"))
@@ -2391,7 +1778,7 @@ ggplot(res.env.cerrado.liz,aes(gen.time,fst.att))+
   labs(x="Generation time", y="Resistance") 
 
 
-#Reproductive value
+### Reproductive output --------------------------------------------------------
 (priors<-get_prior(bf(fst.att ~ repro.value*species + (1|plot/species) + (1|year/month),
                       phi ~ species),
                    data = res.env.cerrado.liz , family = "beta"))
@@ -2691,10 +2078,12 @@ mcmc_plot(m0.att.mvgam, type = "dens_overlay", variable = "betas")
 
 loo_compare(m0.att.mvgam, m1.att.plot.species.mvgam, m1.att.gen.time.mvgam, m1.att.repro.value.mvgam)
 
-###############
-#Recovery time#
-###############
-#Species and plot
+
+
+
+## Recovery time -----------------------------------------------------------
+
+### Species and plot --------------------------------------------------------
 
 ar.mle(ts(res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$sp.plot=="C_nigropunctatum.1"]))
 ar.mle(ts(res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$sp.plot=="C_nigropunctatum.2"]))
@@ -3050,7 +2439,7 @@ ggplot(res.env.cerrado.liz,aes(plot.int, recovery.time))+
   labs(x="Fire severity", y="Recovery time (months)")
 
 
-#Generation time
+### Generation time --------------------------------------------------------
 (priors<-get_prior(recovery.time ~ gen.time*species + (1|plot/species) + (1|year/month),
                    data = res.env.cerrado.liz , family = "gamma"))
 
@@ -3264,7 +2653,7 @@ ggplot(res.env.cerrado.liz,aes(gen.time,recovery.time))+
   labs(x="Generation time", y="Recovery time (months)") 
 
 
-#Reproductive value
+### Reproductive output --------------------------------------------------------
 (priors<-get_prior(recovery.time ~ repro.value*species + (1|plot/species) + (1|year/month),
                    data = res.env.cerrado.liz , family = "gamma"))
 
@@ -3568,116 +2957,9 @@ save(list = c("m0.amp", "m1.amp.plot.species", "m1.amp.gen.time", "m1.amp.repro.
        "m0.recov.t.mvgam", "m1.recov.t.plot.species.mvgam", "m1.recov.t.gen.time.mvgam", "m1.recov.t.repro.value.mvgam"),
      file = "brm_res_CerradoLizards.RData")
 
-##########
-#3D plots#
-##########
-r3dDefaults$useFreeType <- FALSE
-open3d()
-plot3d(res.env.cerrado.liz$fst.amp,
-       res.env.cerrado.liz$fst.att,
-       res.env.cerrado.liz$recovery.time,
-       xlab = "Compensation",
-       ylab = "Resistance",
-       zlab = "Recovery time",
-       col = c("black", "blue", "brown")[as.numeric(as.factor(res.env.cerrado.liz$species))],
-       alpha = 0.1,
-       radius = 0.05,
-       type = "s",
-       aspect = c(1, 1, 1))
+# 3D plots ----------------------------------------------------------------
 
-ellips.Cn <- ellipse3d(cov(cbind(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "C_nigropunctatum"],
-                                 res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "C_nigropunctatum"],
-                                 res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "C_nigropunctatum"])),
-                       centre=c(mean(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "C_nigropunctatum"]),
-                                mean(res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "C_nigropunctatum"]),
-                                mean(res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "C_nigropunctatum"])),
-                       level = 0.95)
-
-ellips.Ma <- ellipse3d(cov(cbind(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "M_atticolus"],
-                                 res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "M_atticolus"],
-                                 res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "M_atticolus"])),
-                       centre=c(mean(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "M_atticolus"]),
-                                mean(res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "M_atticolus"]),
-                                mean(res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "M_atticolus"])),
-                       level = 0.95)
-
-ellips.Ti <- ellipse3d(cov(cbind(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "T_itambere"],
-                                 res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "T_itambere"],
-                                 res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "T_itambere"])),
-                       centre=c(mean(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "T_itambere"]),
-                                mean(res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "T_itambere"]),
-                                mean(res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "T_itambere"])),
-                       level = 0.95)
-
-plot3d(ellips.Cn, col = "black", alpha = 0.2, add = TRUE, box = FALSE, type = "wire")
-plot3d(ellips.Ma, col = "blue", alpha = 0.2, add = TRUE, box = FALSE, type = "wire")
-plot3d(ellips.Ti, col = "brown", alpha = 0.2, add = TRUE, box = FALSE, type = "wire")
-grid3d(c("x+", "y+", "z"))
-
-rgl.snapshot("resilience_sp_3d.png",fmt="png")
-
-close3d()
-
-open3d()
-plot3d(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "C_nigropunctatum"],
-       res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "C_nigropunctatum"],
-       res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "C_nigropunctatum"],
-       xlab = "Compensation",
-       ylab = "Resistance",
-       zlab = "Recovery time",
-       col = pal.plot[res.env.cerrado.liz$plot.int[res.env.cerrado.liz$species == "C_nigropunctatum"]],
-       alpha = 0.1,
-       radius = 0.005,
-       type = "s",
-       aspect = c(1, 1, 1))
-
-grid3d(c("x", "y", "z"))
-
-rgl.snapshot("resilience_Cnigro_3d.png",fmt="png")
-
-close3d()
-
-open3d()
-plot3d(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "M_atticolus"],
-       res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "M_atticolus"],
-       res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "M_atticolus"],
-       xlab = "Compensation",
-       ylab = "Resistance",
-       zlab = "Recovery time",
-       col = pal.plot[res.env.cerrado.liz$plot.int[res.env.cerrado.liz$species == "M_atticolus"]],
-       alpha = 0.1,
-       radius = 0.025,
-       type = "s",
-       aspect = c(1, 1, 1))
-
-grid3d(c("x", "y", "z"))
-
-rgl.snapshot("resilience_Matticolus_3d.png",fmt="png")
-
-close3d()
-
-open3d()
-plot3d(res.env.cerrado.liz$fst.amp[res.env.cerrado.liz$species == "T_itambere"],
-       res.env.cerrado.liz$fst.att[res.env.cerrado.liz$species == "T_itambere"],
-       res.env.cerrado.liz$recovery.time[res.env.cerrado.liz$species == "T_itambere"],
-       xlab = "Compensation",
-       ylab = "Resistance",
-       zlab = "Recovery time",
-       col = pal.plot[res.env.cerrado.liz$plot.int[res.env.cerrado.liz$species == "T_itambere"]],
-       alpha = 0.1,
-       radius = 0.025,
-       type = "s",
-       aspect = c(1, 1, 1))
-
-grid3d(c("x", "y", "z"))
-
-rgl.snapshot("resilience_Titambere_3d.png",fmt="png")
-
-close3d()
-
-#######################
 #Using plot 3d package#
-#######################
 
 quartz(width = 10, height = 8)
 scatter3D(res.env.cerrado.liz$fst.amp,
