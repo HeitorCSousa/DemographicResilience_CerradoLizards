@@ -37,11 +37,8 @@ library(corrplot)
 
 # Generate ecophysiological-related variables -----------------------------
 
-
-
-
 # Performance
-physio_BSB<- read.table("Ecophysio_BSB.txt", h=T)
+physio_BSB <- read.table("Ecophysio_BSB.txt", h=T)
 head(physio_BSB)
 
 perf_df <-
@@ -59,8 +56,8 @@ perf_df <-
     id = rep(physio_BSB$ID,5),
     crc = rep(physio_BSB$SVL,5))
 
-completos <- complete.cases(perf_df[, c("temp","perf")]) #remove NAs
-perf_df <- droplevels(perf_df[completos, ])
+complete <- complete.cases(perf_df[, c("temp","perf")]) #remove NAs
+perf_df <- droplevels(perf_df[complete, ])
 
 perf_Cnigropunctatum_df <- perf_df[perf_df$sp=="C_nigropunctatum",]
 perf_Matticolus_df <- perf_df[perf_df$sp=="M_atticolus",]
@@ -150,12 +147,12 @@ preddata_tpc_Matticolus<-data.frame(temp=seq(10,50,0.1))
 
 preddata_tpc_Titambere<-data.frame(temp=seq(10,50,0.1))
 
-# Faz a predicao 
+#Predict 
 pred_tpc_Cnigropunctatum <- predict(tpc_Cnigropunctatum$gam,
                                     preddata_tpc_Cnigropunctatum,
                                     se.fit=T)
 
-# Anexa as predicoes e erros na tabela de dados
+# Append predictions and SEs in data.frame
 preddata_tpc_Cnigropunctatum$predicted <- pred_tpc_Cnigropunctatum$fit
 preddata_tpc_Cnigropunctatum$se <- pred_tpc_Cnigropunctatum$se.fit
 preddata_tpc_Cnigropunctatum$lower <- pred_tpc_Cnigropunctatum$fit-pred_tpc_Cnigropunctatum$se.fit
@@ -169,15 +166,13 @@ ggplot(preddata_tpc_Cnigropunctatum, aes(x=temp, y=predicted)) + geom_line() +
   lims(x=c(10,40),y=c(0,15)) + theme(plot.title = element_text(hjust = 0.5))
 
 
-
-
 #Matticolus
-## Faz a predicao 
+#Predict 
 pred_tpc_Matticolus <- predict(tpc_Matticolus$gam,
                                preddata_tpc_Matticolus,
                                se.fit=T)
 
-## Anexa as predicoes e erros na tabela de dados
+# Append predictions and SEs in data.frame
 preddata_tpc_Matticolus$predicted <- pred_tpc_Matticolus$fit
 preddata_tpc_Matticolus$se <- pred_tpc_Matticolus$se.fit
 preddata_tpc_Matticolus$lower <- pred_tpc_Matticolus$fit-pred_tpc_Matticolus$se.fit
@@ -191,12 +186,12 @@ ggplot(preddata_tpc_Matticolus, aes(x=temp, y=predicted)) + geom_line() +
   lims(x=c(10,50),y=c(0,10)) + theme(plot.title = element_text(hjust = 0.5))
 
 #Titambere
-## Faz a predicao 
+#Predict 
 pred_tpc_Titambere <- predict(tpc_Titambere$gam,
                               preddata_tpc_Titambere,
                               se.fit=T)
 
-## Anexa as predicoes e erros na tabela de dados
+# Append predictions and SEs in data.frame
 preddata_tpc_Titambere$predicted <- pred_tpc_Titambere$fit
 preddata_tpc_Titambere$se <- pred_tpc_Titambere$se.fit
 preddata_tpc_Titambere$lower <- pred_tpc_Titambere$fit-pred_tpc_Titambere$se.fit
@@ -210,11 +205,7 @@ ggplot(preddata_tpc_Titambere, aes(x=temp, y=predicted)) + geom_line() +
   lims(x=c(10,45),y=c(0,15)) + theme(plot.title = element_text(hjust = 0.5))
 
 
-
-#################
-#Leaf Area Index#
-#################
-#install.packages("MODISTools", dep=T)
+# Leaf Area Index (LAI) ---------------------------------------------------
 
 mt_products()
 mt_bands(product = "MCD15A2H")
@@ -335,22 +326,18 @@ interaction.plot(lai.fire.month$year, lai.fire.month$plot, lai.fire.month$lai)
 
 saveRDS(lai.fire.month,"lai_fire_month.rds")
 
-##############
-#Microclimate#
-##############
+
+# Microclimate ------------------------------------------------------------
 
 
-######################
-#Mechanistic approach#
-######################
-
+## Mechanistic approach ----------------------------------------------------
 
 # get ERA5 climate data with package mcera5 (just do once for region and time of interest)
 
 # assign your credentials (register here: https://cds.climate.copernicus.eu/user/register)
 
-uid <- "86619"
-cds_api_key <- "151ac044-f8cf-4ee0-aa00-64da02cf0295"
+uid <- "insert-here-your-user-id"
+cds_api_key <- "insert-here-your-api-key"
 
 ecmwfr::wf_set_key(user = uid, key = cds_api_key, service = "cds")
 
@@ -370,7 +357,7 @@ en_time <- lubridate::ymd("2019:12:31")
 
 # filename and location for downloaded .nc files
 file_prefix <- "era5"
-op <- "/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Spatial_Data"
+op <- "~/Documents/GitHub/DemographicResilience_CerradoLizards/Ecophysio/Spatial_Data"
 
 # build a request (covering multiple years)
 req <- build_era5_request(xmin = xmn, xmax = xmx,
@@ -600,8 +587,9 @@ canopy.fire.day <- canopy.fire %>%
 
 saveRDS(canopy.fire.day,"canopy_fire_day.rds")
 
-#Using NichemapR micro_era5 function#
-#####################################
+
+## Using NichemapR micro_era5 function -------------------------------------
+
 # run micro_era5 for a location (make sure it's within the bounds of your .nc files)
 #Ran in HPC Oxford cluster
 
@@ -719,8 +707,6 @@ summary(micro.fire)
 quartz(8,8)
 boxplot(TALOC ~ canopy, data=micro.fire)
 
-
-#setwd("/Volumes/Extreme SSD/Heitor/Doutorado/Analises/Cap2_LizardsDemography_Cerrado/Analysis/Ecophysio/Microclima/")
 climate.df <- readRDS("climate_df.rds")
 
 microclim.BSB <- readRDS("microclimate_BSB.rds")
@@ -735,7 +721,7 @@ interaction.plot(microclim.BSB$hour, microclim.BSB$plot,microclim.BSB$temp)
 summary(microclim.BSB$temp)
 
 
-## Predicoes para o periodo de estudo
+## Predictions for the study time period
 
 pred_temp <-
   data.frame(temp = micro.fire$TALOC)
@@ -752,10 +738,8 @@ micro.fire$Titambere_perf <-
 
 summary(micro.fire)
 
-# Horas de atividade
 
-
-
+## Hours of activity -------------------------------------------------------
 
 tpref_BSB <- read.table("Tpref_BSB.txt", h=T)
 str(tpref_BSB)
@@ -877,7 +861,7 @@ climate.ecophysio.month <- left_join(climate.ecophysio.month, precip.month.df,
                                      by = c("month","year"))
 summary(climate.ecophysio.month)
 
-vifcor(as.data.frame(climate.ecophysio.month[,c(4:16,23)]),th=.8) #take off tmin, tmax0cm, RH, tmin2m, tmed, tmax, and RHmin
+vifcor(as.data.frame(climate.ecophysio.month[,c(4:16,23)]),th=.8) #remove tmin, tmax0cm, RH, tmin2m, tmed, tmax, and RHmin
 
 m <- cor(climate.ecophysio.month[,c(4:16,23)])
 quartz(8, 8)
